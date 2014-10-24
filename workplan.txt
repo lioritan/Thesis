@@ -1,0 +1,42 @@
+workplan(each needs to work):
+
+0) test work on yago. make sure what happens with Named Enttities/collocs(new york)
+1) Datasets:
+-old reuters, ModApte split (9603 train, 3299 test, 2 category sets, 10 largest categories)
+-new reuters, some subset since full is 800K docs. (17808 train from same day, 5341 test same day, 16 topics/ondustry categories or 10)
+-OHSUMED, some subset since full is 300K docs, 1991 papers with abstracts. (10,00 train, 10,000 test, see gab work on how categories...)
+-20 newsgroups (20 categories, 1000 docs each. use cross validation 4 or 5 folds)
+-TECH TC
+
+start with 20 and old reuters and maybe tech TC
+***look at sameAs and lookup linker(lookup.dbpedia.org) for alt names...some other NER mechanic?
+
+moar datasets for techTC: ->not really needed! all in yago, though maybe want to subdivide relations in yago for better granularity(like located_in which has towns, countries, contnients)
+good options: dbtune (music db, huge, musicBrains is nice subset), linkedMDB(movie db, big), telegraphis(country, capital,continent,currency)
+others: dbpedia (general knowledge, hard to use), crunchbase,wikicompany(companies+products, currently offline), FAO geopolitical(eurostat but better, has borders,groupings=continent+region)
+some other cool things: data.gov (many many datasets! generally hard to use as facts...), eurostat(european country+region data, hard to use as facts here), freebase(dataset of many many things, super hard to use...), new york times DB(links thing to NYT articles, hard to use), uniprot(proteins data)
+
+OHSUMED structure:
+*no good separation stuff: neurologic sequelae, bacterial meningitis, epilepsy, sensorineural hearing loss. modifiers like "acute","late" which may or may not be important
+*harder stuff like: generalized tonic-clonic seizures (seizures->seizure, prefix mby important), Cysticercus antibody(???), Estrogen deficiency that comes with menopause(can get partial?)
+*worse: retroperitoneal tumors with large vena caval thrombi, deep hypothermic circulatory arrest, renal pelvic transitional cell carcinoma
+*: Treatment of Fournier's gangrene with adjunctive hyperbaric oxygen therapy (Fournier gangrene, adjunctive hyperbaric oxygen therapy)
+*: recombinant human interferon-alpha 2a or human lymphoblastoid interferon-alpha n1 and concomitant zidovudine(recombinant human interferon-alpha 2a, human lymphoblastoid interferon-alpha n1, concomitant zidovudine)
+*: AIDS-related Kaposi's sarcoma (wtf level phrase)
+
+*****stemming is plural->singular things (xxxs->xxx, xxxies->xxxy) and xxx's->xxx (alzheimer's,wegner's,etc)
+*****most of these words are not commonly used, could use commons as seperators?
+
+OHSUMED data strategy:
+--joachim dataset(the popular one) is only cardio-vascular disease(heart and blood system). need disease and treatment mostly
+-dbpedia has mostly useless sidebar data for diseases/interventions(treatment)->mesh entry links to Annotation(text summary),medline+ gives some description(links in article could be good?)
+also-you do have abstracts(summary), and can get the actual article. maybe could use the links inside as a guide?
+
+-diseaseome has disease->(associated genes,subclass of). used as labels to connect others. genes have disease connect only
+-sider has drug side effects
+-linkedCT has disease->clinical trial(abstract+content+keywords,treatment(intervention),which country done). can go by country...also has medical people and sponsors
+-dailyMed has data on drugs (what disease is for,drug family group, who makes it) and organizations (what drugs produce, 
+-drugbank has data on drugs (description, on what used(mammal,human,...),indication(purpose),how works,dbpedia link, possible disease to use, state(liquid/solid)) and also how pairs interact
+
+-bio2rdf seems to have mostly gene->human,mouse interaction,proteins,and all sorts of the crap...
+-no need for "linked neuron data" here (overkill)->connect structure, disease to part, and much more

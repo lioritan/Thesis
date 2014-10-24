@@ -1,0 +1,23 @@
+Bacterial Infections and Mycoses                      C01
+Virus Diseases                                        C02
+Parasitic Diseases                                    C03
+Neoplasms                                             C04
+Musculoskeletal Diseases                              C05
+Digestive System Diseases                             C06
+Stomatognathic Diseases                               C07
+Respiratory Tract Diseases                            C08
+Otorhinolaryngologic Diseases                         C09
+Nervous System Diseases                               C10
+Eye Diseases                                          C11
+Urologic and Male Genital Diseases                    C12
+Female Genital Diseases and Pregnancy Complications   C13
+Cardiovascular Diseases                               C14
+Hemic and Lymphatic Diseases                          C15
+Neonatal Diseases and Abnormalities                   C16
+Skin and Connective Tissue Diseases                   C17
+Nutritional and Metabolic Diseases                    C18
+Endocrine Diseases                                    C19
+Immunologic Diseases                                  C20
+Disorders of Environmental Origin                     C21
+Animal Diseases                                       C22
+Pathological Conditions, Signs and Symptoms           C23
