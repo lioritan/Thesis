@@ -16,3 +16,9 @@ problems/techtc300.zip
 problems/yago_relationss_smaller.pkl
 problems/stanford-ner-2014-06-16.zip
 ohsumed.91.txt
+*.aux
+*.bbl
+*.blg
+*.log
+Proposal/*.pdf
+*.synctex
