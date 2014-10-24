@@ -1,0 +1,18 @@
+#################
+## Folders
+#################
+
+yago2s_tsv/
+problems/ohsumed-first-20000-docs/
+
+#################
+## Files
+#################
+
+problems/public_mm*
+problems/yago_relationss_full.pkl
+problems/techtc300.zip
+
+problems/yago_relationss_smaller.pkl
+problems/stanford-ner-2014-06-16.zip
+ohsumed.91.txt
