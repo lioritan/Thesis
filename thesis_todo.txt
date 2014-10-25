@@ -1,0 +1,21 @@
+Things to do:
+
+Alg:
+- fix bruteforce w/sampling so that it's not slow + compare
+- speed up info_gain (largest bottleneck)
+- try implement AIC/BIC.number of params?(problem dim+num of splits?)
+- implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
+- implement+compare ESA
+
+- use iterative deepening? is that a good idea? no validation set...
+- tree export to pdf: need pydot+graphviz, string representation
+
+Data:
+- build OHSUMED titles only: right now too few docs per category, need to manually find all top level categories and use those...
+- YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases?
+- linkedCT condition->intervention? 
+- reuters? 20NG? techTC300?
+
+Proposal:
+- deadline: as soon as possible 
+- finish pass on chap3, go over chap1+2, draw the tree in intro example

@@ -22,3 +22,4 @@ ohsumed.91.txt
 *.log
 Proposal/*.pdf
 *.synctex
+*.pyc

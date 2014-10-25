@@ -25,7 +25,7 @@ def solve_multiclass(trn, trn_lbl, lbl_vals, tst, tst_lbl, relations, d=0):
             clfs.append((clf, lbl, lbl2))
     def predict_label(x, descriptors=clfs):
         mappify={}
-        mappify.update([t[::-1] for t in enumerate(lbl_vals)])
+        mappify.update([t[::-1] for t in enumerate(lbl_vals)]) #switch i,val for val,i
         votes= zeros(len(lbl_vals))
         for clf,lbl1,lbl2 in clfs:
             label= clf.predict(x)
