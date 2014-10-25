@@ -53,17 +53,17 @@ if __name__=='__main__':
 #    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4,6,8,10,12,14,20,21,23], tst, tst_lbl, 
 #                                                              relations, 0)
                                                               
-    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4], tst, tst_lbl, 
-                                                              relations, 0)
-    print error
-    #make a few more by random pick of 10 categories...
-    with open('result_nonrec.pkl','wb') as fptr:
-        cPickle.dump((error, tst_predict, [(alg7.clean_tree_for_pickle(x[0].query_tree), x[1],x[2]) for x in clfs]), fptr, -1)
-    
-#    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4,6,8,10,12,14,20,21,23], tst, tst_lbl, 
-#                                                              relations, 1)
-    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4], tst, tst_lbl, 
+#    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4], tst, tst_lbl, 
+#                                                              relations, 0)
+#    print error
+#    #make a few more by random pick of 10 categories...
+#    with open('result_nonrec.pkl','wb') as fptr:
+#        cPickle.dump((error, tst_predict, [(alg7.clean_tree_for_pickle(x[0].query_tree), x[1],x[2]) for x in clfs]), fptr, -1)
+#    
+    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4,6,8,10,12,14,20,21,23], tst, tst_lbl, 
                                                               relations, 1)
+#    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4], tst, tst_lbl, 
+#                                                              relations, 1)
     print error
     fkfgkfkg.fgfgfg()()
     #make a few more by random pick of 10 categories...
