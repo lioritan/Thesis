@@ -125,6 +125,4 @@ if __name__=='__main__':
         line=fptr.readline()
     fptr.close()
     
-    #post processing+category filtering/tagging:
-    #take same categories as the other one?
-    pass
+    #Note: I need to mention the MeSH data dictionary thing

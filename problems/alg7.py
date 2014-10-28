@@ -55,7 +55,7 @@ def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
     cond_ent = 0.0
     total_elem_sz = 1.0*len(curr_node_tags)
     
-    for value in set(feature_values):
+    for value in [0,1]:
         locs= find(feature_values == value)
         value_prob = len(locs)/total_elem_sz
         cond_ent += value_prob*entropy(curr_node_tags[locs])
@@ -206,8 +206,8 @@ def split_and_subtree(query_chosen, recursive_step_obj):
     return query_chosen,recursive_step_obj.left_son,recursive_step_obj.right_son
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
-IGTHRESH=0.05
-P_THRESH=0.01
+IGTHRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
