@@ -125,4 +125,41 @@ if __name__=='__main__':
         line=fptr.readline()
     fptr.close()
     
-    #Note: I need to mention the MeSH data dictionary thing
+    Note: I need to mention the MeSH data dictionary thing
+    mapping= {} #map mesh term to higher level mesh term
+    with open('mtrees2015.bin','r') as fptr:
+        for line in fptr.readlines():
+            splitted= line.split(';')
+            top_level= splitted[1].split('.')[0].strip()
+            mapping[splitted[0]]= top_level
+            
+    articles_fixed= []
+    for article in articles:
+        new_tags= set()
+        for tag in article[1]:
+            #clean whitespaces, remove all after first / and match
+            fixed_tag= tag.split('/')[0].strip()
+            new_tags.add(mapping.get(fixed_tag, fixed_tag))
+        articles_fixed.append((article[0], new_tags))
+        
+    #now we can easily take top 20-30 cats... top 20 have>1000
+    #we can also go for C01 to C26... and only take those with over 500-14 cats (cutoff if more. mby 750(12 cats)/800(11 cats)/850(10 cats) better cutoff?)
+    reverse_thing={}
+    for art in articles_fixed:
+        for cat in art[1]:
+            if not reverse_thing.has_key(cat):
+                reverse_thing[cat]= []
+            reverse_thing[cat]+=[art[0]]
+    final_articles=[]
+    tagging=[]
+    for cat in ['C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09']+['C'+str(x) for x in range(10, 21)+range(22,27)]:
+        if len(reverse_thing[cat]) < 850:
+            continue
+        for i, page in enumerate(reverse_thing[cat]):
+            if i> 850: #cutoff
+                break
+            final_articles.append(page)
+            tagging.append(int(cat[1:]))
+            
+    with open('ohsumed_titles_parsed_complete.pkl', 'wb') as fptr:
+        cPickle.dump((final_articles, tagging), fptr, -1)
