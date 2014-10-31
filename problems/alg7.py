@@ -23,6 +23,7 @@ def clean_tree_for_pickle(tree_node):
     tree_node.chosen_query=None
     clean_tree_for_pickle(tree_node.left_son)
     clean_tree_for_pickle(tree_node.right_son)
+    return tree_node
         
 def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
     '''computes entropy on tags. Assumes binary 0-1 tagging only.(not +-1 !!!)

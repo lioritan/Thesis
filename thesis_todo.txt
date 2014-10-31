@@ -10,7 +10,6 @@ Alg:
 - tree export to pdf: need pydot+graphviz, string representation
 
 Data:
-- build OHSUMED titles only: right now too few docs per category, need to manually find all top level categories and use those...
 - YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases?
 - linkedCT condition->intervention? 
 - reuters? 20NG? techTC300?
