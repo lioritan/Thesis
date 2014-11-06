@@ -1,16 +1,17 @@
 Things to do:
 
 Alg:
+- do multiclass instead of all v all binary: need to do: IG->ratio, map of sons. fix statistic test, relabel, train, predict. How do you use the old binary "word_in" features?
+-cross validation on whether to go deeper (do k fold cross val/leave one out, try deeper vs. non deeper and choose majority decision)->no need to split node, right?
 - fix bruteforce w/sampling so that it's not slow + compare
+- implement+compare ESA
 - try implement AIC/BIC.number of params?(problem dim+num of splits?)
 - implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
-- implement+compare ESA
 
-- use iterative deepening? is that a good idea? no validation set...
 - tree export to pdf: need pydot+graphviz, string representation
 
 Data:
-- YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases?
+- YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases? use conceptnet instead?
 - linkedCT condition->intervention? 
 - reuters? 20NG? techTC300?
 
