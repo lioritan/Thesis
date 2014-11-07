@@ -442,16 +442,16 @@ class TreeRecursiveSRLStep(object):
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
             
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.cond)
             classifier_chosen.train_vld_local()
             classifier_chosen.post_prune(self.objects, self.tagging)
             
-            query=lambda x, b=classifier_chosen: b.predict(x)
+            query=lambda x, b=classifier_chosen: b.predict(x, True)
             #DEBUG: what happens here?
-            print self.transforms+[relation_used_for_recursive],self.objects, new_objs
-            print apply_transforms(self.relations, [relation_used_for_recursive]*2, self.objects)
+#            print self.transforms+[relation_used_for_recursive],self.objects, new_objs
+#            print apply_transforms(self.relations, [relation_used_for_recursive]*2, self.objects)
             clf_tagging= array([query(x) for x in self.objects])
-            print clf_tagging
+#            print clf_tagging
             tree_ig=info_gain(self.tagging, clf_tagging)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
             
@@ -460,7 +460,7 @@ class TreeRecursiveSRLStep(object):
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
-                self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
+                self.chosen_query= lambda x, b=classifier_chosen: b.predict(x, True)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
                 del classifier_chosen
@@ -547,7 +547,7 @@ class TreeRecursiveSRLClassifier(object):
             self.tree_sets.append(right)            
         self.query_tree=self.tree_sets[0] #root
         
-    def predict(self, new_object):        
+    def predict(self, new_object, flag=False):        
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
             return 0#some arbitrary rule
@@ -559,6 +559,8 @@ class TreeRecursiveSRLClassifier(object):
                 curr_node=curr_node.right_son
                 continue
             transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
+            if flag:
+                transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
             query_val= curr_node.chosen_query(transformed_obj[0]) #this works
             if query_val==1:
                 curr_node=curr_node.right_son
@@ -728,7 +730,7 @@ if __name__=='__main__':
 #    pred2tst=array([blah2.predict(x) for x in test])
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 3, 3)
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
     before=time.time()
     blah3.train()
     print time.time()-before
