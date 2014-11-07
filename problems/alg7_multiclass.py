@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov 04 17:39:06 2014
+Created on Fri Nov 07 12:23:55 2014
 
 @author: liorf
 """
@@ -8,7 +8,6 @@ Created on Tue Nov 04 17:39:06 2014
 from numpy import *
 from matplotlib.mlab import find
 from scipy.stats import mode, chisquare
-import sklearn.cross_validation as cv
 
 import time
 
@@ -63,6 +62,11 @@ def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
         cond_ent += value_prob*entropy(curr_node_tags[locs])
     return curr_ent- cond_ent
     
+def aic(curr_node_tags, feature_values):
+    pass
+
+def bic(curr_node_tags, feature_values):
+    pass
 
 def is_relation_key(x, relation):
     res=[]
@@ -190,7 +194,6 @@ def apply_transforms(relations, transforms, objects):
     if len(transforms)==0:
         return objects
     curr_objs=[is_relation_key(x, relations[transforms[0]]) for x in objects]
-    return apply_transforms_other(relations, transforms[1:], curr_objs)
     for relation in transforms[1:]:
         curr_objs= [is_in_relation(obj, relations[relation], relation) for obj in curr_objs]
     return curr_objs
@@ -205,7 +208,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
@@ -277,12 +280,6 @@ class TreeRecursiveSRLStep(object):
         
         worthy_relations= temp.items()
         self.bttoo=worthy_relations
-        
-        choose_deeper= self.cross_val_deepening(worthy_relations)
-        if not choose_deeper:
-            self.justify+= ' also decided not to go deeper'
-            return split_and_subtree(self.chosen_query, self)        
-        
         tree_ig=0.0
         for relation_used_for_recursive,rel_n in worthy_relations:  
             
@@ -418,7 +415,6 @@ class TreeRecursiveSRLStep(object):
             self.justify=self.justify+' also cannot recurse'
             return split_and_subtree(self.chosen_query, self)
             
-            
         #sample relevent features n times(with replacement, so recursive n is the amount chosen)
         choices=random.choice(relevant_features, self.n, True, relation_avg_igs/sum(relation_avg_igs))
         temp={}
@@ -430,11 +426,6 @@ class TreeRecursiveSRLStep(object):
         
         worthy_relations= temp.items()
         self.bttoo=worthy_relations
-        
-        choose_deeper= self.cross_val_deepening(worthy_relations)
-        if not choose_deeper:
-            self.justify+= ' also decided not to go deeper'
-            return split_and_subtree(self.chosen_query, self)
     
         tree_ig=0.0
         for relation_used_for_recursive,new_n in worthy_relations:  
@@ -442,16 +433,12 @@ class TreeRecursiveSRLStep(object):
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
             
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.cond)
             classifier_chosen.train_vld_local()
             classifier_chosen.post_prune(self.objects, self.tagging)
             
             query=lambda x, b=classifier_chosen: b.predict(x)
-            #DEBUG: what happens here?
-            print self.transforms+[relation_used_for_recursive],self.objects, new_objs
-            print apply_transforms(self.relations, [relation_used_for_recursive]*2, self.objects)
             clf_tagging= array([query(x) for x in self.objects])
-            print clf_tagging
             tree_ig=info_gain(self.tagging, clf_tagging)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
             
@@ -469,41 +456,6 @@ class TreeRecursiveSRLStep(object):
             self.justify='nothing useful for tagging'
             return None,None,None
         return split_and_subtree(self.chosen_query, self)
-        
-    def cross_val_deepening(self, rel_n_pairs):
-        #can call this after we make pairs of relation+relative count? or take only relevant as input?        
-        FOLDS=5
-        return True
-        
-        cv_results = array(zeros(FOLDS))
-        fold_pairs = cv.KFold(len(self.objects), FOLDS, shuffle=True) #pairs of trn_idxs,tst_idxs
-        for i, (trn_idxs, tst_idx) in enumerate(fold_pairs):
-            new_trn, new_trn_lbl = self.objects[trn_idxs], self.tagging[trn_idxs]
-            new_tst, new_tst_lbl = self.objects[tst_idxs], self.tagging[tst_idxs]
-            
-            new_node=TreeRecursiveSRLStep(new_trn, new_trn_lbl, self.relations, self.transforms, self.n, 0, self.SPLIT_THRESH)
-            #this is non recursive choose best! now we train it
-            if len(self.transforms)==0:
-                query,left,right=new_node.pick_split_query()
-            else:
-                query,left,right=new_node.pick_split_vld_local()
-            predicted= array([new_node.chosen_query(x) for x in new_tst])
-            nonrec_err = mean(new_tst_lbl!= predicted)
-            #for each relation, build lvl 1 tree for node
-            tree_errs= []
-            for relation,n in rel_n_pairs:
-                feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in new_trn]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
-                new_objs, new_tagging= relabel(feature_vals, new_trn_lbl) #flatten+relabel
-                rel_tree= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation], n, 0, self.SPLIT_THRESH)
-                rel_tree.train_vld_local()
-                
-                predicted= array([rel_tree.predict(x) for x in new_tst]) #This line now works works
-                tree_errs+= [mean(new_tst_lbl!=predicted)]
-            best_tree_err= min(tree_errs)
-            #choose best of all. if it's a recursive one, set cv_results[i] to 1
-            if best_tree_err < nonrec_err:
-                cv_results[i] = 1
-        return mean(cv_results)> 0.5 #if it's more than half of them
         
 class TreeRecursiveSRLClassifier(object):
     def __init__(self, objects, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, cond=False):
@@ -690,10 +642,10 @@ if __name__=='__main__':
                             'chile':'south_america', 'venezuela':'south_america', 'brazil':'south_america', 'italy':'europe', 'ireland':'europe', 'syria':'asia', 'india':'asia',
                             'mexico':'south_america', 'israel':'asia', 'vatican':'europe','russia':'asia', 'peru':'south_america', 'canada':'north_america',
                             'f':'g','b':'c','ggg':'fff','fluff':'t','t':'t','d':'d'}#apply to country
-    relations['capital_of']={'paris':'france', 'washington_dc':'u.s.','beijing':'china','mexico_city':'mexico','brasilia':'brazil','havana':'cuba','oslo':'norway','ankara':'turkey','santiago':'chile','caracas':'venezuela','rome':'italy','vatican_city':'vatican','dublin':'ireland','damascus':'syria','new_delhi':'india', 'muscow':'russia',
+    relations['capital_of']={'paris':'france', 'washington_dc':'u.s.','china':'beijing','mexico':'mexico_city','brazil':'brasilia','cuba':'havana','norway':'oslo','turkey':'ankara','chile':'santiago','venezuela':'caracas','italy':'rome','vatican':'vatican_city','ireland':'dublin','syria':'damascus','india':'new_delhi', 'russia':'muscow',
                             'f':'f','r':'r','d':'d','q':'p','fff':'ffg'}
-    relations['city_of']={'paris':'france','los_angeles':'u.s.', 'washington_dc':'u.s.','beijing':'china','mexico_city':'mexico','brasilia':'brazil','havana':'cuba','oslo':'norway','ankara':'turkey','santiago':'chile','caracas':'venezuela','rome':'italy','vatican_city':'vatican','dublin':'ireland','damascus':'syria','new_delhi':'india', 'muscow':'russia',
-                            'f':'f','r':'r','d':'d','q':'p','fff':'ffg','p':'p'}
+    relations['city_of']={'paris':'france','los_angeles':'u.s.', 'washington_dc':'u.s.','china':'beijing','mexico':'mexico_city','brazil':'brasilia','cuba':'havana','norway':'oslo','turkey':'ankara','chile':'santiago','venezuela':'caracas','italy':'rome','vatican':'vatican_city','ireland':'dublin','syria':'damascus','india':'new_delhi', 'russia':'muscow',
+                            'f':'f','t':'t','q':'q','p':'p'}
     relations['president_of']={'vladimir_putin':'russia','barrack_obama':'u.s.',
     'q':'f', 'r':'r', 'f':'f','b':'c','t':'t','d':'d'}
     #relations['calorie_content_kcal']={'tomato':18, 'potato':77, 'rice':365, 'pineapple':50, 'apple':52, 'pear':57, 'wheat':327, 'cucumber':16}#apply to fruit/vegetable, numeric. missing for cocoa
@@ -728,7 +680,7 @@ if __name__=='__main__':
 #    pred2tst=array([blah2.predict(x) for x in test])
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 3, 3)
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
     before=time.time()
     blah3.train()
     print time.time()-before
