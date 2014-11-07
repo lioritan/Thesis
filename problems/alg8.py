@@ -472,12 +472,12 @@ class TreeRecursiveSRLStep(object):
         
     def cross_val_deepening(self, rel_n_pairs):
         #can call this after we make pairs of relation+relative count? or take only relevant as input?        
-        FOLDS=5
-        return True
+        FOLDS=min(3, len(self.objects))
+#        return True
         
         cv_results = array(zeros(FOLDS))
         fold_pairs = cv.KFold(len(self.objects), FOLDS, shuffle=True) #pairs of trn_idxs,tst_idxs
-        for i, (trn_idxs, tst_idx) in enumerate(fold_pairs):
+        for i, (trn_idxs, tst_idxs) in enumerate(fold_pairs):
             new_trn, new_trn_lbl = self.objects[trn_idxs], self.tagging[trn_idxs]
             new_tst, new_tst_lbl = self.objects[tst_idxs], self.tagging[tst_idxs]
             
@@ -487,8 +487,11 @@ class TreeRecursiveSRLStep(object):
                 query,left,right=new_node.pick_split_query()
             else:
                 query,left,right=new_node.pick_split_vld_local()
-            predicted= array([new_node.chosen_query(x) for x in new_tst])
-            nonrec_err = mean(new_tst_lbl!= predicted)
+            if new_node.chosen_query is not None:
+                predicted= array([new_node.chosen_query(x) for x in new_tst])
+                nonrec_err = mean(new_tst_lbl!= predicted)
+            else:
+                nonrec_err = 1.0 #placeholder
             #for each relation, build lvl 1 tree for node
             tree_errs= []
             for relation,n in rel_n_pairs:
@@ -501,8 +504,9 @@ class TreeRecursiveSRLStep(object):
                 tree_errs+= [mean(new_tst_lbl!=predicted)]
             best_tree_err= min(tree_errs)
             #choose best of all. if it's a recursive one, set cv_results[i] to 1
-            if best_tree_err < nonrec_err:
+            if best_tree_err <= nonrec_err:
                 cv_results[i] = 1
+#        print cv_results, nonrec_err
         return mean(cv_results)> 0.5 #if it's more than half of them
         
 class TreeRecursiveSRLClassifier(object):
