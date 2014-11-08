@@ -451,7 +451,8 @@ class TreeRecursiveSRLStep(object):
 #            print self.transforms+[relation_used_for_recursive],self.objects, new_objs
 #            print apply_transforms(self.relations, [relation_used_for_recursive]*2, self.objects)
             clf_tagging= array([query(x) for x in self.objects])
-#            print clf_tagging
+#            if len(self.transforms)>=2:
+#                print clf_tagging
             tree_ig=info_gain(self.tagging, clf_tagging)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
             
@@ -472,7 +473,7 @@ class TreeRecursiveSRLStep(object):
         
     def cross_val_deepening(self, rel_n_pairs):
         #can call this after we make pairs of relation+relative count? or take only relevant as input?        
-        FOLDS=min(3, len(self.objects))
+        FOLDS=min(5, len(self.objects))
 #        return True
         
         cv_results = array(zeros(FOLDS))
