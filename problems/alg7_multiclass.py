@@ -37,6 +37,7 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
+    
     locs= find(feature_values==1)
     locs2= find(feature_values!=1)
     observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
@@ -54,16 +55,24 @@ def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
     curr_ent = entropy(curr_node_tags) #current entropy H(T)
     #sum over all values: #elements with this value/#total elements * entropy(elements with this value)
     cond_ent = 0.0
-    total_elem_sz = 1.0*len(curr_node_tags)
+    total_elem_sz = 1.0*len(feature_values)
     
-    for value in [0,1]:
+    for value in frozenset(feature_values):
         locs= find(feature_values == value)
         value_prob = len(locs)/total_elem_sz
         cond_ent += value_prob*entropy(curr_node_tags[locs])
     return curr_ent- cond_ent
     
 def ig_ratio(curr_node_tags, feature_values):
-    pass
+    intrinsic_val= 0.0
+    
+    total_elem_sz = 1.0*len(feature_values)
+    
+    for value in frozenset(feature_values):
+        locs= find(feature_values == value)
+        value_prob = len(locs)/total_elem_sz
+        intrinsic_val += value_prob*log2(value_prob)
+    return -1*info_gain(curr_node_tags, feature_values)/intrinsic_val
     
 def aic(curr_node_tags, feature_values):
     pass
@@ -261,11 +270,11 @@ class TreeRecursiveSRLStep(object):
             if sum(val_lens)==0 : #no objects have relevant values. This may leave us with objects whose feature values are [], which means any query will return false...
                 continue #not relevant
             relevant_features.append(relation)
-        
+            
         if self.ig <= IGTHRESH:
             self.chosen_query=None
             self.justify='not good enough'
-            return None,None,None
+            return None,self.sons
         if len(relevant_features)==0:
             print 'no relations can be used on this problem!'
         if self.MAX_DEPTH==0 or len(relevant_features)==0: 
@@ -311,7 +320,7 @@ class TreeRecursiveSRLStep(object):
         if self.ig <= 0: #no query is useful
             self.chosen_query=None
             self.justify='nothing useful for tagging'
-            return None,None,None
+            return None,self.sons
         return split_and_subtree(self.chosen_query, self)
     
     def filter_bad_rels(self, relations, value_things):
@@ -390,7 +399,7 @@ class TreeRecursiveSRLStep(object):
         if len(relevant_features)==0:
             self.chosen_query=None
             self.justify='no features'
-            return None,None,None
+            return None,self.sons
         if constant is None:
             self.chosen_query= lambda x: 1 if len(is_in_relation(x, self.relations[relation_used],relation_used))==0 else 0
         else:
@@ -400,7 +409,7 @@ class TreeRecursiveSRLStep(object):
         if self.ig<= IGTHRESH:
             self.chosen_query=None
             self.justify='not good enough'
-            return None,None,None
+            return None,self.sons
         
         clf_tagging= array([self.chosen_query(x) for x in self.objects])
         test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
@@ -457,7 +466,7 @@ class TreeRecursiveSRLStep(object):
         
         if self.ig <= 0 : #no query is useful
             self.justify='nothing useful for tagging'
-            return None,None,None
+            return None,self.sons
         return split_and_subtree(self.chosen_query, self)
         
 class TreeRecursiveSRLClassifier(object):
@@ -626,7 +635,7 @@ if __name__=='__main__':
 #    pred2tst=array([blah2.predict(x) for x in test])
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 0, 3)
     before=time.time()
     blah3.train()
     print time.time()-before
