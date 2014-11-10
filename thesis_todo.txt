@@ -8,7 +8,7 @@ Alg:
 - try implement AIC/BIC.number of params?(problem dim+num of splits?)
 - implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
 
-- tree export to pdf: need pydot+graphviz, string representation
+- tree export to pdf: need pydot+graphviz, string representation. Mby better to just go with prettyprint?
 
 Data:
 - YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases? use conceptnet instead?

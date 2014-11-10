@@ -62,6 +62,9 @@ def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
         cond_ent += value_prob*entropy(curr_node_tags[locs])
     return curr_ent- cond_ent
     
+def ig_ratio(curr_node_tags, feature_values):
+    pass
+    
 def aic(curr_node_tags, feature_values):
     pass
 
@@ -76,7 +79,7 @@ def is_relation_key(x, relation):
     return res
 
 def is_set_valued(relation,relname):
-    return relname.startswith('reverse_') or relname=='possible_cure' or (relname.startswith('drug_') and not relname=='drug_moiety')
+    return relname.startswith('reverse_') or relname=='type' or relname=='possible_cure' or (relname.startswith('drug_') and not relname=='drug_moiety')
     return relname.startswith('reverse_') or relname=='type' #yago
     return isinstance(relation.values()[0], list) #general, slow
 
@@ -200,11 +203,10 @@ def apply_transforms(relations, transforms, objects):
 
 def split_and_subtree(query_chosen, recursive_step_obj):
     query_results=array([query_chosen(x) for x in recursive_step_obj.objects])
-    pos_inds=find(query_results==1)
-    neg_inds=find(query_results!=1)
-    recursive_step_obj.left_son= TreeRecursiveSRLStep(recursive_step_obj.objects[neg_inds], recursive_step_obj.tagging[neg_inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.cond)
-    recursive_step_obj.right_son=TreeRecursiveSRLStep(recursive_step_obj.objects[pos_inds], recursive_step_obj.tagging[pos_inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.cond)
-    return query_chosen,recursive_step_obj.left_son,recursive_step_obj.right_son
+    for val in frozenset(query_results):
+        inds=find(query_results==val)
+        recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds], recursive_step_obj.tagging[inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.cond)
+    return query_chosen,recursive_step_obj.sons
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
@@ -230,6 +232,7 @@ class TreeRecursiveSRLStep(object):
         self.SPLIT_THRESH=SPLIT_THRESH
         
         self.cool_things=[]
+        self.sons={} #maps feature value to node!
 
     def pick_split_query(self):
         '''pick one query(if simple query on objects give high IG, do that, otherwise go recursive and build tree as query'''
@@ -241,7 +244,7 @@ class TreeRecursiveSRLStep(object):
                 all_words.add(word)
         max_ig,best_word=-1.0,''
         for word in all_words:
-            word_ig= info_gain(self.tagging, array([1 if (word in obj) else 0 for obj in self.objects]))
+            word_ig= ig_ratio(self.tagging, array([1 if (word in obj) else 0 for obj in self.objects]))
             avg_word_ig+=word_ig
             if word_ig>max_ig:
                 max_ig,best_word=word_ig,word
@@ -292,7 +295,7 @@ class TreeRecursiveSRLStep(object):
             classifier_chosen.post_prune(self.objects, self.tagging)
 
             clf_labels=array([classifier_chosen.predict(x) for x in self.objects])
-            tree_ig=info_gain(self.tagging, clf_labels)
+            tree_ig=ig_ratio(self.tagging, clf_labels)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
                     
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
@@ -347,7 +350,7 @@ class TreeRecursiveSRLStep(object):
         relation_avg_igs= [] #in alg 3 we only 
         self.chosen_query=None 
         
-        self.ig= -1.0#best known error: treat me as leaf
+        self.ig= 0.0#best known error: treat me as leaf
         best_ig, relation_used, constant= self.ig,None,''
         for relation in self.relations.keys():
             if len(self.transforms)>1 and (relation==self.transforms[-1] or relation=='reverse_'+self.transforms[-1] or relation==self.transforms[-1].replace('reverse_','')):
@@ -374,7 +377,7 @@ class TreeRecursiveSRLStep(object):
                 else:
                     query= lambda x: 1 if is_in_relation(x, self.relations[relation],relation,const) else 0
                 
-                ig_for_const= info_gain(self.tagging, array([query(x) for x in self.objects]))
+                ig_for_const= ig_ratio(self.tagging, array([query(x) for x in self.objects]))
 
                 avg_for_rel+=ig_for_const
                 if ig_for_const>best_ig:
@@ -439,7 +442,7 @@ class TreeRecursiveSRLStep(object):
             
             query=lambda x, b=classifier_chosen: b.predict(x)
             clf_tagging= array([query(x) for x in self.objects])
-            tree_ig=info_gain(self.tagging, clf_tagging)
+            tree_ig=ig_ratio(self.tagging, clf_tagging)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
             
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
@@ -475,12 +478,11 @@ class TreeRecursiveSRLClassifier(object):
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf
-            _,left, right=node.pick_split_query()
-            if left is None or right is None:
+            _,sons =node.pick_split_query()
+            if len(sons.keys())==0:
                 node.chosen_query=None
                 continue#another leaf case...
-            self.tree_sets.append(left)
-            self.tree_sets.append(right)            
+            self.tree_sets.extend(sons.values())
         self.query_tree=self.tree_sets[0] #root
         
     def train_vld_local(self):
@@ -491,85 +493,29 @@ class TreeRecursiveSRLClassifier(object):
                 node.justify='leafed since splitthresh/consistant'
                 node.chosen_query=None
                 continue #leaf            
-            _,left, right=node.pick_split_vld_local()
-            if left is None or right is None:
+            _,sons=node.pick_split_vld_local()
+            if len(sons.keys())==0:
                 node.chosen_query=None
-                continue#another leaf(local maxima/no operators)
-            self.tree_sets.append(left)
-            self.tree_sets.append(right)            
+                continue#another leaf case...
+            self.tree_sets.extend(sons.values())        
         self.query_tree=self.tree_sets[0] #root
         
     def predict(self, new_object):        
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
             return 0#some arbitrary rule
-        while curr_node.chosen_query is not None:            
-            if curr_node.right_son.chosen_tag is None: #query splits all to one side
-                curr_node=curr_node.left_son
+        while curr_node.chosen_query is not None:    
+            if len(curr_node.sons.keys())==1: #only one son
+                curr_node=curr_node.sons[curr_node.sons.keys()[0]]
                 continue
-            if curr_node.left_son.chosen_tag is None: #other side
-                curr_node=curr_node.right_son
-                continue
+            
             transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
             query_val= curr_node.chosen_query(transformed_obj[0]) #this works
-            if query_val==1:
-                curr_node=curr_node.right_son
-            else:
-                curr_node=curr_node.left_son
+            curr_node=curr_node.sons[query_val]
         return int(curr_node.chosen_tag)
         
     def post_prune(self, objects, tagging):
         return #TODO: remove me
-        papa= None,''
-        curr_node= self.query_tree
-        curr_node.visited= False
-        while not curr_node.visited:
-            try:
-                if not hasattr(curr_node.left_son, 'visited'):
-                    curr_node.left_son.visited= False
-                if not hasattr(curr_node.right_son, 'visited'):
-                    curr_node.right_son.visited= False
-            except:
-                pass
-            if curr_node.chosen_query is not None:
-                if not curr_node.left_son.visited:
-                    papa= curr_node,'l'
-                    curr_node= curr_node.left_son                
-                    continue
-                if not curr_node.right_son.visited:
-                    papa= curr_node,'l'
-                    curr_node= curr_node.right_son                
-                    continue
-                break #done!
-                    
-            curr_node.visited= True
-            curr_ig= info_gain(tagging, array([self.predict(x) for x in objects]))
-            old_tag= curr_node.chosen_tag
-            curr_node.chosen_tag= None #will force the other branch
-            new_ig= info_gain(tagging, array([self.predict(x) for x in objects]))
-
-            if curr_ig> new_ig or papa[0] is None:
-                curr_node.chosen_tag= old_tag
-                continue
-            switcher= None
-            if papa[1]=='l':
-                switcher= papa[0].right_son
-            if papa[1]=='r':
-                switcher= papa[0].left_son
-                papa[0].visited= False
-            papa[0].chosen_query= switcher.chosen_query
-            papa[0].justify= switcher.justify
-            papa[0].ig= switcher.ig
-            papa[0].chosen_tag= switcher.chosen_tag
-            papa[0].objects= switcher.objects
-            papa[0].tagging= switcher.tagging
-            #papa[0].bttoo= switcher.bttoo
-            #papa[0].cool_things= switcher.cool_things
-            if switcher.chosen_query is not None:
-                papa[0].left_son= switcher.left_son
-                papa[0].right_son= switcher.right_son
-            curr_node= papa[0]
-        return
             
         
 if __name__=='__main__':

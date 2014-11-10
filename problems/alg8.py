@@ -72,7 +72,7 @@ def is_relation_key(x, relation):
     return res
 
 def is_set_valued(relation,relname):
-    return relname.startswith('reverse_') or relname=='possible_cure' or (relname.startswith('drug_') and not relname=='drug_moiety')
+    return relname.startswith('reverse_') or relname=='type' or relname=='possible_cure' or (relname.startswith('drug_') and not relname=='drug_moiety')
     return relname.startswith('reverse_') or relname=='type' #yago
     return isinstance(relation.values()[0], list) #general, slow
 
@@ -205,7 +205,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
@@ -498,6 +498,8 @@ class TreeRecursiveSRLStep(object):
             for relation,n in rel_n_pairs:
                 feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in new_trn]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
                 new_objs, new_tagging= relabel(feature_vals, new_trn_lbl) #flatten+relabel
+                print new_objs
+                print self.transforms, relation
                 rel_tree= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation], n, 0, self.SPLIT_THRESH)
                 rel_tree.train_vld_local()
                 
