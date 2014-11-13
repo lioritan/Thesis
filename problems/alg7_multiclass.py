@@ -21,8 +21,8 @@ def clean_tree_for_pickle(tree_node):
     #for (tree_root,_,_) in tree_node.cool_things:
     #    clean_tree_for_pickle(tree_root)
     tree_node.chosen_query=None
-    clean_tree_for_pickle(tree_node.left_son)
-    clean_tree_for_pickle(tree_node.right_son)
+    for son in tree_node.sons.values():
+        clean_tree_for_pickle(son)
     return tree_node
         
 def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
@@ -37,7 +37,8 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
-    
+    #this doesn't really make sense in the multiclass case!
+    return 0.0
     locs= find(feature_values==1)
     locs2= find(feature_values!=1)
     observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
@@ -72,6 +73,8 @@ def ig_ratio(curr_node_tags, feature_values):
         locs= find(feature_values == value)
         value_prob = len(locs)/total_elem_sz
         intrinsic_val += value_prob*log2(value_prob)
+    if intrinsic_val==0.0: #labels are all the same! can just return ig(thing) (which is 0)
+        return info_gain(curr_node_tags, feature_values)
     return -1*info_gain(curr_node_tags, feature_values)/intrinsic_val
     
 def aic(curr_node_tags, feature_values):
@@ -109,81 +112,80 @@ def is_in_relation(x, relation,relname, *args):
         return res #list of strings
     return args[0] in res
 
-def relabel_statistic(complex_objs, old_tagging):
-    val_map={}
-    missing=[0,0]
-    for i,obj in enumerate(complex_objs):
-        if len(obj)==0:
-            if old_tagging[i]==1:
-                missing[0]+=1
-            else:
-                missing[1]+=1
-        for item in obj:
-            if not val_map.has_key(item):
-                val_map[item]=[0,0]
-            if old_tagging[i]==1:
-                val_map[item][0]+=1
-            else:
-                val_map[item][1]+=1
-    blarf=[[a] for a in val_map.keys()]
-    if sum(missing)>0:
-        blarf.append([])
-    items= array(blarf, dtype=object)
-    
-    tags=[]
-    for i,item in enumerate(items):
-        if sum(missing)>0 and i>=len(items)-1:
-            label_counts=missing
-        else:
-            label_counts=val_map[item[0]]
-        floob= array([label_counts[0], label_counts[1]])
-        t_val, p_val= chisquare(floob)
-        if any(floob==0) or p_val< 0.05: #consistent/significant majority
-            #TODO: the consistent is for the same reasons as other...is this good?
-            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
-        else:
-            tags.append(-1)
-    tags=array(tags)
-    idxs=find(tags>=0)
-    return items[idxs], tags[idxs]
+#def relabel_statistic(complex_objs, old_tagging):
+#    val_map={}
+#    missing=[0,0]
+#    for i,obj in enumerate(complex_objs):
+#        if len(obj)==0:
+#            if old_tagging[i]==1:
+#                missing[0]+=1
+#            else:
+#                missing[1]+=1
+#        for item in obj:
+#            if not val_map.has_key(item):
+#                val_map[item]=[0,0]
+#            if old_tagging[i]==1:
+#                val_map[item][0]+=1
+#            else:
+#                val_map[item][1]+=1
+#    blarf=[[a] for a in val_map.keys()]
+#    if sum(missing)>0:
+#        blarf.append([])
+#    items= array(blarf, dtype=object)
+#    
+#    tags=[]
+#    for i,item in enumerate(items):
+#        if sum(missing)>0 and i>=len(items)-1:
+#            label_counts=missing
+#        else:
+#            label_counts=val_map[item[0]]
+#        floob= array([label_counts[0], label_counts[1]])
+#        t_val, p_val= chisquare(floob)
+#        if any(floob==0) or p_val< 0.05: #consistent/significant majority
+#            #TODO: the consistent is for the same reasons as other...is this good?
+#            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
+#        else:
+#            tags.append(-1)
+#    tags=array(tags)
+#    idxs=find(tags>=0)
+#    return items[idxs], tags[idxs]
 
 def relabel(complex_objs, old_tagging, majority=True, sig_maj=False):
     '''flatten+label(majority or consistent)'''
-    if sig_maj:
-        return relabel_statistic(complex_objs, old_tagging)
+#    if sig_maj:
+#        return relabel_statistic(complex_objs, old_tagging)
     val_map={}
-    missing=[0,0]
+    missing={}
     for i,obj in enumerate(complex_objs):
-        if len(obj)==0:
-            if old_tagging[i]==1:
-                missing[0]+=1
-            else:
-                missing[1]+=1
+        tag= old_tagging[i]
+        if len(obj)==0:            
+            if not missing.has_key(tag):
+                missing[tag]=0
+            missing[tag]+=1
         for item in obj:
             if not val_map.has_key(item):
-                val_map[item]=[0,0]
-            if old_tagging[i]==1:
-                val_map[item][0]+=1
-            else:
-                val_map[item][1]+=1
+                val_map[item]={}
+            if not val_map[item].has_key(tag):
+                val_map[item][tag]=0
+            val_map[item][tag]+=1
     blarf=[[a] for a in val_map.keys()]
-    if sum(missing)>0:
+    if sum(missing.values())>0:
         blarf.append([])
     items= array(blarf, dtype=object)
     
     tags=[]
     for i,item in enumerate(items):
-        if sum(missing)>0 and i>=len(items)-1:
+        if item==[]:#last one==[]
             label_counts=missing
         else:
             label_counts=val_map[item[0]]
+        #label counts is mapping of tag->apperances
         if majority:
-            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
+            tags.append(label_counts.keys()[argmax(label_counts.values())])
         else:
-            if label_counts[0]==0:
-                tags.append(0)
-            elif label_counts[1]==0:
-                tags.append(1)
+            vals=array(label_counts.values())
+            if sum(vals>0) == 1: #exactly one class
+                tags.append(array(label_counts.keys())[find(vals>0)])
             else:
                 tags.append(-1)
     tags=array(tags)
@@ -309,9 +311,9 @@ class TreeRecursiveSRLStep(object):
                     
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
             if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier                
-                test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
-                if p_val > P_THRESH: #1% confidence level
-                    continue
+#                test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
+#                if p_val > P_THRESH: #1% confidence level
+#                    continue
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
@@ -411,12 +413,12 @@ class TreeRecursiveSRLStep(object):
             self.justify='not good enough'
             return None,self.sons
         
-        clf_tagging= array([self.chosen_query(x) for x in self.objects])
-        test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
-        if p_val > P_THRESH: #10% confidence level
-            self.chosen_query=None
-            self.justify='not good enough'
-            return None,None,None       
+#        clf_tagging= array([self.chosen_query(x) for x in self.objects])
+#        test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
+#        if p_val > P_THRESH: #10% confidence level
+#            self.chosen_query=None
+#            self.justify='not good enough'
+#            return None,None,None       
             
         if len(self.transforms)>= self.MAX_DEPTH: 
             self.justify=self.justify+' and max depth reached'
@@ -456,9 +458,9 @@ class TreeRecursiveSRLStep(object):
             
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
             if tree_ig/tree_ig_penalty > self.ig: #if tree is better, it's the new classifier
-                test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
-                if p_val > P_THRESH: #1% confidence level
-                    continue #tree not good enough!
+#                test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
+#                if p_val > P_THRESH: #1% confidence level
+#                    continue #tree not good enough!
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
@@ -616,6 +618,51 @@ if __name__=='__main__':
                 continue
             relations[new_key][b]= [a]
     
+    msgs=array([
+    ['parrot', 'spain'],
+    ['monkey', 'russia'],
+    ['cat', 'egypt'],
+    ['dolphin', 'japan'],
+    ['salmon', 'norway'],    
+    ['pidgeon', 'usa'],
+    ['robin', 'england'],
+    ['snake', 'france'],
+    ['horse', 'germany'],
+    ['tuna', 'china'],
+    ['nile_fish', 'italy'],
+    ['sol', 'italy']
+    ])    
+    
+    lbls= array([0, 1, 1, 2, 3, 0, 0, 1, 1, 2, 3, 3]) #0=bird, 1=animal(land), 2=fish+asia, 3=fish+nonasia
+    
+    msgs_for_tst=array([
+    ['cod', 'iceland'],
+    ['whale', 'indonesia'],
+    ['filch', 'scotland'],
+    ['tiger', 'morocco']
+    ])
+
+    lbls_for_tst=array([3, 2, 0, 1])    
+    
+    relationss={}
+    relationss['animal_type']={'parrot':'bird', 'monkey':'land', 'cat':'land', 'dolphin':'fish',
+                                'salmon':'fish', 'pidgeon':'bird', 'robin':'bird', 'snake':'land',
+                                'horse':'land', 'tuna':'fish', 'nile_fish':'fish', 'sol':'fish',
+                                'cod':'fish', 'whale':'fish', 'filch':'bird', 'tiger':'land'}
+    relationss['continent']={'spain':'europe', 'russia':'asia', 'egypt':'africa', 'japan':'asia',
+                                'norway':'europe', 'usa':'america', 'england':'europe', 'france':'europe',
+                                'germany':'europe', 'china':'asia', 'israel':'asia', 'italy':'europe',
+                                'iceland':'europe', 'indonesia':'asia', 'scotland':'europe', 'morocco':'africa'}
+    
+    blah=TreeRecursiveSRLClassifier(msgs, lbls, relationss, [], 200, 4, 3)
+    before=time.time()
+    blah.train()
+    print time.time()-before
+    pred3trn=array([blah.predict(x) for x in msgs])
+    print mean(pred3trn!=lbls)
+    pred3tst=array([blah.predict(x) for x in msgs_for_tst])
+    print mean(pred3tst!=lbls_for_tst)
+    
     #now for actual stuff:
 #    blah1=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], True)#no recursive!
 #    before=time.time()
@@ -635,7 +682,7 @@ if __name__=='__main__':
 #    pred2tst=array([blah2.predict(x) for x in test])
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 0, 3)
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
     before=time.time()
     blah3.train()
     print time.time()-before
