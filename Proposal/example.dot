@@ -1,0 +1,35 @@
+digraph g{
+  graph [compound=true];
+  source -> a [style="dotted"];
+  a -> b [label="y", style="dotted"];
+  a -> c [label="n", style="dotted"];
+  source [label="...", shape=box, style="filled"];
+  a [label="clf1(Last Name)?",shape=box];
+  b [label="...", shape=box, style="filled"];
+  c [label="...", shape=box, style="filled"];
+
+  a -> base [lhead=cluster_clf1 arrowhead=vee];
+  base -> heat [lhead=cluster_clf2 arrowhead=vee];
+
+    subgraph cluster_clf1 {
+        base -> plus [label="y"];
+        base -> minus [label="n"];
+        base [label="clf2(Country of Origin)?", shape=box];
+        minus [label="-"];
+        plus [label="+"];
+        label = "clf1";
+    }
+
+    subgraph cluster_clf2 {
+        heat -> gdp [label="y"];
+        heat -> minus2 [label="n"];
+        gdp -> plus3 [label="y"];
+        gdp -> minus3 [label="n"];
+        heat [label="Avg Temp > 35?", shape=box];
+        gdp [label="GDP < 9B?", shape=box];
+        minus2 [label="-"];
+        plus3 [label="+"];
+        minus3 [label="-"];
+        label = "clf2";
+    }
+}

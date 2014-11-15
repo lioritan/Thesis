@@ -36,8 +36,7 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
     return sum(-tmp*log2(tmp))
  
 def statistic_test(tagging, feature_values):
-    '''need to compare the two sides I split (how many of each label in each one)'''
-    #this doesn't really make sense in the multiclass case!
+    '''need to compare the splits (how many of each label in each one)'''
     return 0.0
     locs= find(feature_values==1)
     locs2= find(feature_values!=1)
@@ -494,6 +493,7 @@ class TreeRecursiveSRLClassifier(object):
                 node.chosen_query=None
                 continue#another leaf case...
             self.tree_sets.extend(sons.values())
+            break
         self.query_tree=self.tree_sets[0] #root
         
     def train_vld_local(self):
