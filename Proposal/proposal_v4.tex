@@ -32,7 +32,7 @@
 \section{Introduction}
 \label{sec:Intro}
 In recent decades, we have seen an increasing prevalence of machine learning techniques used in a wide variety of fields such as medical diagnosis, vision, and biology.
-Most machine learning methods assume a given set of labeled examples represented by a set of
+Most machine learning methods assume a given set of labeled examples, represented by a set of
 pre-defined features. These methods have proven to be successful when a collection of good,
 distinguishing features is available.
 In many real-world applications, however, the given set of features is not sufficient for inducing a high quality classifier.
@@ -40,10 +40,10 @@ In many real-world applications, however, the given set of features is not suffi
 One approach for overcoming the difficulty resulting from an insufficiently expressive set of features, is to generate new features.  Most feature generation algorithms produce new features by combining the original ones in various ways.  For example, the LFC algorithm \citep{ragavan1993complex} combines the original feature using logical operators.  The LDMT algorithm \citep{utgo1991linear} uses linear combinations of the original features to construct more informative ones.  The FICUS algorithm \citep{markovitch2002feature} presents a general framework for using any set of constructors to combine features.
 
 Recently, there has been a strong trend of utilizing \emph{Deep Learning} \citep{lecun1998gradient, bengio2009learning} as a feature generation technique. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features.
-There are many good examples of this, such as the ones presented in \citet{plotz2011feature}, as well as \citet{kim2013deep}.
+There are many good examples of this, such as the ones presented in \citet{plotz2011feature} and \citet{kim2013deep}.
 
 While feature combination has proven to enhance the performance of induction algorithms, there are many cases where a mere combination of existing features is not enough.  To that extent, a different approach for generating features has been devised.  This approach aims to incorporate additional knowledge from external sources in order to construct new and informative features.
-\citet{gabrilovich2007computing} for example, present a method for generating features that are based on Wikipedia concepts. \citet{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
+\citet{gabrilovich2006overcoming} for example, present a method for generating features that are based on Wikipedia concepts. \citet{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
 
 In the case where this external knowledge is organized as a set of relations between entities, several methods can be used. One such method is using \emph{Inductive Logic Programming} \citep{muggleton1991inductive} to generate features, in a process referred to as \emph{upgrading} \citep{van2001upgrade}. This process is demonstrated through the ICL algorithm (same paper), an algorithm that uses a refinement graph to search for logical formulae which serve as features. The SGLR algorithm \citep{popescul200716} extends this idea to numerical features, generated using aggregation-based techniques, and then utilizes regression for inference.
 
@@ -73,27 +73,27 @@ One of the earliest methods of utilizing relational information, officially defi
 that define a good separation of the given training set. Originally, ILP methods searched the space of first-order formulae to find the appropriate classifier.
 Over time, effort has been made to allow the usage of traditional propositional algorithms such as ID3 \citep{quinlan1986} over this domain.
 
-One major attempt at adding relational knowledge to induction methods was \emph{propositionalization} \citep{kramer2000bottom}: Since we wish to allow the use of first-order predicates in propositional methods, we create possible (non recursive) first-order predicates in a process known as refinement search.
+One major attempt at adding relational knowledge to induction methods was \emph{propositionalization} \citep{kramer2000bottom}: Since we wish to allow the use of first-order predicates in propositional methods, we create possible (non recursive) first-order predicates in a process known as refinement search \citep{van1998completeness}.
 We define a graph of possible first-order formulae by selecting an initial relation and allowing one of two possible refinement operators: The first operator is binding a single variable in the formula by assigning a constant value to it, and the second is binding a single variable using another relation.
 
-These operators define a search space. For each formula, we can ask whether a given object satisfies it, giving us a binary query for the data. We often prefer to only use formulae with one unbound variable, as it allows a simpler satisfaction check.
+These operators define a search space. For each formula, we can ask whether a given object satisfies it, giving us a binary query for the data. We often prefer to only use formulae with one unbound variable, as it simplifies the satisfaction check.
 It is important to note that each application of refinement operators yields a formula that is subsumed by the parent, meaning that any object satisfying the child formula will also satisfy its parent.
 
 A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \citep{van2001upgrade} were suggested, where instead of creating predicates a-priori, we do so during the training phase, allowing us to avoid searching non-promising refinements.
 
-As a continuation to this trend, \citet{popescul200716} suggest SGLR, an upgrade method which allows the generation of non-binary attributes by using aggregation operators. Essentially, instead of simply checking whether a first-order predicate is satisfied, we perform aggregation over all objects which satisfy it. In addition, SGRL offers an initial insight into the issue of improving the search process by using Akaike's information criteria (AIC, see \citet{burnham2002model}) to select features based on complexity as well as predictive power.
+As a continuation to this trend, \citet{popescul200716} suggest SGLR, an upgrade method which allows the generation of nominal attributes by using aggregation operators. Essentially, instead of simply checking whether a first-order predicate is satisfied, we perform aggregation over all objects which satisfy it. In addition, SGRL offers an initial insight into the issue of improving the search process by using Akaike's information criteria (AIC, see \citet{burnham2002model}) to select features based on a combination of complexity and predictive power.
 
-Newer advances in the relational approach can be seen in the field of \emph{Statistical Relational Learning} \citep{blockeel2013statistical, nath2014learning} as well as the task of \emph{Collective Classification} \citep{kajdanowicz2013collective, laorden2012collective}. The general field of Statistical Relational Learning (and reasoning) deals in tasks where there is a complex, relational structure within the domain. Common tasks in the field are: Collective classification, link prediction and entity resolution between datasets. Of these, the most relevant to our domain is the task of collective classification, where relational information is used to infer labels of objects based on related objects. However, this relational information is not used for feature generation, but as a way to link objects within the target domain.
+Newer advances in the relational approach can be seen in the field of \emph{Statistical Relational Learning} \citep{blockeel2013statistical, nath2014learning} as well as the task of \emph{Collective Classification} \citep{laorden2012collective, kajdanowicz2013collective}. The general field of Statistical Relational Learning (and reasoning) deals in tasks where there is a complex, relational structure within the domain. Common tasks in the field are: Collective classification, link prediction and entity resolution between datasets. Of these, the most relevant to our domain is the task of collective classification, where relational information is used to infer labels of objects based on related objects. However, this relational information is not used for feature generation, but as a way to link objects within the target domain.
 
 In recent years, a new resource in the form of Semantic Linked Data has begun to take form, as part of the Semantic Web project (see survey, \citet{bizer2009linked}). This resource has led to the creation of several new approaches designed to utilize this new, ontology-based representation of knowledge \citep{losch2012graph,rios2014statistical}.
 
 To this end, there have been several efforts in utilizing Linked Data for Feature Generation \citep{cheng2011automated, paulheim2012unsupervised}. While these techniques offer some insight towards applying the knowledge within such an extensive knowledge base as features, they add them in an unsupervised manner, leading to the creation of an impractically large number of features, most of which are irrelevant, as seen in propositionalization methods. Due to this, they have difficulties handling complex relationships.
 
 
-An interesting domain can be found in a well-known and well-explored task within the field of Natural Language Processing(NLP): the task of text classification.
-The task of text classification involves assigning categories or labels to documents, based on their content. The potential labels/categories are given in advance, and we have a collection of labeled documents to use as a training set. This task has many practical applications, such as spam filtering, sentiment analysis and topic identification.
+An interesting domain can be found in a well-known and well-explored task within the field of Natural Language Processing (NLP): the task of text classification.
+this task involves assigning categories or labels to documents, based on their content. The potential labels/categories are given in advance, and we have a collection of labeled documents to use as a training set. This task has many practical applications, such as spam filtering, sentiment analysis and topic identification.
 
-Until recent years, text classification systems represented text almost exclusively as a \emph{Bag of Words}, thus creating a vector space representation \citep{salton1983introduction,Wu:1981:CST:1013228.511759}. While this method offered simplicity, it had inherent limitations in terms of representation power.
+Until recent years, text classification systems represented text almost exclusively as a \emph{Bag of Words}, thus creating a vector space representation \citep{Wu:1981:CST:1013228.511759, salton1983introduction}. While this method offered simplicity, it had inherent limitations in terms of representation power.
 
 A major breakthrough came in the form of the \emph{explicit sematic analysis} \citep{gabrilovich2006overcoming} method, which used semantic concepts extracted from knowledge sources such as Wikipedia as features. This technique allowed for a richer representation of the text, and has shown improvement over the Bag-of-Words representation for the task of text classification, especially in shorter texts.
 
@@ -116,10 +116,10 @@ A \emph{supervised feature generation algorithm} $A$ using relations is an algor
 We would like the new hypothesis space, defined over $F_{\cal R}$, to be one that is both rich enough to provide hypotheses with a lower loss than those in the original space, as well as simple enough that the learning algorithm used will be able to find such good hypotheses given training data.
 We would also like there to be connections between $F$ and ${\cal R}$, meaning some of the feature values of features in $F$ (when applied to objects in $S$) also exist within relations in $\cal R$.
 
-We propose a general feature generation algorithm using additional knowledge on feature values.
+We propose a general supervised feature generation algorithm using additional knowledge on feature values.
 Given an original feature $f_{i}$ with domain $Dom_i$, our algorithm will formulate a new learning task trying to separate values in $Dom_i$ appearing in positive examples of the original learning task from those appearing in negative ones.  The result of the new learning task will be a classifier
 $h_{i}:Dom_{i}\rightarrow \{0,1\}$ that can label feature values of $f_{i}$. We can then define a new binary feature $f'_{i}(x)=h_{i}(f_{i}(x))$.
-We name this algorithm \emph{Binary-RFG}, as it generates binary features (For pseudo-code, see appendix \ref{app:2}.
+We name this algorithm \emph{Binary-RFG}, as it generates binary features (For pseudo-code, see appendix \ref{app:2}).
 
 In order to explain how we create such $h_{i}$, let us consider a single step of the feature generation algorithm.
 Given a feature $f_{i}$, we define the set of all its value in the training set $S$ as $v_i(S) = \{v | (o,y) \in S, f_{i}(o)=v\}$. In the intro example, for instance, $v_i(S)$ will be the set of all last names of patients.
@@ -138,7 +138,7 @@ Through the above process, we can define a tree of possible domains to search ov
 $S$ is a domain.
 If $\bar{S}$ is a domain, then for any function $G_{\bar{F},\bar{R}}: O\rightarrow Dom_i$, $\bar{S'}=\{(v_i,label(v_i)|(o,y)\in \bar{S}, v_i=G_{\bar{F},\bar{R}}(o)\}$ is also a domain.
 \end{defn}
-The result is a process that bears some similarity to that of search over a refinement graph \citep{dvzeroski2001introduction,van1998completeness}.
+The result is a process that bears some similarity to that of search over a refinement graph.
 Given sufficient resources, we could potentially search this tree exhaustively during the learning process. In most practical cases, however, an exhaustive search proves intractable, and we must select a search strategy over this tree.
 
 The unique contributions of this method are as follows:
@@ -161,7 +161,7 @@ Finally, we note that the local variation yields an algorithm that can easily be
 \section{Research Questions}
 Listed below are several interesting and potentially challenging research questions we intend on exploring during our work:
 \begin{itemize}
-    \item \emph{Cutoff strategies and threshold criteria.} We must define good stopping criteria for determining whether a resulting classifier created by the algorithm is likely to yield a good feature. We intend to explore several criteria, including Information-Gain ratio\citep{quinlan1986} and Akaike's corrected information criterion(see \citet{burnham2002model}). We must also consider the case of limited resources as a consideration, evaluating the gain from an additional recursive step against the computational cost of doing so. %AIC estimates same thing as Cross-Val: out of sample deviation. BIC estimates Minimum description length(model complexity)
+    \item \emph{Cutoff strategies and threshold criteria.} We must define good stopping criteria for determining whether a resulting classifier created by the algorithm is likely to yield a good feature. We intend to explore several criteria, including Information-Gain ratio \citep{quinlan1986} and Akaike's corrected information criterion (see \citet{burnham2002model}). We must also consider the case of limited resources as a consideration, evaluating the gain from an additional recursive step against the computational cost of doing so. %AIC estimates same thing as Cross-Val: out of sample deviation. BIC estimates Minimum description length(model complexity)
         %read more on claims of correlation between AIC with LOO crossval and BIC with K-Fold crossval. does this mean I CAN use BIC?
         %update: AIC assumes true model not an option, and picks best approx candidate. BIC assumes true model exists as candidate, tries to find it. both CAN be used.
         %Conclusion: try both...most of the time they agree anyway
@@ -178,7 +178,7 @@ Listed below are several interesting and potentially challenging research questi
 \end{itemize}
 
 \section{Evaluation}
-In order to measure the performance and significance of this approach, we intend to empirically evaluate its performance for the domain of document classification. We intend to look at several datasets, ranging from classical, often used datasets such as 20 newsgroups \citep{Lang95} and OHSUMED \citep{hersh1994ohsumed} to more modern ones such as Reuters Corpus Volume I(RCV1) \citep{lewis2004rcv1} and TechTC \citep{davidov2004parameterized}. For Semantic linked data, we first intend to use YAGO2\citep{hoffart2013yago2}. We will consider the usage conceptNet5 \citep{speer2012representing} as well.\\
+In order to measure the performance and significance of this approach, we intend to empirically evaluate its performance for the domain of document classification. We intend to look at several datasets, ranging from classical, often used datasets such as 20 newsgroups \citep{Lang95} and OHSUMED \citep{hersh1994ohsumed} to more modern ones such as Reuters Corpus Volume I(RCV1) \citep{lewis2004rcv1} and TechTC \citep{davidov2004parameterized}. For Semantic linked data, we first intend to use YAGO2 \citep{hoffart2013yago2}. We will consider the usage conceptNet5 \citep{speer2012representing} as well.\\
 
 We intend to compare the accuracy of our approach against the achievable accuracy without the use of feature generation, as well as the accuracy achievable by other feature generation methods such as \emph{ESA} \citep{gabrilovich2006overcoming} and \emph{FeGeLOD} \citep{paulheim2012unsupervised}.
 

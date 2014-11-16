@@ -32,7 +32,7 @@
 \section{Introduction}
 \label{sec:Intro}
 In recent decades, we have seen an increasing prevalence of machine learning techniques used in a wide variety of fields such as medical diagnosis, vision, and biology.
-Most machine learning methods assume a given set of labeled examples represented by a set of
+Most machine learning methods assume a given set of labeled examples, represented by a set of
 pre-defined features. These methods have proven to be successful when a collection of good,
 distinguishing features is available.
 In many real-world applications, however, the given set of features is not sufficient for inducing a high quality classifier.
@@ -40,7 +40,7 @@ In many real-world applications, however, the given set of features is not suffi
 One approach for overcoming the difficulty resulting from an insufficiently expressive set of features, is to generate new features.  Most feature generation algorithms produce new features by combining the original ones in various ways.  For example, the LFC algorithm \citep{ragavan1993complex} combines the original feature using logical operators.  The LDMT algorithm \citep{utgo1991linear} uses linear combinations of the original features to construct more informative ones.  The FICUS algorithm \citep{markovitch2002feature} presents a general framework for using any set of constructors to combine features.
 
 Recently, there has been a strong trend of utilizing \emph{Deep Learning} \citep{lecun1998gradient, bengio2009learning} as a feature generation technique. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features.
-There are many good examples of this, such as the ones presented in \citet{plotz2011feature}, as well as \citet{kim2013deep}.
+There are many good examples of this, such as the ones presented in \citet{plotz2011feature} and \citet{kim2013deep}.
 
 While feature combination has proven to enhance the performance of induction algorithms, there are many cases where a mere combination of existing features is not enough.  To that extent, a different approach for generating features has been devised.  This approach aims to incorporate additional knowledge from external sources in order to construct new and informative features.
 \citet{gabrilovich2007computing} for example, present a method for generating features that are based on Wikipedia concepts. \citet{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
@@ -54,15 +54,15 @@ As an example of the potential use of such an approach, consider the following:
 Suppose we are given medical records of patients containing name, country of origin as well as medically relevant information.
 Our task is to identify patients with high risk of developing a \emph{genetic} disease, which is more common in warm countries as well as countries with a lower GDP.
 The original set of features is not sufficient for inducing the target concept.  Assume, however, that we have access to an external knowledge base, containing, among others, relations specifying information about countries and connecting last names with country of origin.
-Our method would first formulate a new induction problem where the positive examples are last names of high-risk patients, and then, through a recursive process, formulate a new problem where the positive examples are countries of origin corresponding to last names of high risk patients. The resulting classifier could then be used as a regular binary feature when classifying patients, allowing us to capture the genetic component of the disease through the last name.
-While traditional feature generation methods could find some relation-based trends, they would struggle to find the above relationship, as it is too complex.
-While our proposed method is general and can be used for any induction task, in this work we will focus on applying the method for the important task of text classification.
+Our method would first formulate a new induction problem where the positive examples are last names of high-risk patients, and then, through a recursive process, formulate a new problem where the positive examples are countries of origin corresponding to last names of high risk patients. The resulting classifier could then be used as a regular binary feature when classifying patients, allowing us to capture the genetic component of the disease through the last name. While traditional feature generation methods could find some relation-based trends, they would struggle to find the above relationship, as it is too complex.
 
-\includegraphics[attr1=val1, attr2=val2, ..., attrn=valn]{imagename}
 
-%%%%%%%%%%%%%TODO%%%%%%%%%
-%insert example drawing here
-%%%%%%%%%%%%%TODO%%%%%%%%%
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3, keepaspectratio=true]{output.png}
+    \caption{An single node in the decision tree. Note that the split is made by calling an additional classifier (which is created using relational data) on the value of a feature.}
+    \label{fig:example}
+\end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -98,7 +98,7 @@ Until recent years, text classification systems represented text almost exclusiv
 A major breakthrough came in the form of the \emph{explicit sematic analysis} \citep{gabrilovich2006overcoming} method, which used semantic concepts extracted from knowledge sources such as Wikipedia as features. This technique allowed for a richer representation of the text, and has shown improvement over the Bag-of-Words representation for the task of text classification, especially in shorter texts.
 
 %Final paragraph here to finish.
-The goal of our work is to utilize Linked Data as a knowledge source for automatically generating features based on meaningful semantic concepts, thus improving existing machine learning algorithms. We intend to do so in a supervised manner to allow a better guided search over candidate features, based on a combination of complexity and predictive power.
+The goal of our work is to utilize Linked Data as a knowledge source for automatically generating features based on meaningful semantic concepts, thus improving existing machine learning algorithms. We intend to do so in a supervised manner to allow a better guided search over candidate features, based on a combination of complexity and predictive power. We will place focus on the domain of text classification as a natural application of our approach.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Proposed Solution}
