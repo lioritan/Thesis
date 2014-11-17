@@ -58,88 +58,7 @@ def is_in_relation(x, relation,relname, *args):
         return res #list of strings
     return args[0] in res
 
-def relabel_statistic(complex_objs, old_tagging):
-    val_map={}
-    missing=[0,0]
-    for i,obj in enumerate(complex_objs):
-        if len(obj)==0:
-            if old_tagging[i]==1:
-                missing[0]+=1
-            else:
-                missing[1]+=1
-        for item in obj:
-            if not val_map.has_key(item):
-                val_map[item]=[0,0]
-            if old_tagging[i]==1:
-                val_map[item][0]+=1
-            else:
-                val_map[item][1]+=1
-    blarf=[[a] for a in val_map.keys()]
-    if sum(missing)>0:
-        blarf.append([])
-    items= array(blarf, dtype=object)
-    
-    tags=[]
-    for i,item in enumerate(items):
-        if sum(missing)>0 and i>=len(items)-1:
-            label_counts=missing
-        else:
-            label_counts=val_map[item[0]]
-        floob= array([label_counts[0], label_counts[1]])
-        t_val, p_val= chisquare(floob)
-        if any(floob==0) or p_val< 0.05: #consistent/significant majority
-            #TODO: the consistent is for the same reasons as other...is this good?
-            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
-        else:
-            tags.append(-1)
-    tags=array(tags)
-    idxs=find(tags>=0)
-    return items[idxs], tags[idxs]
 
-def relabel(complex_objs, old_tagging, majority=True, sig_maj=False):
-    '''flatten+label(majority or consistent)'''
-    if sig_maj:
-        return relabel_statistic(complex_objs, old_tagging)
-    val_map={}
-    missing=[0,0]
-    for i,obj in enumerate(complex_objs):
-        if len(obj)==0:
-            if old_tagging[i]==1:
-                missing[0]+=1
-            else:
-                missing[1]+=1
-        for item in obj:
-            if not val_map.has_key(item):
-                val_map[item]=[0,0]
-            if old_tagging[i]==1:
-                val_map[item][0]+=1
-            else:
-                val_map[item][1]+=1
-    blarf=[[a] for a in val_map.keys()]
-    if sum(missing)>0:
-        blarf.append([])
-    items= array(blarf, dtype=object)
-    
-    tags=[]
-    for i,item in enumerate(items):
-        if sum(missing)>0 and i>=len(items)-1:
-            label_counts=missing
-        else:
-            label_counts=val_map[item[0]]
-        if majority:
-            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
-        else:
-            if label_counts[0]==0:
-                tags.append(0)
-            elif label_counts[1]==0:
-                tags.append(1)
-            else:
-                tags.append(-1)
-    tags=array(tags)
-    if majority:
-        return items,tags
-    idxs=find(tags>=0)
-    return items[idxs], tags[idxs]
 
 def apply_transforms(relations, transforms, objects):
     '''transforms is list of relation+direction pairs.
@@ -158,6 +77,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
     return query_chosen,recursive_step_obj.left_son,recursive_step_obj.right_son
     
 def generate_relational_features(objects, relations, max_depth, n):
+    '''create all of the features! 2011 paper? 2012 paper? ESA?
     pass
         
 #MAX_DEPTH=2 #TODO!

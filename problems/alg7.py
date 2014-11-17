@@ -208,7 +208,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.001
+P_THRESH=0.01
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
@@ -488,7 +488,7 @@ class TreeRecursiveSRLClassifier(object):
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
             if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
-                node.justify='leafed since splitthresh/consistant'
+                node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf            
             _,left, right=node.pick_split_vld_local()

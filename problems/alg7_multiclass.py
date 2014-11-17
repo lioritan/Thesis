@@ -493,7 +493,6 @@ class TreeRecursiveSRLClassifier(object):
                 node.chosen_query=None
                 continue#another leaf case...
             self.tree_sets.extend(sons.values())
-            break
         self.query_tree=self.tree_sets[0] #root
         
     def train_vld_local(self):
@@ -501,7 +500,7 @@ class TreeRecursiveSRLClassifier(object):
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
             if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
-                node.justify='leafed since splitthresh/consistant'
+                node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf            
             _,sons=node.pick_split_vld_local()

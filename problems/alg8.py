@@ -35,6 +35,9 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
         return 0.0 #edge case
     tmp = freqs[nonzeros]
     return sum(-tmp*log2(tmp))
+    
+def confidence_criteria(tagging, feautre_values):
+    pass
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
@@ -501,9 +504,9 @@ class TreeRecursiveSRLStep(object):
             for relation,n in rel_n_pairs:
                 feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in new_trn]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
                 new_objs, new_tagging= relabel(feature_vals, new_trn_lbl) #flatten+relabel
-                print new_objs
-                print self.transforms, relation
-                rel_tree= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation], n, 0, self.SPLIT_THRESH)
+                #print new_objs
+                #print self.transforms, relation
+                rel_tree= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation], n, self.MAX_DEPTH-(len(self.transforms)-1), self.SPLIT_THRESH)
                 rel_tree.train_vld_local()
                 
                 predicted= array([rel_tree.predict(x) for x in new_tst]) #This line now works works
@@ -546,7 +549,7 @@ class TreeRecursiveSRLClassifier(object):
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
             if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
-                node.justify='leafed since splitthresh/consistant'
+                node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf            
             _,left, right=node.pick_split_vld_local()

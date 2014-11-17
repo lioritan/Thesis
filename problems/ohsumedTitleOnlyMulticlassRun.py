@@ -76,19 +76,20 @@ if __name__=='__main__':
                                                               relations, 0)
     print error
 ##    #make a few more by random pick of 10 categories...
-    with open('result_nonrec.pkl','wb') as fptr:
-        a=None
-        try:
-            a=alg.clean_tree_for_pickle(clf.query_tree)
-        except RuntimeError:
-            pass
-        cPickle.dump((error, tst_predict,a) , fptr, -1)
+#    with open('result_nonrec.pkl','wb') as fptr:
+#        a=None
+#        try:
+#            a=alg.clean_tree_for_pickle(clf.query_tree)
+#        except RuntimeError:
+#            pass
+#        cPickle.dump((error, tst_predict,a) , fptr, -1)
 #    
-    error, tst_predict, clf= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
+    error2, tst_predict2, clf2= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
                                                               relations, 1)
 #    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4], tst, tst_lbl, 
 #                                                              relations, 1)
-    print error
+    print error2
+    fhfgfg.fhgh()
     #make a few more by random pick of 10 categories...
     with open('result_rec1.pkl','wb') as fptr:
         a=None

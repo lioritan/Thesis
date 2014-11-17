@@ -41,7 +41,7 @@ if __name__=='__main__':
     for ((trn, trn_lbl),(tst,tst_lbl)) in datasets:
         print count
         count+=1
-        if count>11:#each one goes different
+        if count>1:#each one goes different
             continue
         
         errs_non_recurse=[]
