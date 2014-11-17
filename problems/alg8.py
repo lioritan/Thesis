@@ -7,7 +7,7 @@ Created on Tue Nov 04 17:39:06 2014
 
 from numpy import *
 from matplotlib.mlab import find
-from scipy.stats import mode, chisquare
+from scipy.stats import mode, chisquare, fisher_exact
 import sklearn.cross_validation as cv
 
 import time
@@ -42,11 +42,14 @@ def statistic_test(tagging, feature_values):
     locs2= find(feature_values!=1)
     observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
     expected= array([len(find(tagging[locs2]==1)),len(find(tagging[locs2]!=1))])
+    table=vstack((observed,expected))
     if any(expected==0):
         if any(observed==0):
             return inf, 0.0 #this is good for us
-        return chisquare(expected, observed)
-    return chisquare(observed, expected) #high stat+low p->good
+        #return chisquare(expected, observed)
+        return fisher_exact(table)
+    #return chisquare(observed, expected) #high stat+low p->good
+    return fisher_exact(table)
     
 #MAYBE: info_gain_ratio for non binary features and possibly need to do AIC/BIC  ?  
 def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
@@ -205,7 +208,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.001
+P_THRESH=0.05
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
