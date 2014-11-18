@@ -46,7 +46,6 @@ def make_graphviz_string(tree):
         res='n%d [shape=box, style="filled", label="'%free_id
         free_id+=1
         if type(node.justify)==str: #I have a recursive tree
-            print node.justify
             res+= node.justify+'\n nsamples:%d\n IG:%f"];\n'%(len(node.objects),node.ig)
             return res, free_id
         res+= 'clf%d(%s)\n nsamples:%d\n IG:%f"];\n'%(free_id-1, str(node.justify.transforms), len(node.objects),node.ig)

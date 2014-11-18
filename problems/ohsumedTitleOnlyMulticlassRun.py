@@ -72,9 +72,9 @@ if __name__=='__main__':
     
     ((trn, trn_lbl), (tst, tst_lbl))= ((array(trn), array(trn_lbl)), (array(tst), array(tst_lbl)))    
 
-    error, tst_predict, clf= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
-                                                              relations, 0)
-    print error
+#    error, tst_predict, clf= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
+#                                                              relations, 0)
+#    print error
 ##    #make a few more by random pick of 10 categories...
 #    with open('result_nonrec.pkl','wb') as fptr:
 #        a=None

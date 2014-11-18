@@ -484,7 +484,7 @@ class TreeRecursiveSRLClassifier(object):
     def train(self):
         self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.cond)] #initally all in same node
         for node in self.tree_sets:
-            if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0):#consistent/too small to split 
+            if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==node.tagging[0]):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf
@@ -499,7 +499,7 @@ class TreeRecursiveSRLClassifier(object):
         self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH, self.cond)] #initally all in same node
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
-            if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
+            if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==node.tagging[0])):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf            
