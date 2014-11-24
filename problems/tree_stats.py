@@ -20,7 +20,7 @@ def calc_node_and_leaf_stats(top_node):
     num_nodes= 0
     num_leafs=0
     for node in nodes:
-        if type(node.justify)==str and node.justify.startswith('leafed'):
+        if type(node.justify)==str and (node.justify.startswith('leafed') or node.justify.startswith('not good enough')):
             num_leafs+=1
             leafs_sz.append(len(node.tagging))
             leafs_misclass.append(len(find(node.tagging!=node.chosen_tag))/(1.0*len(node.tagging)))
