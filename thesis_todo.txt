@@ -1,10 +1,12 @@
 Things to do:
 
 Alg:
-- fix bruteforce w/sampling so that it's not slow + compare
-- implement+compare ESA
+- fix bruteforce and compare! do FG once offline using ~furnkrantz? need to also compare to 1 step alg7/8 and then state-of-art...- implement+compare ESA
+- implement ESA-FG
 - try implement AIC/BIC.number of params?(problem dim+num of splits?)
 - implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
+- some pre-pruning based on confidence?
+- 
 
 
 Data:
