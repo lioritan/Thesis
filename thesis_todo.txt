@@ -3,11 +3,12 @@ Things to do:
 Alg:
 - fix bruteforce and compare! do FG once offline using ~furnkrantz? need to also compare to 1 step alg7/8 and then state-of-art...- implement+compare ESA
 - implement ESA-FG
+- using linkedCT for medical data? using conceptnet/freebase instead of yago?
 - try implement AIC/BIC.number of params?(problem dim+num of splits?)
 - implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
 - some pre-pruning based on confidence?
 - 
-
+-what about non-binary features in general (avg instead of majority?)
 
 Data:
 - YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases? use conceptnet instead?
