@@ -209,7 +209,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.001
+P_THRESH=0.01
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
@@ -302,8 +302,6 @@ class TreeRecursiveSRLStep(object):
                 test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue
-                if not self.is_nice_left(lambda x, b=classifier_chosen: b.predict(x)):
-                    continue #bad left=overfitting/very overfitting
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
@@ -314,16 +312,6 @@ class TreeRecursiveSRLStep(object):
             self.justify='nothing useful for tagging'
             return None,None,None
         return split_and_subtree(self.chosen_query, self)
-    
-    def is_nice_left(self, tree_query):
-        _, left, _= split_and_subtree(tree_query, self)
-        left_ratio= 1.0*len(find(left.tagging!=left.chosen_tag))/len(left.tagging)        
-        old_ratio= 1.0*len(find(self.tagging!=self.chosen_tag))/len(self.tagging)        
-        niceness= nan_to_num(left_ratio/old_ratio)        
-        
-        self.left_son= None
-        self.right_son= None
-        return 0.5 <= niceness <= 1
     
     def filter_bad_rels(self, relations, value_things):
         #filter transforms+non-relevant since doesn't apply
@@ -463,8 +451,6 @@ class TreeRecursiveSRLStep(object):
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
-                if not self.is_nice_left(lambda x, b=classifier_chosen: b.predict(x)):
-                    continue #bad left=overfitting/very overfitting
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
@@ -531,7 +517,7 @@ class TreeRecursiveSRLClassifier(object):
             transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
             if flag:
                 transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
-#            print transformed_obj    
+            print transformed_obj    
             query_val= None
             if len(transformed_obj[0])==0 or type(curr_node.justify)==str:
                 query_val= curr_node.chosen_query(transformed_obj[0])

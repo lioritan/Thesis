@@ -209,7 +209,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
@@ -282,10 +282,14 @@ class TreeRecursiveSRLStep(object):
         worthy_relations= temp.items()
         self.bttoo=worthy_relations
         tree_ig=0.0
+        old_ratio= 1.0*len(find(self.tagging!=self.chosen_tag))/len(self.tagging)
         for relation_used_for_recursive,rel_n in worthy_relations:  
             
             feature_vals=[is_relation_key(obj, self.relations[relation_used_for_recursive]) for obj in self.objects]
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
+            new_ratio= 1.0*len(find(new_tagging!= mode(new_tagging)[0]))/len(new_tagging)
+            if nan_to_num(new_ratio/old_ratio) >= 1.1 or nan_to_num(new_ratio/old_ratio) <= 0.1:
+                continue #no recursion for you! more errors or too unbalanced!
             #3)call TreeRecursiveSRLClassifier
             
             classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.cond)
@@ -430,9 +434,13 @@ class TreeRecursiveSRLStep(object):
         self.bttoo=worthy_relations
     
         tree_ig=0.0
+        old_ratio= 1.0*len(find(self.tagging!=self.chosen_tag))/len(self.tagging)
         for relation_used_for_recursive,new_n in worthy_relations:  
             feature_vals=[is_in_relation(obj, self.relations[relation_used_for_recursive],relation_used_for_recursive) for obj in self.objects]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
+            new_ratio= 1.0*len(find(new_tagging!= mode(new_tagging)[0]))/len(new_tagging)
+            if nan_to_num(new_ratio/old_ratio) >= 1.1 or nan_to_num(new_ratio/old_ratio) <= 0.1:
+                continue #no recursion for you! more errors or too unbalanced!
             #3)call TreeRecursiveSRLClassifier
             
             classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.cond)
@@ -517,7 +525,7 @@ class TreeRecursiveSRLClassifier(object):
             transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
             if flag:
                 transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
-            print transformed_obj    
+#            print transformed_obj    
             query_val= None
             if len(transformed_obj[0])==0 or type(curr_node.justify)==str:
                 query_val= curr_node.chosen_query(transformed_obj[0])

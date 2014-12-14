@@ -209,7 +209,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         
 MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
@@ -517,7 +517,7 @@ class TreeRecursiveSRLClassifier(object):
             transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
             if flag:
                 transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
-            print transformed_obj    
+#            print transformed_obj    
             query_val= None
             if len(transformed_obj[0])==0 or type(curr_node.justify)==str:
                 query_val= curr_node.chosen_query(transformed_obj[0])

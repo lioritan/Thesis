@@ -28,6 +28,24 @@ def load_trees_and_oracle(filename):
     oracle_trees= [rec0_trees[i] if idxs[i]==0 else rec1_trees[i] if idxs[i]==1 else rec2_trees for i in range(100)]
     
     return rec0_trees, rec1_trees, rec2_trees, errs, oracle, idxs, oracle_trees
+
+def get_old_new_pairs(top_node_list):
+'''use this per case of better1,better2(on rec_trees), worse1,worse2'''
+     pairs_list=[]
+     for top_node in top_node_list:
+         nodes=[top_node]
+         for node in nodes:
+             if type(node.justify)==str:
+                 if node.justify.startswith('leafed') or node.justify.startswith('not good enough'):
+                     continue
+                 nodes.append(node.left_son)
+                 nodes.append(node.right_son)
+                 continue
+             pairs_list.append((node,node.justify))
+             nodes.append(node.left_son)
+             nodes.append(node.right_son)
+             continue
+    return pairs_list
     
 def turn_to_useful_things(rec0, rec1, rec2, errs, filter_lvl=0.0):
     '''create a,b,c,d, better/worse_trees_lvlX + baselines

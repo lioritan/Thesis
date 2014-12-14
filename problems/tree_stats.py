@@ -72,6 +72,8 @@ def find_rec_trees(top_node):
             nodes.append(node.right_son)
             continue
         tree_heads.append(node.justify)
+        nodes.append(node.left_son)
+        nodes.append(node.right_son)
     return tree_heads
 
 def calc_rec_tree_stats(top_node):
@@ -118,6 +120,8 @@ def calc_rec_tree_stats(top_node):
             nodes.append(node.left_son)
             nodes.append(node.right_son)
             continue
+        nodes.append(node.left_son)
+        nodes.append(node.right_son)
         num_lvl1_trees+=1
         cool_igs= array([a[1] for a in node.cool_things])
         idx= argmax(cool_igs)
