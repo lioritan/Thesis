@@ -25,7 +25,7 @@ def calc_node_and_leaf_stats(top_node):
     top_node.curr_depth= 0
     for node in nodes:
         tree_depth= max(tree_depth, node.curr_depth)
-        if type(node.justify)==str and (node.justify.startswith('leafed') or node.justify.startswith('not good enough')):
+        if type(node.justify)==str and (node.justify.startswith('leafed') or node.justify.startswith('no')):
             num_leafs+=1
             leafs_sz.append(len(node.tagging))
             leafs_misclass.append(len(find(node.tagging!=node.chosen_tag))/(1.0*len(node.tagging)))
@@ -66,7 +66,7 @@ def find_rec_trees(top_node):
     tree_heads= []
     for node in nodes:
         if type(node.justify)==str:
-            if node.justify.startswith('leafed') or node.justify.startswith('not good enough'):
+            if node.justify.startswith('leafed') or node.justify.startswith('no'):
                 continue
             nodes.append(node.left_son)
             nodes.append(node.right_son)
@@ -115,7 +115,7 @@ def calc_rec_tree_stats(top_node):
     
     for node in nodes:
         if type(node.justify)==str:
-            if node.justify.startswith('leafed') or node.justify.startswith('not good enough'):
+            if node.justify.startswith('leafed') or node.justify.startswith('no'):
                 continue
             nodes.append(node.left_son)
             nodes.append(node.right_son)
@@ -165,14 +165,14 @@ def calc_rec_tree_stats(top_node):
         if len(node.transforms)==0:
             feature_vals=[set(alg7.is_relation_key(obj, node.relations[rel])) for obj in node.objects]
         else:
-            feature_vals=[set(alg7.is_in_relation(obj, node.relations[rel],rel)) for obj in node.objects] #apply_transforms_other(self.relations, [relation], self.objects) #
+            feature_vals=[set(list(flatten(alg7.is_in_relation(obj, node.relations[rel],rel)))) for obj in node.objects] #apply_transforms_other(self.relations, [relation], self.objects) #
         val_lens=array([len(val) for val in feature_vals])
         max_tree_mult_lvl1.append(amax(val_lens))
         mean_tree_mult_lvl1.append(mean(val_lens))
         mean_tree_mult_filtered_lvl1.append(mean(val_lens[nonzero(val_lens)]))
         def find_tagging(top_node, train_point):
             #finds tagging without the query func...
-            if type(top_node.justify)==str and (top_node.justify.startswith('leafed') or top_node.justify.startswith('not good enough')):
+            if type(top_node.justify)==str and (top_node.justify.startswith('leafed') or top_node.justify.startswith('no')):
                 return top_node.chosen_tag
             if train_point==[]:
                 return find_tagging(top_node.left_son if []==top_node.left_son.objects[-1] else top_node.right_son, train_point)
