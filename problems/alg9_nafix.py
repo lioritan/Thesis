@@ -433,6 +433,7 @@ class TreeRecursiveSRLClassifier(object):
         self.n=n
         self.MAX_DEPTH=MAX_DEPTH
         self.SPLIT_THRESH=SPLIT_THRESH
+        #print len(self.transforms), self.n, self.transforms
         
     def train(self):
         self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.cond)] #initally all in same node
@@ -442,8 +443,7 @@ class TreeRecursiveSRLClassifier(object):
                 node.chosen_query=None
                 continue #leaf
             _,sons =node.pick_split_query()
-            fkfkfk.kfkkf()
-            if len(sons.keys())==0:
+            if len(sons.keys())<2:
                 node.chosen_query=None
                 continue#another leaf case...
             self.tree_sets.extend(sons.values()) 
@@ -457,10 +457,9 @@ class TreeRecursiveSRLClassifier(object):
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 continue #leaf            
-            print len(node.objects)
+            #print len(node.objects)
             _,sons =node.pick_split_vld_local()
-            #fkdk.dl()
-            if len(sons.keys())==0:
+            if len(sons.keys())<2:
                 node.chosen_query=None
                 continue#another leaf case...
             self.tree_sets.extend(sons.values())
@@ -610,7 +609,7 @@ if __name__=='__main__':
 #    pred2tst=array([blah2.predict(x) for x in test])
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 3, 3)
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
     before=time.time()
     blah3.train()
     print time.time()-before
