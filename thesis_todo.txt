@@ -11,7 +11,7 @@ Alg:
 -what about non-binary features in general (avg instead of majority?)
 
 Data:
-- YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases? use conceptnet instead?
+- YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases? use conceptnet/freebase instead?
 - linkedCT condition->intervention? 
 - reuters? 20NG? techTC300?
 

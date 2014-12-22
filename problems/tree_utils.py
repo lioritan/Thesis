@@ -5,6 +5,13 @@ Created on Thu Nov 13 13:01:55 2014
 @author: liorf
 """
 import pydot
+import matplotlib.pyplot as plt
+from numpy import *
+
+def plot_accuracies(rec0, reci, filename):
+    plt.scatter(1-rec0, 1-reci)
+    plt.plot(arange(0.0,1.0,0.05), arange(0.0,1.0,0.05))
+    plt.savefig(filename)
 
 def clean_tree_for_pickle(tree_node):
     if tree_node.chosen_query is None:
