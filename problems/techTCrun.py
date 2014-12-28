@@ -1,6 +1,6 @@
 from numpy import *
 #import bruteforce_propo as compete
-import alg8 as godfish
+import alg9_nafix_traced as godfish
 #import alg7 as compete
 #import bruteforce_propo as compete
 import yago
@@ -41,8 +41,8 @@ if __name__=='__main__':
     for ((trn, trn_lbl),(tst,tst_lbl)) in datasets:
         print count
         count+=1
-        if count>1:#each one goes different
-            continue
+        #if count<=50:#each one goes different
+        #    continue
         
         errs_non_recurse=[]
         errs_rel=[]
@@ -55,7 +55,9 @@ if __name__=='__main__':
         vars_3=[]
         vars_rel=[]
         
-        
+        logfile1= open('results%d_log_rec0.txt'%(count), 'w')
+        logfile2= open('results%d_log_rec1.txt'%(count), 'w')
+        logfile3= open('results%d_log_rec2.txt'%(count), 'w')
         for i in [7]: #switch back to [3,7] later. doesn't seem to matter much between 1/3/5 and 7/9(which are worse for tree)
             
 #            blah11= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i, True)
@@ -64,28 +66,30 @@ if __name__=='__main__':
 #            errs_non_recurse.append(mean(pred11!=tst_lbl)) 
 #            vars_non.append(std(pred11!=tst_lbl))
 #            
-            blah12= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i)
+            blah12= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i, logfile1)
             blah12.train()#non recursive
             pred12=array([blah12.predict(x) for x in tst])
             errs_rel.append(mean(pred12!=tst_lbl)) 
             vars_rel.append(std(pred12!=tst_lbl))
+            logfile1.close()
             
             before=time.time()
-            bc= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(1**2), 1, i)
+            bc= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(1**2), 1, i, logfile2)
             bc.train()#non recursive
             predx=array([bc.predict(x) for x in tst])
             hug1.append(mean(predx!=tst_lbl)) 
             vars_.append(std(predx!=tst_lbl))
             print time.time()-before
-            
+            logfile2.close()
             
             before=time.time()
-            bc2= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(2**2), 2, i)
+            bc2= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(2**2), 2, i, logfile3)
             bc2.train()#recursive, somewhere around best only...
             print time.time()-before
             predy=array([bc2.predict(x) for x in tst])
             hug2.append(mean(predy!=tst_lbl)) 
             vars_2.append(std(predy!=tst_lbl))
+            logfile3.close()
             
 #            blah12= compete.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i,True)
 #            blah12.train()#non recursive

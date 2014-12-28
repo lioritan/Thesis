@@ -195,7 +195,7 @@ class TreeRecursiveSRLStep(object):
         self.sons= {}
         
         self.cool_things=[]
-        self.logfile.write('Created node. Num objects: '+str(len(self.tagging))+'. Positive: '+str(self.objects[find(self.tagging==1)])+' Negative: '+str(self.objects[find(self.tagging!=1)])+'\n')
+        self.logfile.write('Created node. Num objects: '+str(len(self.tagging))+': '+str(len(find(self.tagging==1)))+' positive, '+str(len(find(self.tagging!=1)))+' negative.\n Positive: '+str(self.objects[find(self.tagging==1)])+' \n Negative: '+str(self.objects[find(self.tagging!=1)])+'\n')
 
     def pick_split_query(self):
         '''pick one query(if simple query on objects give high IG, do that, otherwise go recursive and build tree as query'''
@@ -279,7 +279,7 @@ class TreeRecursiveSRLStep(object):
             self.chosen_query=None
             self.justify='nothing useful for tagging'
             return None,self.sons
-        self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
+        self.logfile.write('chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
         return split_and_subtree(self.chosen_query, self)
     
     def filter_bad_rels(self, relations, value_things):
@@ -431,7 +431,7 @@ class TreeRecursiveSRLStep(object):
         if self.ig <= 0 : #no query is useful
             self.justify='nothing useful for tagging'
             return None,self.sons            
-        self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
+        self.logfile.write('chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
         return split_and_subtree(self.chosen_query, self)
         
 class TreeRecursiveSRLClassifier(object):
@@ -631,11 +631,11 @@ if __name__=='__main__':
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
     logfile= open('run_log.txt','w')
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)
-    logfile.close()
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 3, 3, logfile)
     before=time.time()
     blah3.train()
     print time.time()-before
+    logfile.close()
     pred3trn=array([blah3.predict(x) for x in msg_objs])
     print mean(pred3trn!=message_labels)
     pred3tst=array([blah3.predict(x) for x in test])

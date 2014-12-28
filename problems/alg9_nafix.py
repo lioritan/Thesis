@@ -444,6 +444,7 @@ class TreeRecursiveSRLClassifier(object):
                 continue #leaf
             _,sons =node.pick_split_query()
             if len(sons.keys())<2:
+                node.justify='leafed(weird stuff)'
                 node.chosen_query=None
                 continue#another leaf case...
             self.tree_sets.extend(sons.values()) 
@@ -460,6 +461,7 @@ class TreeRecursiveSRLClassifier(object):
             #print len(node.objects)
             _,sons =node.pick_split_vld_local()
             if len(sons.keys())<2:
+                node.justify='leafed(weird stuff)'
                 node.chosen_query=None
                 continue#another leaf case...
             self.tree_sets.extend(sons.values())
