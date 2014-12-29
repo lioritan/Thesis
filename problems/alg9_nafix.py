@@ -67,6 +67,9 @@ def ig_ratio(curr_node_tags, feature_values, discard_na=False):
     intrinsic_val= 0.0
     if discard_na is True:
         inds= find(feature_values!=-1)
+        if len(inds)==0:
+            print 'something has gone horribly wrong!'
+            return 0.0
         feature_values= feature_values[inds]
         curr_node_tags= curr_node_tags[inds]
     
@@ -281,8 +284,8 @@ class TreeRecursiveSRLStep(object):
         new_rel_fet=[]
         new_avg_ig=[]
         for i,relation in enumerate(relations):
-            if len(self.transforms)>1 and (relation in self.transforms or 'reverse_'+relation in self.transforms or relation.replace('reverse_','') in self.transforms):
-                continue
+            if len(self.transforms)>1 and (relation=='reverse_'+self.transforms[-1] or (relation==self.transforms[-1].replace('reverse_','') and relation!=self.transforms[-1]) or (len(self.transforms)>1 and relation==self.transforms[-1])) :
+                continue #no using the relation you came with on the way back...
             
             if value_things[i]<=0.0:
                 continue #ig is 0->no point
@@ -413,7 +416,7 @@ class TreeRecursiveSRLStep(object):
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
-                self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
+                self.chosen_query= lambda x, b=classifier_chosen: b.predict(x, True)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
                 del classifier_chosen
@@ -443,7 +446,7 @@ class TreeRecursiveSRLClassifier(object):
                 node.chosen_query=None
                 continue #leaf
             _,sons =node.pick_split_query()
-            if len(sons.keys())<2:
+            if len(sons.keys())==0:
                 node.justify='leafed(weird stuff)'
                 node.chosen_query=None
                 continue#another leaf case...
@@ -460,7 +463,7 @@ class TreeRecursiveSRLClassifier(object):
                 continue #leaf            
             #print len(node.objects)
             _,sons =node.pick_split_vld_local()
-            if len(sons.keys())<2:
+            if len(sons.keys())==0:
                 node.justify='leafed(weird stuff)'
                 node.chosen_query=None
                 continue#another leaf case...
@@ -611,7 +614,7 @@ if __name__=='__main__':
 #    pred2tst=array([blah2.predict(x) for x in test])
 #    print mean(pred2tst!=test_lbl)
 #    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
+    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 4, 3)
     before=time.time()
     blah3.train()
     print time.time()-before
