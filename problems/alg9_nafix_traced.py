@@ -171,8 +171,17 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         inds=find(query_results==val)
         recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds], recursive_step_obj.tagging[inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.cond)
     return query_chosen,recursive_step_obj.sons
+def ig_from_one_retag(tagging):
+    ind_neg= find(tagging==0)[0]
+    ind_pos= find(tagging==1)[0]
+    
+    tag_pos= zeros(len(tagging))
+    tag_pos[ind_pos]= 1
+    tag_neg= zeros(len(tagging))
+    tag_neg[ind_neg]= 1
+    return max(ig_ratio(tagging, tag_pos), ig_ratio(tagging, tag_neg))
         
-MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
+MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
 P_THRESH=0.001
 #BAD_RELATION=False
@@ -229,7 +238,8 @@ class TreeRecursiveSRLStep(object):
                 continue #not relevant
             relevant_features.append(relation)
         
-        if self.ig <= IGTHRESH:
+        min_ig_required= ig_from_one_retag(self.tagging)
+        if self.ig <= min_ig_required:
             self.chosen_query=None
             self.justify='not good enough'
             return None,self.sons
@@ -370,7 +380,8 @@ class TreeRecursiveSRLStep(object):
             self.chosen_query= lambda x: 1 if is_in_relation(x, self.relations[relation_used],relation_used,constant) else 0
         self.ig, self.justify= best_ig, 'hasword(X),X in relation: %s with %s'%(relation_used, constant)
         
-        if self.ig<= IGTHRESH:
+        min_ig_required= ig_from_one_retag(self.tagging)
+        if self.ig<= min_ig_required:
             self.chosen_query=None
             self.justify='not good enough'
             return None,self.sons
@@ -475,7 +486,7 @@ class TreeRecursiveSRLClassifier(object):
         self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)] #initally all in same node
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
-            if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
+            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 self.logfile.write('node became leaf\n')
