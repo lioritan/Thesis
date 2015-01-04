@@ -37,7 +37,8 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
-    return 0.0,0.0
+    if len(frozenset(feature_values))>2:
+        return 0.0,0.0 #only works for 2 values
     locs= find(feature_values==1)
     locs2= find(feature_values!=1)
     observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
@@ -206,6 +207,7 @@ class TreeRecursiveSRLStep(object):
         self.sons= {}
         
         self.cool_things=[]
+        self.is_rec= False
 
     def pick_split_query(self):
         '''pick one query(if simple query on objects give high IG, do that, otherwise go recursive and build tree as query'''
@@ -236,7 +238,7 @@ class TreeRecursiveSRLStep(object):
             relevant_features.append(relation)
         
         min_ig_required= ig_from_one_retag(self.tagging)
-        if self.ig <= min_ig_required:
+        if self.ig <= min_ig_required: #was IGTHRESH
             self.chosen_query=None
             self.justify='not good enough'
             return None,self.sons
@@ -278,6 +280,7 @@ class TreeRecursiveSRLStep(object):
                 test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue
+                self.is_rec= True
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
@@ -428,6 +431,7 @@ class TreeRecursiveSRLStep(object):
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
+                self.is_rec= True
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x, True)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
@@ -500,7 +504,7 @@ class TreeRecursiveSRLClassifier(object):
                 if len(self.transforms)>0:
                     return -1 
                 #if not lvl0, return -1 for this
-            elif type(curr_node.justify)==str:
+            elif not curr_node.is_rec:
                 query_val= curr_node.chosen_query(transformed_obj[0])
             else: 
                 vals=[]
