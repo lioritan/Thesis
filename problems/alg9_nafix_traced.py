@@ -196,7 +196,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         inds=find(query_results==val)
         recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds], recursive_step_obj.tagging[inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.cond)
     return query_chosen,recursive_step_obj.sons
-def ig_from_one_retag(tagging):
+def ig_from_one_retag(tagging): #binary only...
     ind_neg= find(tagging==0)[0]
     ind_pos= find(tagging==1)[0]
     
@@ -251,7 +251,7 @@ class TreeRecursiveSRLStep(object):
                 max_ig,best_word=word_ig,word
         self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+best_word
         avg_word_ig=avg_word_ig/len(all_words)
-        if self.cond is True:
+        if self.cond is True or self.MAX_DEPTH==0:
             self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
@@ -271,7 +271,6 @@ class TreeRecursiveSRLStep(object):
             return None,self.sons
         if len(relevant_features)==0:
             print 'no relations can be used on this problem!'
-        if self.MAX_DEPTH==0 or len(relevant_features)==0: 
             self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
@@ -513,7 +512,10 @@ class TreeRecursiveSRLClassifier(object):
         self.logfile.write(' '*len(self.transforms)+'Created tree with transforms: '+str(self.transforms)+'\n')
         
     def train(self):
+        num_nodes= 0
+        depth= 0
         self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.logfile, self.cond)] #initally all in same node
+        self.tree_sets[0].depth= 1
         for node in self.tree_sets:
             if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
@@ -526,12 +528,19 @@ class TreeRecursiveSRLClassifier(object):
                 node.chosen_query=None
                 self.logfile.write('node became leaf\n')
                 continue#another leaf case...
+            num_nodes+=1
+            depth= max(depth, node.depth)
+            for son in sons.values():
+                son.depth= node.depth+1
             self.tree_sets.extend(sons.values()) 
         self.query_tree=self.tree_sets[0] #root
-        self.logfile.write('training done\n')
+        self.logfile.write('training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
         
     def train_vld_local(self):
+        num_nodes= 0
+        depth= 0
         self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)] #initally all in same node
+        self.tree_sets[0].depth= 1
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
             if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
@@ -546,9 +555,13 @@ class TreeRecursiveSRLClassifier(object):
                 node.chosen_query=None
                 self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
                 continue#another leaf case...
+            num_nodes+=1
+            depth= max(depth, node.depth)
+            for son in sons.values():
+                son.depth= node.depth+1
             self.tree_sets.extend(sons.values())
         self.query_tree=self.tree_sets[0] #root
-        self.logfile.write(' '*len(self.transforms)+'training done\n')
+        self.logfile.write(' '*len(self.transforms)+'training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
         
     def predict(self, new_object, flag=False):        
         curr_node= self.query_tree
@@ -580,7 +593,11 @@ class TreeRecursiveSRLClassifier(object):
                     query_val= int(mode(vals)[0][0]) #ISSUE: mode is problem if equal...
                 else:
                     query_val= -1 #query for tree is -1
-            curr_node=curr_node.sons[query_val]
+            
+            tmp= curr_node.chosen_tag
+            curr_node=curr_node.sons.get(query_val)
+            if curr_node is None: #tried tree that has no N/A in train, but does in test
+                return tmp #best guess...
         return int(curr_node.chosen_tag)
         
     def post_prune(self, objects, tagging):
