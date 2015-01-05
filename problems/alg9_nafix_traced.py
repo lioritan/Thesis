@@ -29,16 +29,41 @@ def clean_tree_for_pickle(tree_node):
 def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
     '''computes entropy on tags. Assumes binary 0-1 tagging only.(not +-1 !!!)
     entropy= sum(-f*log2(f)) where f are the frequencies of each value'''
-    freqs = bincount(tags)/(1.0*len(tags))
-    nonzeros= find(freqs !=0)
-    if size(nonzeros)<= 1:
-        return 0.0 #edge case
-    tmp = freqs[nonzeros]
-    return sum(-tmp*log2(tmp))
+#    freqs = bincount(tags)/(1.0*len(tags))
+#    nonzeros= find(freqs !=0)
+#    if size(nonzeros)<= 1:
+#        return 0.0 #edge case
+#    tmp = freqs[nonzeros]
+#    return sum(-tmp*log2(tmp))
+    length=len(tags)*1.0
+    value_list=frozenset(tags)
+    ent=0.0
+    for val in value_list:
+        count=count_nonzero(tags==val)/length
+        ent-=count*log2(count)
+    return ent 
+    
+#def entropy(labels):
+#    """ Computes entropy of label distribution. """
+#    n_labels = len(labels)
+#    if n_labels <= 1:
+#        return 0.
+#    counts = bincount(labels)
+#    probs = counts / (n_labels*1.0)
+##    print probs
+#    n_classes = count_nonzero(probs)
+#    if n_classes <= 1:
+#        return 0.
+#    ent = 0.
+#    # Compute standard entropy.
+#    for i in probs:
+#        ent -= i * log2(i)
+#    return ent
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
-    return 0.0,0.0
+    if len(frozenset(feature_values))>2:
+        return 0.0,0.0 #only works for 2 values
     locs= find(feature_values==1)
     locs2= find(feature_values!=1)
     observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
@@ -207,7 +232,8 @@ class TreeRecursiveSRLStep(object):
         self.sons= {}
         
         self.cool_things=[]
-        self.logfile.write('Created node. Num objects: '+str(len(self.tagging))+': '+str(len(find(self.tagging==1)))+' positive, '+str(len(find(self.tagging!=1)))+' negative.\n' )#'Positive: '+str(self.objects[find(self.tagging==1)])+' \n Negative: '+str(self.objects[find(self.tagging!=1)])+'\n')
+        self.is_rec= False
+        self.logfile.write(' '*len(self.transforms)+'Created node. Num objects: '+str(len(self.tagging))+': '+str(len(find(self.tagging==1)))+' positive, '+str(len(find(self.tagging!=1)))+' negative.\n' )#'Positive: '+str(self.objects[find(self.tagging==1)])+' \n Negative: '+str(self.objects[find(self.tagging!=1)])+'\n')
 
     def pick_split_query(self):
         '''pick one query(if simple query on objects give high IG, do that, otherwise go recursive and build tree as query'''
@@ -239,7 +265,7 @@ class TreeRecursiveSRLStep(object):
             relevant_features.append(relation)
         
         min_ig_required= ig_from_one_retag(self.tagging)
-        if self.ig <= min_ig_required:
+        if self.ig <= min_ig_required: #was IGTHRESH
             self.chosen_query=None
             self.justify='not good enough'
             return None,self.sons
@@ -262,15 +288,24 @@ class TreeRecursiveSRLStep(object):
         worthy_relations= temp.items()
         self.bttoo=worthy_relations
         tree_ig=0.0
+        before_all= time.time()
         for relation_used_for_recursive,rel_n in worthy_relations:  
             
             feature_vals=[is_relation_key(obj, self.relations[relation_used_for_recursive]) for obj in self.objects]
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            self.logfile.write('trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'\n')
             classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.logfile, self.cond)
+            inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
+            def rep_zero(x):
+                if x==0:
+                    return 1
+                return x
+            self.logfile.write('trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
+            (len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging))/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
+            before=time.time()
             classifier_chosen.train_vld_local()
             classifier_chosen.post_prune(self.objects, self.tagging)
+            self.logfile.write('tree tried! Time: '+str(time.time()-before)+'\n')
             
             #TODO: FIXME!!!!!! predict shouldn't work on x but rather do something smart...
             clf_labels=array([classifier_chosen.predict(x) for x in self.objects])
@@ -282,11 +317,13 @@ class TreeRecursiveSRLStep(object):
                 test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue
+                self.is_rec= True
                 self.logfile.write('chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
                 del classifier_chosen
+        self.logfile.write('finished recursive part for node. Time: '+str(time.time()-before_all)+'\n')
         
         if self.ig <= 0: #no query is useful
             self.chosen_query=None
@@ -395,13 +432,13 @@ class TreeRecursiveSRLStep(object):
             
         if len(self.transforms)>= self.MAX_DEPTH: 
             self.justify=self.justify+' and max depth reached'
-            self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
+            self.logfile.write(' '*len(self.transforms)+'chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
         relevant_features, relation_avg_igs =self.filter_bad_rels(relevant_features, relation_avg_igs)
         if len(relevant_features)==0: #had feature, now I don't
             self.justify=self.justify+' also cannot recurse'
-            self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
+            self.logfile.write(' '*len(self.transforms)+'chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
             
         #sample relevent features n times(with replacement, so recursive n is the amount chosen)
@@ -417,14 +454,23 @@ class TreeRecursiveSRLStep(object):
         self.bttoo=worthy_relations
     
         tree_ig=0.0
+        before_all= time.time()
         for relation_used_for_recursive,new_n in worthy_relations:  
             feature_vals=[is_in_relation(obj, self.relations[relation_used_for_recursive],relation_used_for_recursive) for obj in self.objects]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            self.logfile.write('trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'\n')
             classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)
+            inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
+            def rep_zero(x):
+                if x==0:
+                    return 1
+                return x
+            self.logfile.write(' '*len(self.transforms+['a'])+'trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
+            (len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging))/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
+            before= time.time()
             classifier_chosen.train_vld_local()
             classifier_chosen.post_prune(self.objects, self.tagging)
+            self.logfile.write(' '*len(self.transforms)+'tree tried! Time: '+str(time.time()-before)+'\n')
             
             #TODO: FIXME as well (for the case of relation where set valued...)
             #can mby just fix predict itself?
@@ -438,16 +484,18 @@ class TreeRecursiveSRLStep(object):
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
-                self.logfile.write('chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
+                self.is_rec= True
+                self.logfile.write(' '*len(self.transforms)+'chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x, True)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
                 del classifier_chosen
+        self.logfile.write(' '*len(self.transforms)+'finished recursive part for node. Time: '+str(time.time()-before_all)+'\n')
         
         if self.ig <= 0 : #no query is useful
             self.justify='nothing useful for tagging'
             return None,self.sons            
-        self.logfile.write('chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
+        self.logfile.write(' '*len(self.transforms)+'chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
         return split_and_subtree(self.chosen_query, self)
         
 class TreeRecursiveSRLClassifier(object):
@@ -462,7 +510,7 @@ class TreeRecursiveSRLClassifier(object):
         self.SPLIT_THRESH=SPLIT_THRESH
         #print len(self.transforms), self.n, self.transforms
         self.logfile= logfile
-        self.logfile.write('Created tree with transforms: '+str(self.transforms)+'\n')
+        self.logfile.write(' '*len(self.transforms)+'Created tree with transforms: '+str(self.transforms)+'\n')
         
     def train(self):
         self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.logfile, self.cond)] #initally all in same node
@@ -489,18 +537,18 @@ class TreeRecursiveSRLClassifier(object):
             if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
-                self.logfile.write('node became leaf\n')
+                self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
                 continue #leaf            
             #print len(node.objects)
             _,sons =node.pick_split_vld_local()
             if len(sons.keys())==0:
                 node.justify='leafed(weird stuff)'
                 node.chosen_query=None
-                self.logfile.write('node became leaf\n')
+                self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
                 continue#another leaf case...
             self.tree_sets.extend(sons.values())
         self.query_tree=self.tree_sets[0] #root
-        self.logfile.write('training done\n')
+        self.logfile.write(' '*len(self.transforms)+'training done\n')
         
     def predict(self, new_object, flag=False):        
         curr_node= self.query_tree
@@ -520,7 +568,7 @@ class TreeRecursiveSRLClassifier(object):
                 if len(self.transforms)>0:
                     return -1 
                 #if not lvl0, return -1 for this
-            elif type(curr_node.justify)==str:
+            elif not curr_node.is_rec:
                 query_val= curr_node.chosen_query(transformed_obj[0])
             else: 
                 vals=[]
@@ -656,3 +704,4 @@ if __name__=='__main__':
     print mean(pred3trn!=message_labels)
     pred3tst=array([blah3.predict(x) for x in test])
     print mean(pred3tst!=test_lbl)
+    
