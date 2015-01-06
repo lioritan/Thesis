@@ -196,15 +196,14 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         inds=find(query_results==val)
         recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds], recursive_step_obj.tagging[inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.cond)
     return query_chosen,recursive_step_obj.sons
-def ig_from_one_retag(tagging): #binary only...
-    ind_neg= find(tagging==0)[0]
-    ind_pos= find(tagging==1)[0]
-    
-    tag_pos= zeros(len(tagging))
-    tag_pos[ind_pos]= 1
-    tag_neg= zeros(len(tagging))
-    tag_neg[ind_neg]= 1
-    return max(ig_ratio(tagging, tag_pos), ig_ratio(tagging, tag_neg))
+def ig_from_one_retag(tagging): 
+    curr_max= -1.0
+    for value in frozenset(tagging):
+        ind= find(tagging==value)[0]
+        tag_pos= zeros(len(tagging))
+        tag_pos[ind]= 1
+        curr_max= max(curr_max, ig_ratio(tagging, tag_pos))
+    return curr_max
         
 MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
@@ -299,8 +298,11 @@ class TreeRecursiveSRLStep(object):
                 if x==0:
                     return 1
                 return x
+            blop=0.
+            if len(new_tagging)!=0:
+                blop=len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging)
             self.logfile.write('trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
-            (len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging))/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
+            (blop)/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
             before=time.time()
             classifier_chosen.train_vld_local()
             classifier_chosen.post_prune(self.objects, self.tagging)
@@ -464,8 +466,11 @@ class TreeRecursiveSRLStep(object):
                 if x==0:
                     return 1
                 return x
+            blop=0.
+            if len(new_tagging)!=0:
+                blop=len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging)
             self.logfile.write(' '*len(self.transforms+['a'])+'trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
-            (len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging))/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
+            (blop)/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
             before= time.time()
             classifier_chosen.train_vld_local()
             classifier_chosen.post_prune(self.objects, self.tagging)
@@ -596,8 +601,8 @@ class TreeRecursiveSRLClassifier(object):
             
             tmp= curr_node.chosen_tag
             curr_node=curr_node.sons.get(query_val)
-            if curr_node is None: #tried tree that has no N/A in train, but does in test
-                return tmp #best guess...
+            if curr_node is None: #tried tree that has no N/A in train, but does in test/ example was []
+                return tmp #best possible guess
         return int(curr_node.chosen_tag)
         
     def post_prune(self, objects, tagging):

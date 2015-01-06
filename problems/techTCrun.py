@@ -74,7 +74,7 @@ if __name__=='__main__':
             logfile1.close()
             
             before=time.time()
-            bc= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(1**2), 1, i, logfile2)
+            bc= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],30*(1**2), 1, i, logfile2)
             bc.train()#non recursive
             predx=array([bc.predict(x) for x in tst])
             hug1.append(mean(predx!=tst_lbl)) 
@@ -83,7 +83,7 @@ if __name__=='__main__':
             logfile2.close()
             
             before=time.time()
-            bc2= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(2**2), 2, i, logfile3)
+            bc2= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],30*(2**2), 2, i, logfile3)
             bc2.train()#recursive, somewhere around best only...
             print time.time()-before
             predy=array([bc2.predict(x) for x in tst])

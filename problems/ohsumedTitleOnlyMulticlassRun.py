@@ -8,10 +8,10 @@ Created on Wed Nov 12 11:04:46 2014
 from numpy import *
 from matplotlib.mlab import find
 import cPickle
-import alg7_multiclass as alg
+import alg9_nafix_traced as alg
 
-def solve_multiclass(trn, trn_lbl, lbl_vals, tst, tst_lbl, relations, d=0):
-    clf= alg.TreeRecursiveSRLClassifier(trn, trn_lbl, relations, [], 100*(d**2), d, 7)
+def solve_multiclass(trn, trn_lbl, lbl_vals, tst, tst_lbl, relations, logfile, d=0):
+    clf= alg.TreeRecursiveSRLClassifier(trn, trn_lbl, relations, [], 30*(d**2), d, 7, logfile)
     clf.train()
     
     tst_predict= array([clf.predict(x) for x in tst])
@@ -50,7 +50,10 @@ if __name__=='__main__':
     with open('med_relations.pkl','rb') as fptr:
         (relations, entities)= cPickle.load(fptr) 
         
-    with open('ohsumed_titles_parsed_complete.pkl','rb') as fptr:
+#    with open('ohsumed_titles_parsed_complete.pkl','rb') as fptr:
+#        (articles,labels)= cPickle.load(fptr) 
+        
+    with open('ohsumed_titles_only_small_subset.pkl','rb') as fptr:
         (articles,labels)= cPickle.load(fptr) 
     
     (articles,labels)= (array(articles), array(labels))  
@@ -63,8 +66,10 @@ if __name__=='__main__':
     tst_lbl= []
     for lbl in label_names:
         idxs= find(labels==lbl)
-        al= idxs[:600]
-        ah= idxs[600:]
+#        al= idxs[:600]
+#        ah= idxs[600:]
+        al= idxs[:50]
+        ah= idxs[50:]
         trn+= [x for x in articles[al]]
         trn_lbl+= [x for x in labels[al]]
         tst+= [x for x in articles[ah]]
@@ -72,24 +77,28 @@ if __name__=='__main__':
     
     ((trn, trn_lbl), (tst, tst_lbl))= ((array(trn), array(trn_lbl)), (array(tst), array(tst_lbl)))    
 
-#    error, tst_predict, clf= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
-#                                                              relations, 0)
-#    print error
-##    #make a few more by random pick of 10 categories...
-#    with open('result_nonrec.pkl','wb') as fptr:
-#        a=None
-#        try:
-#            a=alg.clean_tree_for_pickle(clf.query_tree)
-#        except RuntimeError:
-#            pass
-#        cPickle.dump((error, tst_predict,a) , fptr, -1)
-#    
+    logfile1= open('run_log_rec0.txt', 'w')
+    error, tst_predict, clf= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
+                                                              relations,logfile1, 0)
+    logfile1.close()
+    print error
+#    #make a few more by random pick of 10 categories...
+    with open('result_nonrec.pkl','wb') as fptr:
+        a=None
+        try:
+            a=alg.clean_tree_for_pickle(clf.query_tree)
+        except RuntimeError:
+            pass
+        cPickle.dump((error, tst_predict,a) , fptr, -1)
+    
+    logfile2= open('run_log_rec1.txt', 'w')
     error2, tst_predict2, clf2= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
-                                                              relations, 1)
+                                                              relations,logfile2, 1)
 #    error, tst_predict, clfs, decision_func= solve_multiclass(trn, trn_lbl,[1,4], tst, tst_lbl, 
 #                                                              relations, 1)
+    logfile2.close()
     print error2
-    fhfgfg.fhgh()
+#    fhfgfg.fhgh()
     #make a few more by random pick of 10 categories...
     with open('result_rec1.pkl','wb') as fptr:
         a=None
@@ -99,8 +108,10 @@ if __name__=='__main__':
             pass
         cPickle.dump((error, tst_predict,a) , fptr, -1)
     
+    logfile3= open('run_log_rec2.txt', 'w')
     error, tst_predict, clf= solve_multiclass(trn, trn_lbl,label_names, tst, tst_lbl, 
-                                                              relations, 2)
+                                                              relations,logfile3, 2)
+    logfile3.close()
     print error
     #make a few more by random pick of 10 categories...
     with open('result_rec2.pkl','wb') as fptr:
