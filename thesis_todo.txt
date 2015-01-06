@@ -7,6 +7,7 @@ Alg:
 - using linkedCT for medical data? using conceptnet/freebase instead of yago?
 - implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
 -what about non-binary features in general (avg instead of majority?)
+- can potentially branch&bound instead of sampling? Cheng H, Yan X, Han J, Yu PS (2008) Direct discriminative pattern mining for effective classification
 
 Data:
 - YAGO data mby expand: sameAS/event data/numeric relations. increase relation granularity? more databases? use conceptnet/freebase instead?
