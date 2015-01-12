@@ -6,8 +6,9 @@ Created on Fri Nov 21 14:25:39 2014
 """
 from numpy import *
 from matplotlib.mlab import find
-import alg7
+#import alg7
 from matplotlib.cbook import flatten
+from alg9_nafix_traced import *
 
     
 def calc_node_and_leaf_stats(top_node):
@@ -62,7 +63,13 @@ def get_stats(a1, a2=None):
 def fix_query(node):
     if type(node.justify)!=str:
         fix_query_tree(node.justify)
-        node.chosen_query= lambda x, tree=node.justify: tree.predict(x, len(node.transforms)>0)
+        fptr=open('crap.txt','w')
+        my_tree= TreeRecursiveSRLClassifier(None, None, None, node.justify.transforms, 0, 0, 0, fptr)
+        fptr.close()
+        my_tree.query_tree= node.justify
+        node.chosen_query= lambda x, tree=my_tree: tree.predict(x, len(node.transforms)>0)
+        return
+    if node.justify.startswith('leafed') or node.justify.startswith('no'):
         return
     if node.justify.startswith('hasword:'): #simple one
         word= node.justify[len('hasword:'):]
@@ -79,20 +86,27 @@ def fix_query(node):
 def fix_query_tree(top_node):
     fix_query(top_node)
     for son in top_node.sons.values():
-        fix_query(son)
+        fix_query_tree(son)
         
 def flow_test_set(top_node, test_set, test_labels):
     nodes= [(top_node, test_set, test_labels)]
     
     for node,tst,tst_lbl in nodes:
-        node.test= tst
         node.test_labels= tst_lbl
+        node.base_acc= mean(tst_lbl==node.chosen_tag) #basic accuracy, no using the node
         if type(node.justify)==str and (node.justify.startswith('leafed') or node.justify.startswith('no')):
             continue
         vals= array([node.chosen_query(x) for x in tst])
+        new_lbl= zeros(len(tst)) + node.chosen_tag
+
         for val in frozenset(vals):
-            inds= find(vals==val)
-            nodes.append((node.sons[val], tst[inds], tst_lbl[inds]))        
+            if val not in node.sons.keys():
+                continue
+            inds= find(vals==val)            
+            nodes.append((node.sons[val], tst[inds], tst_lbl[inds])) 
+            new_lbl[inds]= node.sons[val].chosen_tag
+        node.imp_acc= mean(tst_lbl==new_lbl)
+        node.acc= node.imp_acc/node.base_acc
     
 def find_rec_trees(top_node):
     '''for applying node/leaf stats on recursive trees'''

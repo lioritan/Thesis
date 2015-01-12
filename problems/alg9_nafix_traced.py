@@ -13,6 +13,7 @@ import time
 
 
 def clean_tree_for_pickle(tree_node):
+#    tree_node.relations=None
     if tree_node.chosen_query is None:
         return
     try:
