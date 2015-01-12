@@ -80,6 +80,19 @@ def fix_query_tree(top_node):
     fix_query(top_node)
     for son in top_node.sons.values():
         fix_query(son)
+        
+def flow_test_set(top_node, test_set, test_labels):
+    nodes= [(top_node, test_set, test_labels)]
+    
+    for node,tst,tst_lbl in nodes:
+        node.test= tst
+        node.test_labels= tst_lbl
+        if type(node.justify)==str and (node.justify.startswith('leafed') or node.justify.startswith('no')):
+            continue
+        vals= array([node.chosen_query(x) for x in tst])
+        for val in frozenset(vals):
+            inds= find(vals==val)
+            nodes.append((node.sons[val], tst[inds], tst_lbl[inds]))        
     
 def find_rec_trees(top_node):
     '''for applying node/leaf stats on recursive trees'''
