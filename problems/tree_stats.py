@@ -90,12 +90,16 @@ def find_rec_trees(top_node):
         if type(node.justify)==str:
             if node.justify.startswith('leafed') or node.justify.startswith('no'):
                 continue
-            nodes.append(node.left_son)
-            nodes.append(node.right_son)
+            for son in node.sons.values():
+                nodes.append(son)
+#            nodes.append(node.left_son)
+#            nodes.append(node.right_son)
             continue
         tree_heads.append(node.justify)
-        nodes.append(node.left_son)
-        nodes.append(node.right_son)
+        for son in node.sons.values():
+            nodes.append(son)
+#        nodes.append(node.left_son)
+#        nodes.append(node.right_son)
     return tree_heads
 
 def calc_rec_tree_stats(top_node):
