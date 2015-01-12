@@ -59,6 +59,28 @@ def get_stats(a1, a2=None):
         return the_thing, mean(the_thing), median(the_thing), mean(a1), median(a1)
     return the_thing, mean(the_thing), median(the_thing)
     
+def fix_query(node):
+    if type(node.justify)!=str:
+        fix_query_tree(node.justify)
+        node.chosen_query= lambda x, tree=node.justify: tree.predict(x, len(node.transforms)>0)
+        return
+    if node.justify.startswith('hasword:'): #simple one
+        word= node.justify[len('hasword:'):]
+        node.chosen_query= lambda x: 1 if (word in x) else 0
+        return
+    relation= node.justify.split(' ')[3]
+    val= node.justify.split(' ')[-1]
+    if val=='None': #none
+        node.chosen_query= lambda x: 1 if len(is_in_relation(x, node.relations[relation],relation))==0 else 0
+        return
+    node.chosen_query= lambda x: 1 if is_in_relation(x, node.relations[relation],relation,val) else 0
+    return
+        
+def fix_query_tree(top_node):
+    fix_query(top_node)
+    for son in top_node.sons.values():
+        fix_query(son)
+    
 def find_rec_trees(top_node):
     '''for applying node/leaf stats on recursive trees'''
     nodes= [top_node]
