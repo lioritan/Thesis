@@ -252,6 +252,10 @@ class TreeRecursiveSRLStep(object):
         self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+best_word
         avg_word_ig=avg_word_ig/len(all_words)
         if self.cond is True or self.MAX_DEPTH==0:
+            if self.ig <= 0: #no query is useful
+                self.chosen_query=None
+                self.justify='nothing useful for tagging'
+                return None,self.sons
             self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
