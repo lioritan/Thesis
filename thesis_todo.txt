@@ -1,6 +1,7 @@
 Things to do:
 
 Alg:
+- new formulation? explore collective classification, link propagation,graph kernels. use weigthing by tfidf for majority label? do this in advance for feature gen, then table?
 - mby switch outer tree with boosting? (boosting on several recursive trees)
 - fix bruteforce and compare! do FG once offline using ~furnkrantz? need to also compare to 1 step alg and then state-of-art...- implement+compare ESA
 - implement ESA-FG
