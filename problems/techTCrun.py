@@ -1,6 +1,6 @@
 from numpy import *
 #import bruteforce_propo as compete
-import alg9_nafix_traced as godfish
+import alg10_ficuslike as godfish
 #import alg7 as compete
 #import bruteforce_propo as compete
 import yago
@@ -36,121 +36,49 @@ if __name__=='__main__':
             datasets.append(pickle.load(fptr))
             fptr.close()
 #    
-    count=0
     res_7=[]
-    for ((trn, trn_lbl),(tst,tst_lbl)) in datasets:
+    errs= zeros((100, 3))
+    feature_nums= zeros((100, 3))
+    feature_names= []
+    for count,((trn, trn_lbl),(tst,tst_lbl)) in enumerate(datasets):        
         print count
-        count+=1
         #if count<=50:#each one goes different
         #    continue
         
-        errs_non_recurse=[]
-        errs_rel=[]
-        hug1=[]
-        hug2=[]
-        hug3=[]
-        vars_non=[]
-        vars_=[]
-        vars_2=[]
-        vars_3=[]
-        vars_rel=[]
-        
+        feature_name_trio= []
+                
         logfile1= open('results%d_log_rec0.txt'%(count), 'w')
         logfile2= open('results%d_log_rec1.txt'%(count), 'w')
         logfile3= open('results%d_log_rec2.txt'%(count), 'w')
+        logfiles=[logfile1, logfile2, logfile3]
         for i in [7]: #switch back to [3,7] later. doesn't seem to matter much between 1/3/5 and 7/9(which are worse for tree)
-            
-#            blah11= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i, True)
-#            blah11.train()#non recursive
-#            pred11=array([blah11.predict(x) for x in tst])
-#            errs_non_recurse.append(mean(pred11!=tst_lbl)) 
-#            vars_non.append(std(pred11!=tst_lbl))
-#            
-            blah12= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i, logfile1)
-            blah12.train()#non recursive
-            pred12=array([blah12.predict(x) for x in tst])
-            errs_rel.append(mean(pred12!=tst_lbl)) 
-            vars_rel.append(std(pred12!=tst_lbl))
-            logfile1.close()
-            
-            before=time.time()
-            bc= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],30*(1**2), 1, i, logfile2)
-            bc.train()#non recursive
-            predx=array([bc.predict(x) for x in tst])
-            hug1.append(mean(predx!=tst_lbl)) 
-            vars_.append(std(predx!=tst_lbl))
-            print time.time()-before
-            logfile2.close()
-            
-            before=time.time()
-            bc2= godfish.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],30*(2**2), 2, i, logfile3)
-            bc2.train()#recursive, somewhere around best only...
-            print time.time()-before
-            predy=array([bc2.predict(x) for x in tst])
-            hug2.append(mean(predy!=tst_lbl)) 
-            vars_2.append(std(predy!=tst_lbl))
-            logfile3.close()
-            
-#            blah12= compete.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],0,0,i,True)
-#            blah12.train()#non recursive
-#            pred12=array([blah12.predict(x) for x in tst])
-#            errs_rel.append(mean(pred12!=tst_lbl)) 
-#            vars_rel.append(std(pred12!=tst_lbl))
-#            
-#            before=time.time()
-#            bc= compete.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(1**2), 0, i)
-#            bc.train()#non recursive
-#            predx=array([bc.predict(x) for x in tst])
-#            hug1.append(mean(predx!=tst_lbl)) 
-#            vars_.append(std(predx!=tst_lbl))
-#            print time.time()-before
-#            
-#            
-#            before=time.time()
-#            bc2= compete.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(2**2), 1, i)
-#            bc2.train()#recursive, somewhere around best only...
-#            print time.time()-before
-#            predy=array([bc2.predict(x) for x in tst])
-#            hug2.append(mean(predy!=tst_lbl)) 
-#            vars_2.append(std(predy!=tst_lbl))
-            #Note: 100*(d**2) barely scales to 4, and would likely fail for 5
-            #2*(d**2)
-#            a=(blah12, bc, bc2
-#            ,errs_rel, hug1, hug2
-#            ,vars_rel, vars_, vars_2)
-#            res_7.append(a)
-#            fgfgfk.g()
-            
-#            before=time.time()
-#            bc3= compete.TreeRecursiveSRLClassifier(trn, trn_lbl, relationss, [],100*(3**2), 3, i)
-#            bc3.train()#recursive, somewhere around best only...
-#            print time.time()-before
-#            predz=array([bc3.predict(x) for x in tst])
-#            hug3.append(mean(predz!=tst_lbl)) 
-#            vars_3.append(std(predz!=tst_lbl))
-            #Note: 100*(d**2) barely scales to 4, and would likely fail for 5
-        
-#        a=(blah11, blah12, bc, bc2
-#        ,errs_non_recurse, errs_rel, hug1, hug2
-#        ,vars_non, vars_rel, vars_, vars_2)
-#        res_7.append(a)
-#        godfish.clean_tree_for_pickle(blah11.query_tree)
-#        godfish.clean_tree_for_pickle(blah12.query_tree)
-#        godfish.clean_tree_for_pickle(bc.query_tree)
-#        godfish.clean_tree_for_pickle(bc2.query_tree)
-#        with open('results%d.pkl'%(count),'wb') as fptr:
-#            pickle.dump(a, fptr, -1)
-        a=(blah12, bc, bc2
-        ,errs_rel, hug1, hug2
-        ,vars_rel, vars_, vars_2)
-        res_7.append(a)
-        godfish.clean_tree_for_pickle(blah12.query_tree)
-        godfish.clean_tree_for_pickle(bc.query_tree)
-        godfish.clean_tree_for_pickle(bc2.query_tree)
-#        godfish.clean_tree_for_pickle(bc3.query_tree)
+            for d in xrange(3):    
+                blor= godfish.FeatureGenerationFromRDF(trn, trn_lbl, relationss)
+                blor.generate_features(30*(d**2), d, i, logfiles[d], 10, 1)  
+                logfiles[d].close()
+                trn, trn_lbl, tst, feature_names= blor.get_new_table(tst)
+#                from sklearn.feature_selection import SelectKBest
+#                feature_selector= SelectKBest(chi2, k=100)
+#                trn= feature_selector.fit_transform(trn, trn_lbl)
+#                tst= feature_selector.transform(tst)
+    
+                from sklearn.svm import SVC
+                from sklearn.neighbors import KNeighborsClassifier
+                from sklearn.tree import DecisionTreeClassifier
+    
+                clf= SVC(kernel='linear', C=100)
+#                clf= KNeighborsClassifier(n_neighbors=3)
+#                clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
+                clf.fit(trn, trn_lbl)
+                tst_predict= clf.predict(tst)
+                #results:
+                err[count, d]= mean(tst_predict!=tst_lbl)
+                feature_name_trio.append(feature_names)
+                feature_nums[count, d]= len(blor.new_features)
+        feature_names.append(feature_name_trio)    
+        a=(errs[count,:], feature_name_trio, feature_nums[count,:])
         with open('results%d.pkl'%(count),'wb') as fptr:
-            pickle.dump(a, fptr, -1)
-#        
+            pickle.dump(a, fptr, -1)     
     with open('final_res.pkl','wb') as fptr:
-        pickle.dump(res_7, fptr, -1)
+        pickle.dump((errs, feature_names, feature_nums), fptr, -1)
     
