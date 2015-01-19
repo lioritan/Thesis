@@ -8,6 +8,8 @@ import string
 import os
 import time
 
+from matplotlib.mlab import find
+
 if __name__=='__main__':    
         
     import cPickle as pickle
@@ -37,7 +39,13 @@ if __name__=='__main__':
             fptr.close()
 #    
     res_7=[]
-    errs= zeros((100, 3))
+    errs_svm= zeros((100, 3))
+    errs_knn= zeros((100,3))
+    errs_tree= zeros((100,3))
+
+    errs_svm_na1= zeros((100,3))
+    errs_knn_na1= zeros((100,3))
+    errs_tree_na1= zeros((100,3))
     feature_nums= zeros((100, 3))
     feature_names= []
     for count,((trn, trn_lbl),(tst,tst_lbl)) in enumerate(datasets):        
@@ -67,18 +75,37 @@ if __name__=='__main__':
                 from sklearn.tree import DecisionTreeClassifier
     
                 clf= SVC(kernel='linear', C=100)
-#                clf= KNeighborsClassifier(n_neighbors=3)
-#                clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
+                clf.fit(trn, trn_lbl)
+                tst_predict= clf.predict(tst)
+                errs_svm[count, d]= mean(tst_predict!=tst_lbl)
+
+                clf= KNeighborsClassifier(n_neighbors=1)
+                clf.fit(trn, trn_lbl)
+                tst_predict= clf.predict(tst)
+                errs_knn[count, d]= mean(tst_predict!=tst_lbl)
+
+                clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
                 clf.fit(trn, trn_lbl)
                 tst_predict= clf.predict(tst)
                 #results:
-                err[count, d]= mean(tst_predict!=tst_lbl)
+                errs_tree[count, d]= mean(tst_predict!=tst_lbl)
                 feature_name_trio.append(feature_names)
                 feature_nums[count, d]= len(blor.new_features)
+
+                trn[find(trn==-100)]= -1
+                clf=SVC(kernel='linear', C=100)
+                clf.fit(trn, trn_lbl)
+                errs_svm_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
+                clf=KNeighborsClassifier(n_neighbors=1)
+                clf.fit(trn, trn_lbl)
+                errs_knn_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
+                clf=DecisionTreeClassifier(criterion='entropy',min_samples_split=2, random_state=0)
+                clf.fit(trn, trn_lbl)
+                errs_tree_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
         feature_names.append(feature_name_trio)    
-        a=(errs[count,:], feature_name_trio, feature_nums[count,:])
+        a=(errs_svm[count,:], errs_knn[count,:], errs_tree[count,:], errs_svm_na1[count,:], errs_knn_na1[count,:],errs_tree_na1[count,:],feature_name_trio, feature_nums[count,:])
         with open('results%d.pkl'%(count),'wb') as fptr:
             pickle.dump(a, fptr, -1)     
     with open('final_res.pkl','wb') as fptr:
-        pickle.dump((errs, feature_names, feature_nums), fptr, -1)
+        pickle.dump((errs_svm, errs_knn, errs_tree, errs_svm_na1, errs_knn_na1, errs_tree_na1, feature_names, feature_nums), fptr, -1)
     

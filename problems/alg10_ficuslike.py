@@ -222,15 +222,14 @@ class TreeRecursiveSRLStep(object):
         avg_word_ig=0.0
         all_words=set()
         for words in self.objects:
-            for word in words:
-                all_words.add(word)
+            all_words.update(words)
         max_ig,best_word=-1.0,''
         for word in all_words:
             word_ig= ig_ratio(self.tagging, array([1 if (word in obj) else 0 for obj in self.objects]))
             avg_word_ig+=word_ig
             if word_ig>max_ig:
                 max_ig,best_word=word_ig,word
-        self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+best_word
+        self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+str(best_word)
         avg_word_ig=avg_word_ig/len(all_words)
         if self.cond is True or self.MAX_DEPTH==0 or len(self.objects)< self.stopthresh:
             if self.ig <= ig_from_one_retag(self.tagging): #no query is useful enough
@@ -553,7 +552,7 @@ class TreeRecursiveSRLClassifier(object):
         self.logfile.write(' '*len(self.transforms)+'training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
     
     def predict(self, new_object, flag=False):  
-        NA_VAL= -10
+        NA_VAL= -100
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
             return 0#some arbitrary rule
