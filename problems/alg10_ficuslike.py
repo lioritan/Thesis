@@ -186,7 +186,7 @@ def ig_from_one_retag(tagging):
         
 MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
@@ -551,8 +551,9 @@ class TreeRecursiveSRLClassifier(object):
             self.tree_sets.extend(sons.values())
         self.query_tree=self.tree_sets[0] #root
         self.logfile.write(' '*len(self.transforms)+'training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
-        
-    def predict(self, new_object, flag=False):        
+    
+    def predict(self, new_object, flag=False):  
+        NA_VAL= -10
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
             return 0#some arbitrary rule
@@ -566,9 +567,9 @@ class TreeRecursiveSRLClassifier(object):
                 transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
             query_val= None
             if len(transformed_obj[0])==0:
-                query_val= -100 #N/A
+                query_val= NA_VAL
                 if len(self.transforms)>0:
-                    return -100
+                    return NA_VAL
                 #if not lvl0, return -1 for this
             elif not curr_node.is_rec:
                 query_val= curr_node.chosen_query(transformed_obj[0])
@@ -581,7 +582,7 @@ class TreeRecursiveSRLClassifier(object):
                 if len(vals)>0:
                     query_val= int(mode(vals)[0][0]) #ISSUE: mode is problem if equal...
                 else:
-                    query_val= -100 #query for tree is -1
+                    query_val= NA_VAL #query for tree is -1
             
             tmp= curr_node.chosen_tag
             curr_node=curr_node.sons.get(query_val)
@@ -607,19 +608,22 @@ class FeatureGenerationFromRDF(object):
         self.new_features= tree.recursive_features
         self.new_justify= tree.feature_justify
     
-    def get_new_table(self):
+    def get_new_table(self, test):
         all_words=set()
         for words in self.objects:
             all_words.update(words)
         self.table= zeros((len(self.objects), len(all_words)+len(self.new_features)))
+        self.test= zeros((len(test), len(all_words)+len(self.new_features)))
         self.feature_names=[]
         for i,word in enumerate(all_words):
             self.table[:,i]= array([1 if (word in obj) else 0 for obj in self.objects])
+            self.test[:, i]= array([1 if (word in obj) else 0 for obj in test])
             self.feature_names.append('has word:%s'%(word))
         for j,new_feature in enumerate(self.new_features):
             self.table[:, len(all_words)+j]= array([new_feature(obj) for obj in self.objects])
+            self.test[:, len(all_words)+j]= array([new_feature(obj) for obj in test])
             self.feature_names.append(self.new_justify[j])
-        return self.table, self.tagging, self.feature_names
+        return self.table, self.tagging, self.test, self.feature_names
                     
     
 if __name__=='__main__':
@@ -712,13 +716,25 @@ if __name__=='__main__':
             relations[new_key][b]= [a]
 
     logfile= open('run_log.txt','w')
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)
+    blor= FeatureGenerationFromRDF(msg_objs, message_labels, relations)
     before=time.time()
-    blah3.train(1)
+    blor.generate_features(200, 2, 3, logfile, 1)    
+    #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
+    #blah3.train(1)
     print time.time()-before
     logfile.close()
-    pred3trn=array([blah3.predict(x) for x in msg_objs])
-    print mean(pred3trn!=message_labels)
-    pred3tst=array([blah3.predict(x) for x in test])
+    trn, trn_lbl, tst, feature_names= blor.get_new_table(test)
+    
+    from sklearn.svm import SVC
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.tree import DecisionTreeClassifier
+#    blah3= SVC(kernel='linear', C=inf)
+#    blah3= KNeighborsClassifier(n_neighbors=5)
+    blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
+    blah3.fit(trn, trn_lbl)
+    
+    pred3trn=blah3.predict(trn)
+    print mean(pred3trn!=trn_lbl)
+    pred3tst=blah3.predict(tst)
     print mean(pred3tst!=test_lbl)
     
