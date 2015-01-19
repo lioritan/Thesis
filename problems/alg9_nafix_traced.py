@@ -553,7 +553,7 @@ class TreeRecursiveSRLClassifier(object):
         self.tree_sets[0].depth= 1
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
-            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
+            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==node.chosen_tag)):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
