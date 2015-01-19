@@ -186,7 +186,7 @@ def ig_from_one_retag(tagging):
         
 MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.001
+P_THRESH=0.01
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
@@ -599,14 +599,26 @@ class FeatureGenerationFromRDF(object):
         self.new_features= []
         self.new_justify= []
     
-    def generate_features(self, n, max_depth, split_thresh, logfile, STOPTHRESH= 10):
-        #first version: stop-thresh+take all better.
-        #second version will be the stochastic thing
-        tree= TreeRecursiveSRLClassifier(self.objects, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
-        tree.train(STOPTHRESH) #minimum number of objects!
+    def generate_features(self, n, max_depth, split_thresh, logfile, STOPTHRESH= 10, version=1):
         
-        self.new_features= tree.recursive_features
-        self.new_justify= tree.feature_justify
+        
+        if version==1: #first version: stop-thresh+take all better.
+            tree= TreeRecursiveSRLClassifier(self.objects, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
+            tree.train(STOPTHRESH) #minimum number of objects!
+        
+            self.new_features= tree.recursive_features
+            self.new_justify= tree.feature_justify
+            return
+        elif version==2: #second version will be the stochastic thing on examples
+            for i in xrange(10):
+                inds= random.choice(len(self.objects), len(self.objects)/2, replace=False)
+                tree= TreeRecursiveSRLClassifier(self.objects[inds], self.tagging[inds], self.relations, [], n, max_depth, split_thresh, logfile)
+                tree.train(STOPTHRESH)
+                
+                self.new_features.extend(tree.recursive_features)
+                self.new_justify.extend(tree.feature_justify)
+        else: #final version is only generate for top node, but take ALL relations...
+            pass
     
     def get_new_table(self, test):
         all_words=set()
@@ -656,7 +668,7 @@ if __name__=='__main__':
             '2016_olympics possible not take place in brazil but in mexico',
             'canada_squash soup recipe popular in u.s.'
             ] #messages on fruits/veggies that originally from america is concept. have some fruit, some america, some both, some neither
-    msg_objs=[a.split(' ') for a in messages]
+    msg_objs=array([a.split(' ') for a in messages])
     message_labels = (array([1,1,-1,1,-1,-1,-1,1,-1,1,1,-1,1,-1,1,-1,-1,
                              -1,1,-1,-1,1,1,-1,1,-1,1])+1)/2
     test_msgs= ['potato and tomato sound the same and also come from same continent list of 10 things from the new world which surprise',
@@ -718,7 +730,7 @@ if __name__=='__main__':
     logfile= open('run_log.txt','w')
     blor= FeatureGenerationFromRDF(msg_objs, message_labels, relations)
     before=time.time()
-    blor.generate_features(200, 2, 3, logfile, 1)    
+    blor.generate_features(200, 2, 3, logfile, 1, 2)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before
@@ -729,12 +741,13 @@ if __name__=='__main__':
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.tree import DecisionTreeClassifier
     from sklearn.feature_selection import SelectKBest
-#    blah3= SVC(kernel='linear', C=inf)
-#    blah3= KNeighborsClassifier(n_neighbors=5)
+
 #    feature_selector= SelectKBest(chi2, k=100)
 #    filtered_trn= feature_selector.fit_transform(trn, trn_lbl)
 #    filtered_tst= feature_selector.transform(tst)
-    blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
+    blah3= SVC(kernel='linear', C=inf)
+#    blah3= KNeighborsClassifier(n_neighbors=5)
+#    blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
     blah3.fit(trn, trn_lbl)
     
     pred3trn=blah3.predict(trn)
