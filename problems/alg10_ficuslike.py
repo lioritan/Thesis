@@ -728,8 +728,12 @@ if __name__=='__main__':
     from sklearn.svm import SVC
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.tree import DecisionTreeClassifier
+    from sklearn.feature_selection import SelectKBest
 #    blah3= SVC(kernel='linear', C=inf)
 #    blah3= KNeighborsClassifier(n_neighbors=5)
+#    feature_selector= SelectKBest(chi2, k=100)
+#    filtered_trn= feature_selector.fit_transform(trn, trn_lbl)
+#    filtered_tst= feature_selector.transform(tst)
     blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
     blah3.fit(trn, trn_lbl)
     
