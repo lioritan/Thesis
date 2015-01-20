@@ -186,7 +186,7 @@ def ig_from_one_retag(tagging):
         
 MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.01
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):

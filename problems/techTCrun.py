@@ -54,6 +54,7 @@ if __name__=='__main__':
         #    continue
         
         feature_name_trio= []
+        trn,tst= array(trn, dtype=object), array(tst, dtype=object)
                 
         logfile1= open('results%d_log_rec0.txt'%(count), 'w')
         logfile2= open('results%d_log_rec1.txt'%(count), 'w')
@@ -62,7 +63,7 @@ if __name__=='__main__':
         for i in [7]: #switch back to [3,7] later. doesn't seem to matter much between 1/3/5 and 7/9(which are worse for tree)
             for d in xrange(3):    
                 blor= godfish.FeatureGenerationFromRDF(trn, trn_lbl, relationss)
-                blor.generate_features(30*(d**2), d, i, logfiles[d], 10, 1)  
+                blor.generate_features(30*(d**2), d, i, logfiles[d], 1, 1)  
                 logfiles[d].close()
                 trn, trn_lbl, tst, feature_names= blor.get_new_table(tst)
 #                from sklearn.feature_selection import SelectKBest, chi2
