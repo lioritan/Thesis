@@ -186,7 +186,7 @@ def ig_from_one_retag(tagging):
         
 MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.001
+P_THRESH=0.01
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
@@ -302,6 +302,7 @@ class TreeRecursiveSRLStep(object):
             if tree_ig/tree_ig_penalty >= best_ig: #any better than non-rec
                 self.good_recs.append(lambda x,c=classifier_chosen: c.predict(x))
                 self.good_recs_justify.append(str(classifier_chosen.transforms))
+            
             if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier                
                 test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
@@ -605,8 +606,8 @@ class FeatureGenerationFromRDF(object):
             tree= TreeRecursiveSRLClassifier(self.objects, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
             tree.train(STOPTHRESH) #minimum number of objects!
         
-            self.new_features= tree.recursive_features
-            self.new_justify= tree.feature_justify
+            self.new_features= list(tree.recursive_features)
+            self.new_justify= list(tree.feature_justify)
             return
         elif version==2: #second version will be the stochastic thing on examples
             for i in xrange(10):
@@ -616,8 +617,8 @@ class FeatureGenerationFromRDF(object):
                 
                 self.new_features.extend(tree.recursive_features)
                 self.new_justify.extend(tree.feature_justify)
-        else: #final version is only generate for top node, but take ALL relations...
-            pass
+                return
+        
     
     def get_new_table(self, test):
         all_words=set()
@@ -667,7 +668,7 @@ if __name__=='__main__':
             '2016_olympics possible not take place in brazil but in mexico',
             'canada_squash soup recipe popular in u.s.'
             ] #messages on fruits/veggies that originally from america is concept. have some fruit, some america, some both, some neither
-    msg_objs=array([a.split(' ') for a in messages])
+    msg_objs=array([a.split(' ') for a in messages], dtype=object)
     message_labels = (array([1,1,-1,1,-1,-1,-1,1,-1,1,1,-1,1,-1,1,-1,-1,
                              -1,1,-1,-1,1,1,-1,1,-1,1])+1)/2
     test_msgs= ['potato and tomato sound the same and also come from same continent list of 10 things from the new world which surprise',
@@ -729,7 +730,7 @@ if __name__=='__main__':
     logfile= open('run_log.txt','w')
     blor= FeatureGenerationFromRDF(msg_objs, message_labels, relations)
     before=time.time()
-    blor.generate_features(200, 2, 3, logfile, 1, 2)    
+    blor.generate_features(200, 2, 3, logfile, 1, 1)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before
@@ -753,4 +754,5 @@ if __name__=='__main__':
     print mean(pred3trn!=trn_lbl)
     pred3tst=blah3.predict(tst)
     print mean(pred3tst!=test_lbl)
+    print len(blor.new_features)
     

@@ -47,7 +47,7 @@ if __name__=='__main__':
     errs_knn_na1= zeros((100,3))
     errs_tree_na1= zeros((100,3))
     feature_nums= zeros((100, 3))
-    feature_names= []
+    feature_names_list= []
     for count,((trn, trn_lbl),(tst,tst_lbl)) in enumerate(datasets):        
         print count
         #if count<=50:#each one goes different
@@ -65,8 +65,8 @@ if __name__=='__main__':
                 blor.generate_features(30*(d**2), d, i, logfiles[d], 10, 1)  
                 logfiles[d].close()
                 trn, trn_lbl, tst, feature_names= blor.get_new_table(tst)
-#                from sklearn.feature_selection import SelectKBest
-#                feature_selector= SelectKBest(chi2, k=100)
+#                from sklearn.feature_selection import SelectKBest, chi2
+#                feature_selector= SelectKBest(chi2, k=min(100,size(trn,1) ))
 #                trn= feature_selector.fit_transform(trn, trn_lbl)
 #                tst= feature_selector.transform(tst)
     
@@ -102,10 +102,10 @@ if __name__=='__main__':
                 clf=DecisionTreeClassifier(criterion='entropy',min_samples_split=2, random_state=0)
                 clf.fit(trn, trn_lbl)
                 errs_tree_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
-        feature_names.append(feature_name_trio)    
+        feature_names_list.append(feature_name_trio)    
         a=(errs_svm[count,:], errs_knn[count,:], errs_tree[count,:], errs_svm_na1[count,:], errs_knn_na1[count,:],errs_tree_na1[count,:],feature_name_trio, feature_nums[count,:])
         with open('results%d.pkl'%(count),'wb') as fptr:
             pickle.dump(a, fptr, -1)     
     with open('final_res.pkl','wb') as fptr:
-        pickle.dump((errs_svm, errs_knn, errs_tree, errs_svm_na1, errs_knn_na1, errs_tree_na1, feature_names, feature_nums), fptr, -1)
+        pickle.dump((errs_svm, errs_knn, errs_tree, errs_svm_na1, errs_knn_na1, errs_tree_na1, feature_names_list, feature_nums), fptr, -1)
     
