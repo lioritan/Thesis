@@ -50,8 +50,8 @@ if __name__=='__main__':
     feature_names_list= []
     for count,((trn, trn_lbl),(tst,tst_lbl)) in enumerate(datasets):        
         print count
-        if count >2:
-            break
+#        if count >2:
+#            break
         #if count<=50:#each one goes different
         #    continue
         
@@ -95,7 +95,7 @@ if __name__=='__main__':
                 feature_name_trio.append(feature_names)
                 feature_nums[count, d]= len(blor.new_features)
 
-                trn[find(trn==-100)]= -1
+                trn[trn==-100]= -1
                 clf=SVC(kernel='linear', C=100)
                 clf.fit(trn, trn_lbl)
                 errs_svm_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
