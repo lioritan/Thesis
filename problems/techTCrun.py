@@ -50,22 +50,24 @@ if __name__=='__main__':
     feature_names_list= []
     for count,((trn, trn_lbl),(tst,tst_lbl)) in enumerate(datasets):        
         print count
+        if count >2:
+            break
         #if count<=50:#each one goes different
         #    continue
         
         feature_name_trio= []
-        trn,tst= array(trn, dtype=object), array(tst, dtype=object)
+        training,testing= array(trn, dtype=object), array(tst, dtype=object)
                 
         logfile1= open('results%d_log_rec0.txt'%(count), 'w')
         logfile2= open('results%d_log_rec1.txt'%(count), 'w')
         logfile3= open('results%d_log_rec2.txt'%(count), 'w')
         logfiles=[logfile1, logfile2, logfile3]
         for i in [7]: #switch back to [3,7] later. doesn't seem to matter much between 1/3/5 and 7/9(which are worse for tree)
-            for d in xrange(3):    
-                blor= godfish.FeatureGenerationFromRDF(trn, trn_lbl, relationss)
+            for d in [0,1,2]:    
+                blor= godfish.FeatureGenerationFromRDF(training, trn_lbl, relationss)
                 blor.generate_features(30*(d**2), d, i, logfiles[d], 1, 1)  
                 logfiles[d].close()
-                trn, trn_lbl, tst, feature_names= blor.get_new_table(tst)
+                trn, trn_lbl, tst, feature_names= blor.get_new_table(testing)
 #                from sklearn.feature_selection import SelectKBest, chi2
 #                feature_selector= SelectKBest(chi2, k=min(100,size(trn,1) ))
 #                trn= feature_selector.fit_transform(trn, trn_lbl)
