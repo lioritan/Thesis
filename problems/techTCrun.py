@@ -15,7 +15,7 @@ def feature_select_ig(trn, trn_lbl, tst, fraction):
     ig_ratios=[ig_ratio(trn[:,j], trn_lbl) for j in xrange(size(trn,1))]
     idxs= sorted(ig_ratios, reverse=True)[:int(size(trn,1)*fraction)]
     
-    return trn[idxs], tst[idxs]
+    return trn[:, idxs], tst[:, idxs]
 
 if __name__=='__main__':    
         
