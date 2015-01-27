@@ -1,10 +1,11 @@
 Things to do:
 
 Alg:
+- switch to using 20NG subset instead of techTC (need BEP not acc)
+
 - new formulation? explore collective classification, link propagation,graph kernels. use weigthing by tfidf for majority label? do this in advance for feature gen, then table?
 - mby switch outer tree with boosting? (boosting on several recursive trees)
-- fix bruteforce and compare! do FG once offline using ~furnkrantz? need to also compare to 1 step alg and then state-of-art...- implement+compare ESA
-- implement ESA-FG
+- compare to ~furnkrantz? ESA?
 - using linkedCT for medical data? using conceptnet/freebase instead of yago?
 - implement anytime version. mby weighting by (featuresAdded+1)/(featuresTried+1)
 -what about non-binary features in general (avg instead of majority?)

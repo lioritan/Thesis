@@ -10,6 +10,13 @@ import time
 
 from matplotlib.mlab import find
 
+from alg10_ficuslike import ig_ratio
+def feature_select_ig(trn, trn_lbl, tst, fraction):
+    ig_ratios=[ig_ratio(trn[:,j], trn_lbl) for j in xrange(size(trn,1))]
+    idxs= sorted(ig_ratios, reverse=True)[:int(size(trn,1)*fraction)]
+    
+    return trn[idxs], tst[idxs]
+
 if __name__=='__main__':    
         
     import cPickle as pickle
@@ -39,21 +46,21 @@ if __name__=='__main__':
             fptr.close()
 #    
     res_7=[]
-    errs_svm= zeros((100, 3))
-    errs_knn= zeros((100,3))
-    errs_tree= zeros((100,3))
+    errs_svm= zeros((100, 3, 12)) #12->feature num percentage: 0.01,0.05,0.1,0.2,...,1.0
+    errs_knn= zeros((100,3, 12))
+    #errs_tree= zeros((100,3))
 
-    errs_svm_na1= zeros((100,3))
-    errs_knn_na1= zeros((100,3))
-    errs_tree_na1= zeros((100,3))
+    errs_svm_na1= zeros((100,3, 12))
+    errs_knn_na1= zeros((100,3, 12))
+#    errs_tree_na1= zeros((100,3))
     feature_nums= zeros((100, 3))
     feature_names_list= []
     for count,((trn, trn_lbl),(tst,tst_lbl)) in enumerate(datasets):        
         print count
 #        if count >2:
 #            break
-        #if count<=50:#each one goes different
-        #    continue
+        if count<50 or count>=51:#each one goes different
+            continue
         
         feature_name_trio= []
         training,testing= array(trn, dtype=object), array(tst, dtype=object)
@@ -68,47 +75,46 @@ if __name__=='__main__':
                 blor.generate_features(30*(d**2), d, i, logfiles[d], 1, 1)  
                 logfiles[d].close()
                 trn, trn_lbl, tst, feature_names= blor.get_new_table(testing)
-#                from sklearn.feature_selection import SelectKBest, chi2
-#                feature_selector= SelectKBest(chi2, k=min(100,size(trn,1) ))
-#                trn= feature_selector.fit_transform(trn, trn_lbl)
-#                tst= feature_selector.transform(tst)
+                
+                for j,fraction in enumerate([0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]):
+                    new_trn, new_tst= feature_select_ig(trn, trn_lbl, tst, fraction)
     
-                from sklearn.svm import SVC
-                from sklearn.neighbors import KNeighborsClassifier
-                from sklearn.tree import DecisionTreeClassifier
+                    from sklearn.svm import SVC
+                    from sklearn.neighbors import KNeighborsClassifier
+#                    from sklearn.tree import DecisionTreeClassifier
     
-                clf= SVC(kernel='linear', C=100)
-                clf.fit(trn, trn_lbl)
-                tst_predict= clf.predict(tst)
-                errs_svm[count, d]= mean(tst_predict!=tst_lbl)
+                    clf= SVC(kernel='linear', C=100)
+                    clf.fit(new_trn, trn_lbl)
+                    tst_predict= clf.predict(new_tst)
+                    errs_svm[count, d, j]= mean(tst_predict!=tst_lbl)
 
-                clf= KNeighborsClassifier(n_neighbors=1)
-                clf.fit(trn, trn_lbl)
-                tst_predict= clf.predict(tst)
-                errs_knn[count, d]= mean(tst_predict!=tst_lbl)
+                    clf= KNeighborsClassifier(n_neighbors=1)
+                    clf.fit(new_trn, trn_lbl)
+                    tst_predict= clf.predict(new_tst)
+                    errs_knn[count, d, j]= mean(tst_predict!=tst_lbl)
 
-                clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
-                clf.fit(trn, trn_lbl)
-                tst_predict= clf.predict(tst)
-                #results:
-                errs_tree[count, d]= mean(tst_predict!=tst_lbl)
-                feature_name_trio.append(feature_names)
-                feature_nums[count, d]= len(blor.new_features)
+#                clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
+#                clf.fit(trn, trn_lbl)
+#                tst_predict= clf.predict(tst)
+#                #results:
+#                errs_tree[count, d]= mean(tst_predict!=tst_lbl)
+#                feature_name_trio.append(feature_names)
+#                feature_nums[count, d]= len(blor.new_features)
 
-                trn[trn==-100]= -1
-                clf=SVC(kernel='linear', C=100)
-                clf.fit(trn, trn_lbl)
-                errs_svm_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
-                clf=KNeighborsClassifier(n_neighbors=1)
-                clf.fit(trn, trn_lbl)
-                errs_knn_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
-                clf=DecisionTreeClassifier(criterion='entropy',min_samples_split=2, random_state=0)
-                clf.fit(trn, trn_lbl)
-                errs_tree_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
+                    new_trn[new_trn==-100]= -1
+                    clf=SVC(kernel='linear', C=100)
+                    clf.fit(new_trn, trn_lbl)
+                    errs_svm_na1[count, d, j]= mean(clf.predict(new_tst)!=tst_lbl)
+                    clf=KNeighborsClassifier(n_neighbors=1)
+                    clf.fit(new_trn, trn_lbl)
+                    errs_knn_na1[count, d, j]= mean(clf.predict(new_tst)!=tst_lbl)
+#                    clf=DecisionTreeClassifier(criterion='entropy',min_samples_split=2, random_state=0)
+#                    clf.fit(trn, trn_lbl)
+#                    errs_tree_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
         feature_names_list.append(feature_name_trio)    
-        a=(errs_svm[count,:], errs_knn[count,:], errs_tree[count,:], errs_svm_na1[count,:], errs_knn_na1[count,:],errs_tree_na1[count,:],feature_name_trio, feature_nums[count,:])
+        a=(errs_svm[count,:,:], errs_knn[count,:,:], errs_svm_na1[count,:,:], errs_knn_na1[count,:,:],feature_name_trio, feature_nums[count,:])
         with open('results%d.pkl'%(count),'wb') as fptr:
             pickle.dump(a, fptr, -1)     
     with open('final_res.pkl','wb') as fptr:
-        pickle.dump((errs_svm, errs_knn, errs_tree, errs_svm_na1, errs_knn_na1, errs_tree_na1, feature_names_list, feature_nums), fptr, -1)
+        pickle.dump((errs_svm, errs_knn, errs_svm_na1, errs_knn_na1, feature_names_list, feature_nums), fptr, -1)
     
