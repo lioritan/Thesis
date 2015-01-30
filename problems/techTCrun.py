@@ -72,9 +72,11 @@ if __name__=='__main__':
         for i in [7]: #switch back to [3,7] later. doesn't seem to matter much between 1/3/5 and 7/9(which are worse for tree)
             for d in [0,1,2]:    
                 blor= godfish.FeatureGenerationFromRDF(training, trn_lbl, relationss)
-                blor.generate_features(30*(d**2), d, i, logfiles[d], 1, 1)  
+                blor.generate_features(30*(d**2), d, i, logfiles[d], 10, 1)  
                 logfiles[d].close()
                 trn, trn_lbl, tst, feature_names= blor.get_new_table(testing)
+                feature_name_trio.append(feature_names)
+                feature_nums[count, d]= len(blor.new_features)
                 
                 for j,fraction in enumerate([0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]):
                     new_trn, new_tst= feature_select_ig(trn, trn_lbl, tst, fraction)
@@ -115,6 +117,6 @@ if __name__=='__main__':
         a=(errs_svm[count,:,:], errs_knn[count,:,:], errs_svm_na1[count,:,:], errs_knn_na1[count,:,:],feature_name_trio, feature_nums[count,:])
         with open('results%d.pkl'%(count),'wb') as fptr:
             pickle.dump(a, fptr, -1)     
-    with open('final_res.pkl','wb') as fptr:
-        pickle.dump((errs_svm, errs_knn, errs_svm_na1, errs_knn_na1, feature_names_list, feature_nums), fptr, -1)
+#    with open('final_res.pkl','wb') as fptr:
+#        pickle.dump((errs_svm, errs_knn, errs_svm_na1, errs_knn_na1, feature_names_list, feature_nums), fptr, -1)
     
