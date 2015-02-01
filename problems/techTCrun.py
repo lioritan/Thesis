@@ -12,13 +12,13 @@ from matplotlib.mlab import find
 
 from alg10_ficuslike import ig_ratio
 def feature_select_ig(trn, trn_lbl, tst, fraction):
-    ig_ratios=[ig_ratio(trn[:,j], trn_lbl) for j in xrange(size(trn,1))]
-    idxs= sorted(ig_ratios, reverse=True)[:int(size(trn,1)*fraction)]
+    ig_ratios=[(ig_ratio(trn[:,j], trn_lbl), j) for j in xrange(size(trn,1))]
+    sorted_features_by_ig= sorted(ig_ratios, reverse=True)[:int(size(trn,1)*fraction)]
+    idxs=[b for a,b in sorted_features_by_ig]
     
     return trn[:, idxs], tst[:, idxs]
 
 if __name__=='__main__':    
-        
     import cPickle as pickle
     fptr=open('yago_relationss_smaller.pkl', 'rb')
     relationss= pickle.load(fptr)
