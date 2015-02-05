@@ -68,12 +68,10 @@ def make_graphviz_string(tree):
         if type(node.justify)==str and node.justify.startswith('leafed'):
             return 'n%d [shape=box, style="filled", label="LEAF\n nsamples:%d\n"];\n'%(free_id, len(node.objects)), free_id+1
         res, new_id= print_node(node, free_id)
-        res+= 'n%d -> n%d [label="n"];\n'%(free_id, new_id)
-        left_side, new_id= recurse(node.left_son, new_id)
-        res+= left_side
-        res+= 'n%d -> n%d [label="y"];\n'%(free_id, new_id)
-        right_side, new_id= recurse(node.right_son, new_id)
-        res+= right_side
+        for value,son in node.sons.items():
+            res+= 'n%d -> n%d [label="%d"];\n'%(free_id, new_id, value)
+            one_side, new_id= recurse(son, new_id)
+            res+= one_side
         return res, new_id
     
     tree_string+=recurse(tree.query_tree, 0)[0]

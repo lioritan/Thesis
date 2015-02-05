@@ -10,6 +10,7 @@ from matplotlib.mlab import find
 from scipy.stats import mode, chisquare
 
 import time
+from matplotlib.cbook import flatten
 
 
 def clean_tree_for_pickle(tree_node):
