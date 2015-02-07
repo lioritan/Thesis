@@ -66,7 +66,7 @@ def make_graphviz_string(tree):
         '''do for sons. right now this is non-multiclass(multiclass easy to add)
         return lowest free id, string'''
         if type(node.justify)==str and node.justify.startswith('leafed'):
-            return 'n%d [shape=box, style="filled", label="LEAF\n nsamples:%d\n"];\n'%(free_id, len(node.objects)), free_id+1
+            return 'n%d [shape=box, style="filled", label="LEAF %d\n nsamples:%d\n"];\n'%(free_id, node.chosen_tag, len(node.objects)), free_id+1
         res, new_id= print_node(node, free_id)
         for value,son in node.sons.items():
             res+= 'n%d -> n%d [label="%d"];\n'%(free_id, new_id, value)
