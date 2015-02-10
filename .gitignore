@@ -20,6 +20,6 @@ ohsumed.91.txt
 *.bbl
 *.blg
 *.log
-Proposal/*.pdf
+#Proposal/*.pdf
 *.synctex
 *.pyc
