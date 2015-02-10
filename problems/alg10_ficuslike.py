@@ -40,6 +40,7 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
+    return 0.0,0.0
     if len(frozenset(feature_values))>2:
         return 0.0,0.0 #only works for 2 values
     locs= find(feature_values==1)
@@ -464,7 +465,7 @@ class TreeRecursiveSRLStep(object):
             query=lambda x, b=classifier_chosen: b.predict(x, True)
             clf_tagging= array([query(x) for x in self.objects])
             tree_ig=ig_ratio(self.tagging, clf_tagging)
-            tree_ig_penalty=1 #TODO? something to do with tree size and depth?
+            tree_ig_penalty=0.5 #TODO? something to do with tree size and depth?
             
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
             if tree_ig/tree_ig_penalty > self.ig: #if tree is better, it's the new classifier

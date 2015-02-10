@@ -9,6 +9,8 @@ import os
 import time
 
 from matplotlib.mlab import find
+from tree_utils import *
+import pydot
 
 from alg10_ficuslike import ig_ratio
 def feature_select_ig(trn, trn_lbl, tst, fraction):
@@ -46,12 +48,12 @@ if __name__=='__main__':
             fptr.close()
 #    
     res_7=[]
-    errs_svm= zeros((100, 3, 12)) #12->feature num percentage: 0.01,0.05,0.1,0.2,...,1.0
-    errs_knn= zeros((100,3, 12))
-    #errs_tree= zeros((100,3))
+    errs_svm= zeros((100, 3, 19)) #12->feature num percentage: 0.01,0.05,0.1,0.2,...,1.0
+    errs_knn= zeros((100,3, 19))
+    errs_tree= zeros((100,3,19))
 
-    errs_svm_na1= zeros((100,3, 12))
-    errs_knn_na1= zeros((100,3, 12))
+    errs_svm_na1= zeros((100,3, 19))
+    errs_knn_na1= zeros((100,3, 19))
 #    errs_tree_na1= zeros((100,3))
     feature_nums= zeros((100, 3))
     feature_names_list= []
@@ -59,7 +61,8 @@ if __name__=='__main__':
         print count
 #        if count >2:
 #            break
-        if count<50 or count>=51:#each one goes different
+        if count!=31 and count!=37 and count!=43 and count!=49 and count!=51 and count!=59 and count!=62 and count!=64 and count!=70:#each one goes different
+        #if count!=19 and count!=77 and count!=98 and count!=4 and count!=12 and count!=22 and count!=24 and count!=25:
             continue
         
         feature_name_trio= []
@@ -72,18 +75,23 @@ if __name__=='__main__':
         for i in [7]: #switch back to [3,7] later. doesn't seem to matter much between 1/3/5 and 7/9(which are worse for tree)
             for d in [0,1,2]:    
                 blor= godfish.FeatureGenerationFromRDF(training, trn_lbl, relationss)
-                blor.generate_features(30*(d**2), d, i, logfiles[d], 10, 1)  
+                blor.generate_features(30*(2**2), d, i, logfiles[d], 10, 1)  
                 logfiles[d].close()
-                trn, trn_lbl, tst, feature_names= blor.get_new_table(testing)
+                trn, trn_lbl, tst, feature_names, feature_trees= blor.get_new_table(testing)
                 feature_name_trio.append(feature_names)
                 feature_nums[count, d]= len(blor.new_features)
+                for f_number,(rel,rec_tree) in enumerate(feature_trees):
+                    print rel
+                    with open('rec_tree_dot depth %d,dataset%d,num %d.dot'%(d,count,f_number+1), 'wb') as fptr:
+                        fptr.write(make_graphviz_string(rec_tree))
+                    #export_to_pdf(rec_tree, 'rec_tree%d,dataset%d.pdf'%(f_number+1,count))
                 
-                for j,fraction in enumerate([0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]):
+                for j,fraction in enumerate([0.005,0.0075,0.01,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]):
                     new_trn, new_tst= feature_select_ig(trn, trn_lbl, tst, fraction)
     
                     from sklearn.svm import SVC
                     from sklearn.neighbors import KNeighborsClassifier
-#                    from sklearn.tree import DecisionTreeClassifier
+                    from sklearn.tree import DecisionTreeClassifier
     
                     clf= SVC(kernel='linear', C=100)
                     clf.fit(new_trn, trn_lbl)
@@ -95,26 +103,27 @@ if __name__=='__main__':
                     tst_predict= clf.predict(new_tst)
                     errs_knn[count, d, j]= mean(tst_predict!=tst_lbl)
 
-#                clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
-#                clf.fit(trn, trn_lbl)
-#                tst_predict= clf.predict(tst)
+                    clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=2, random_state=0)
+                    clf.fit(new_trn, trn_lbl)
+                    tst_predict= clf.predict(new_tst)
+                    errs_tree[count,d,j] = mean(tst_predict!=tst_lbl)
 #                #results:
 #                errs_tree[count, d]= mean(tst_predict!=tst_lbl)
 #                feature_name_trio.append(feature_names)
 #                feature_nums[count, d]= len(blor.new_features)
 
-                    new_trn[new_trn==-100]= -1
-                    clf=SVC(kernel='linear', C=100)
-                    clf.fit(new_trn, trn_lbl)
-                    errs_svm_na1[count, d, j]= mean(clf.predict(new_tst)!=tst_lbl)
-                    clf=KNeighborsClassifier(n_neighbors=1)
-                    clf.fit(new_trn, trn_lbl)
-                    errs_knn_na1[count, d, j]= mean(clf.predict(new_tst)!=tst_lbl)
+#                    new_trn[new_trn==-100]= -1
+#                    clf=SVC(kernel='linear', C=100)
+#                    clf.fit(new_trn, trn_lbl)
+#                    errs_svm_na1[count, d, j]= mean(clf.predict(new_tst)!=tst_lbl)
+#                    clf=KNeighborsClassifier(n_neighbors=1)
+#                    clf.fit(new_trn, trn_lbl)
+#                    errs_knn_na1[count, d, j]= mean(clf.predict(new_tst)!=tst_lbl)
 #                    clf=DecisionTreeClassifier(criterion='entropy',min_samples_split=2, random_state=0)
 #                    clf.fit(trn, trn_lbl)
 #                    errs_tree_na1[count, d]= mean(clf.predict(tst)!=tst_lbl)
         feature_names_list.append(feature_name_trio)    
-        a=(errs_svm[count,:,:], errs_knn[count,:,:], errs_svm_na1[count,:,:], errs_knn_na1[count,:,:],feature_name_trio, feature_nums[count,:])
+        a=(errs_svm[count,:,:], errs_knn[count,:,:], errs_tree[count,:,:], feature_nums[count,:])
         with open('results%d.pkl'%(count),'wb') as fptr:
             pickle.dump(a, fptr, -1)     
 #    with open('final_res.pkl','wb') as fptr:
