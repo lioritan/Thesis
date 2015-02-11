@@ -85,10 +85,10 @@ One of the earliest methods of utilizing relational information is \emph{Inducti
 Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \citep{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
 
 One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \citep{kramer2000bottom}: Since we wish to allow the use of first-order predicates in propositional methods, we create possible (non recursive) first-order predicates in a process known as refinement search \citep{van1998completeness}.
-We define a graph of possible first-order formulae by selecting an initial relation and allowing one of two possible refinement operators: The first operator is binding a single variable in the formula by assigning a constant value to it, and the second is binding a single variable using another relation.
+%We define a graph of possible first-order formulae by selecting an initial relation and allowing one of two possible refinement operators: The first operator is binding a single variable in the formula by assigning a constant value to it, and the second is binding a single variable using another relation.
 
-These operators define a search space. For each formula, we can ask whether a given object satisfies it, giving us a binary query for the data. We often prefer to only use formulae with one unbound variable, as it simplifies the satisfaction check.
-It is important to note that each application of refinement operators yields a formula that is subsumed by the parent, meaning that any object satisfying the child formula will also satisfy its parent.
+%These operators define a search space. For each formula, we can ask whether a given object satisfies it, giving us a binary query for the data. We often prefer to only use formulae with one unbound variable, as it simplifies the satisfaction check.
+%It is important to note that each application of refinement operators yields a formula that is subsumed by the parent, meaning that any object satisfying the child formula will also satisfy its parent.
 
 A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \citep{van2001upgrade} were suggested, where instead of creating predicates a-priori, we do so during the training phase, allowing us to avoid searching non-promising refinements.
 
@@ -98,16 +98,16 @@ As a continuation to this trend, \citet{popescul200716} suggest SGLR, an upgrade
 
 %Newer advances in the relational approach can be seen in the field of \emph{Statistical Relational Learning} \citep{blockeel2013statistical, nath2014learning} as well as the task of \emph{Collective Classification} \citep{laorden2012collective, kajdanowicz2013collective}. The general field of Statistical Relational Learning (and reasoning) deals in tasks where there is a complex, relational structure within the domain. Common tasks in the field are: Collective classification, link prediction and entity resolution between datasets. Of these, the most relevant to our domain is the task of collective classification, where relational information is used to infer labels of objects based on related objects. However, this relational information is not used for feature generation, but as a way to link objects within the target domain.
 
-%should possibly be moved to related work
+%should possibly be moved to related work (not limited to combinations)
 Recently, there has been a strong trend of utilizing \emph{Deep Learning} \citep{lecun1998gradient, bengio2009learning} as a feature generation technique. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features.
 There are many good examples of this, such as the ones presented in \citet{plotz2011feature} and \citet{kim2013deep}.
 
-An interesting domain can be found in a well-known and well-explored task within the field of Natural Language Processing (NLP): the task of text classification.
-this task involves assigning categories or labels to documents, based on their content. The potential labels/categories are given in advance, and we have a collection of labeled documents to use as a training set. This task has many practical applications, such as spam filtering, sentiment analysis and topic identification.
+%An interesting domain can be found in a well-known and well-explored task within the field of Natural Language Processing (NLP): the task of text classification.
+%this task involves assigning categories or labels to documents, based on their content. The potential labels/categories are given in advance, and we have a collection of labeled documents to use as a training set. This task has many practical applications, such as spam filtering, sentiment analysis and topic identification.
 
-Until recent years, text classification systems represented text almost exclusively as a \emph{Bag of Words}, thus creating a vector space representation \citep{Wu:1981:CST:1013228.511759, salton1983introduction}. While this method offered simplicity, it had inherent limitations in terms of representation power.
+%Until recent years, text classification systems represented text almost exclusively as a \emph{Bag of Words}, thus creating a vector space representation \citep{Wu:1981:CST:1013228.511759, salton1983introduction}. While this method offered simplicity, it had inherent limitations in terms of representation power.
 
-A major breakthrough came in the form of the \emph{explicit sematic analysis} \citep{gabrilovich2009wikipedia} method, which used semantic concepts extracted from knowledge sources such as Wikipedia as features. This technique allowed for a richer representation of the text, and has shown improvement over the Bag-of-Words representation for the task of text classification, especially in shorter texts.
+%A major breakthrough came in the form of the \emph{explicit sematic analysis} \citep{gabrilovich2009wikipedia} method, which used semantic concepts extracted from knowledge sources such as Wikipedia as features. This technique allowed for a richer representation of the text, and has shown improvement over the Bag-of-Words representation for the task of text classification, especially in shorter texts.
 
 %this one is pointless, right?
 %The goal of our work is to utilize Linked Data as a knowledge source for automatically generating features based on meaningful semantic concepts, thus improving existing machine learning algorithms. We intend to do so in a supervised manner to allow a better guided search over candidate features, based on a combination of complexity and predictive power. We will place focus on the domain of text classification as a natural application of our approach.
@@ -145,8 +145,9 @@ To define a feature map over the new training set $\hat{S}$, we look for all rel
 ${\cal G}(S,{\cal R}) = \left\{ r \in {\cal R} | v_i(S) \subseteq \{x_1 | (x_1,x_2) \in r\}\right\}$. In the intro example, one such $r$ can be a relation mapping last names to countries of origin. We then use ${\cal G}$ as a feature map for $\hat{S_i}$.
 Solving this new learning problem on $\hat{S_i}, {\cal G}(S,{\cal R})$ yields our classifier $h_{i}$.
 Note that during the process of learning $h_{i}$, we can once again call the feature generation procedure to generate useful features for the \emph{new} task, hence the recursive aspect of the process. We can see this in the intro example, wherein we construct a second-level problem on countries of origin to correctly identify the appropriate conditions that signify high risk countries.
+We note that in order to prevent cycles which provide no new information, we disallow re-use of a reverse relations to already used ones.
 
-When performing feature generation, we often wish to evaluate the predictive power of generated features. When such evaluation is done in the context of the entire dataset, it is possible to lose the unique benefit of a potentially powerful feature. To address this phenomenon, we decided to perform and evaluate our feature generation algorithm within local contexts through the use of a decision tree. It is important to note, however, that the features generated in this process can be used for any induction algorithm, not necessarily decision tree induction algorithms.
+When performing feature generation, we often wish to evaluate the predictive power of generated features. When such evaluation is done in the context of the entire dataset, it is possible to lose the unique benefit of a potentially powerful feature. To address this phenomenon, we decided to apply our recursive feature generation algorithm in a divide-and-conquer approach through the use of a decision tree. It is important to note, however, that the features generated in this process can be used for any induction algorithm, not necessarily decision tree induction algorithms.
 Using decision trees has several advantages: 
 \begin{itemize}
 	\item We gain an innate way to evaluate and filter generated features: A feature generated in a node will be added to the final result only if it is no less informative than the existing feature with the highest information-gain. %We further require that the features achieve a significantly better $\chi^2$ score on the training examples.->this part is not accurate!!!
@@ -155,22 +156,9 @@ Using decision trees has several advantages:
 	\item Since we use generated features in the constructed tree, we can ensure that features generated afterwards within the tree will be largely orthogonal to it, thus ensuring variety in the generated features. %is this accurate?
 	\item Decision trees are relatively interpretable, which leads to features which are easier to understand.
 \end{itemize}
-Naturally, we use decision trees as the classifiers for the newly constructed learning problems as well, allowing us to easily repeat the process recursively. This also means we can construct features which mix multiple levels of abstraction by having some of the nodes within the tree be constructed features and others be regular ones. In the into example, we could decide that if the country of origin appropriate for a person's last name is a country at risk, we must still ask whether the person's last name is their maiden name, as the constructed feature would otherwise yield a false positive.
+Naturally, we use decision trees as the classifiers for the newly constructed learning problems as well, allowing us to easily repeat the process recursively. %This also means we can construct features which mix multiple levels of abstraction by having some of the nodes within the tree be constructed features and others be regular ones. In the intro example, we could decide that if the country of origin appropriate for a person's last name is a country at risk, we must still ask whether the person's last name is their maiden name, as the constructed feature would otherwise yield a false positive.
 
-Finally, the features generated during the decision tree training procedure are collected and returned for use as general, black-box features which can be used along with any induction algorithm.
-
-\subsection{Analysis}
-
-%I honestly have no idea where I'm going with these, so mby...
-%Due to the nature of the feature generation method, the generated features are decision trees. These features capture a subset of feature values linked in the semantic domain through a shared relational chain 
-
-We can look at the recursive feature generation process as a search problem over the DAG of possible domains:
-\begin{defn} Domain:\\%defined recursivly. add that we can do ANY transform G using S,R,F
-	$S$ is a domain.
-	If $\bar{S}$ is a domain, then for any function $G_{\bar{F},\bar{R}}: O\rightarrow Dom_i$, $\bar{S'}=\{(v_i,label(v_i)|(o,y)\in \bar{S}, v_i=G_{\bar{F},\bar{R}}(o)\}$ is also a domain.
-\end{defn}
-The result bears some similarity to the process of searching over a refinement graph in the field of Relational Learning.
-In order for this search space to be a acyclic, we must take care to avoid cycles by refusing to return to already explored domains. This also makes sense from an algorithmic perspective, as there is no new information to be gained by this.
+Finally, the features generated during the decision tree training procedure are collected and returned for use as general, black-box features which can be used along with any induction algorithm. The decision tree itself is discarded.
 
 The aforementioned feature generation approach offers some unique contributions:
 \begin{itemize}
@@ -182,7 +170,7 @@ The aforementioned feature generation approach offers some unique contributions:
 
 
 \subsection{Applications for Text Categorization}
-In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach.
+In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts, as in the bag-of-words \citep{Wu:1981:CST:1013228.511759, salton1983introduction} approach. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach.
 The resulting features will locate sets of words which are connected in the relational domain. This allows us to better generalize compared to the standard bag-of-words method, and find potentially complex semantic relationships, especially when using Semantic Linked Data as our relational database.
 
 An important side effect of this usage is that, since each label in the semantic data defines a relation and texts may contain words from different contexts, there are often multiple relations which apply and thus ${\cal G}(S,{\cal R})$ is often large. For example, a text referring to William Shakespeare's play of "Hamlet" may connect to relations on people (for William Shakespeare himself), on theatre plays (for "Hamlet"), and possibly locations (for the country of Denmark, where the play is set).
@@ -205,7 +193,7 @@ We compared the new set of features (our new features combined with the original
 
 \subsection{Results}
 %results, specific examples (qualative analysis), explaining it and so on
-Figure \ref{fig:accuracy} shows the average accuracy across all datasets within techTC-100 for various feature selection levels. We compare the baseline features to a combined pool of the original and generated features. The left graph shows the accuracy using K-Nearest Neighbours \citep{fix1951discriminatory} as our classifier ($K=1$) and the right graph shows the accuracy using SVM \citep{cortes1995support} as our classifier (Linear kernel, $C=100$). Results ran using CART \citep{steinberg2009cart} as a classifier (requiring a consistent tree) yielded no discernible pattern of improvement or decrease in performance, except in very low feature selection levels, where there is a significance decrease in accuracy $ (p<0.05) $.
+Figure \ref{fig:accuracy} shows the average accuracy across all datasets within techTC-100 for various feature selection levels. We compare the baseline features to a combined pool of the original and generated features. The left graph shows the accuracy using K-Nearest Neighbours \citep{fix1951discriminatory} as our classifier ($K=1$) and the right graph shows the accuracy using SVM \citep{cortes1995support} as our classifier (Linear kernel, $C=100$). Results ran using CART \citep{breiman1984classification} as a classifier (requiring a consistent tree) yielded no discernible pattern of improvement or decrease in performance, except in very low feature selection levels, where there is a significance decrease in accuracy $ (p<0.05) $.
 
 We see that the depth one application is better than the bag-of-words approach, and the depth two application yields a further improvement. We witness this for both algorithms, especially in high (over $20\%$) feature selection levels. This is slightly more apparent for SVM-based classification. Both depths achieve a significant improvement $ (p<0.05) $ over the bag-of-words approach for multiple feature selection levels. For instance, when taking $20\% $ of the features, we see a statistically significant improvement for both KNN and SVM classification accuracies (using a paired-t-test).  
 Furthermore, for SVM we see a significant improvement between the first and second depths at a $0.75\%$ feature selection level. For KNN, there is a statistically improvement between the depths for feature selection levels in the range $60\%-80\%$, though the depth two application is only significantly better than the baseline approach for a feature selection level of $70\%$
@@ -332,9 +320,9 @@ Another major potential avenue for improvement is to use such links in order to 
 				\Return \Call{splitByFeature}{feature, S}
 			\EndFunction
 			\Function{RI-ChooseFeature}{S, F, R, d, min-leaf}
-			\If {$d\leq 0$}
+			\If {$d = 0$}
 				\State
-				\Return \Call{DecisionTreeInduction}{S,F}
+				\Return \Call{InductionAlgorithm}{S,F}
 			\EndIf
 			\State addedF= $\{\}$
 			\While {resources not exhausted, new relevant features exist}
