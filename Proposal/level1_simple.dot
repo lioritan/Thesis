@@ -1,0 +1,10 @@
+digraph Tree{
+ graph [compound=true];
+n0 [shape=box, style="filled", label="Is (or shares a name with) a mythological goddess"];
+n0 -> n1 [label="n"];
+n1 [shape=box, style="filled", label="-
+"];
+n0 -> n2 [label="y"];
+n2 [shape=box, style="filled", label="+
+"];
+}

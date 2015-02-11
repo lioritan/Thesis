@@ -151,7 +151,7 @@ Note that during the process of learning $h_{i}$, we can once again call the fea
 When performing feature generation, we often wish to evaluate the predictive power of generated features. When such evaluation is done in the context of the entire dataset, it is possible to lose the unique benefit of a potentially powerful feature. To address this phenomenon, we decided to perform and evaluate our feature generation algorithm within local contexts through the use of a decision tree. It is important to note, however, that the features generated in this process can be used for any induction algorithm, not necessarily decision tree induction algorithms.
 Using decision trees has several advantages: 
 \begin{itemize}
-	\item We gain an innate way to evaluate and filter generated features: A feature generated in a node will be added to the final result only if it achieves a higher information-gain than the most informative existing feature. %We further require that the features achieve a significantly better $\chi^2$ score on the training examples.->this part is not accurate!!!
+	\item We gain an innate way to evaluate and filter generated features: A feature generated in a node will be added to the final result only if it is no less informative than the existing feature with the highest information-gain. %We further require that the features achieve a significantly better $\chi^2$ score on the training examples.->this part is not accurate!!!
 	\item Since we repeat this process within inner nodes of the tree, we allow for the discovery of locally relevant relationships which may be difficult to pick up when looking at the entirety of the data. We use pre-pruning based on minimal leaf size to avoid creating features which are poorly supported by actual training data.
 	\item Since a decision tree classifier tests features one at a time, we can easily isolate the impact of a specific generated feature.
 	\item Since we use generated features in the constructed tree, we can ensure that features generated afterwards within the tree will be largely orthogonal to it, thus ensuring variety in the generated features. %is this accurate?
@@ -204,58 +204,93 @@ As a knowledge base, we used YAGO2 \citep{hoffart2013yago2}, omitting any relati
 We ran our feature generation algorithm for both depth 1, i.e., creating a recursive learning problem for the original problem, as well as depth 2, creating recursive learning problems for the original problem and the first order recursive problem.
 
 We compared the new set of features (our new features combined with standard binary bag-of-words features) to the original binary bag-of-words features at various feature selection levels. We used information gain as the feature selection criterion.
+
 \subsection{Results}
 %results, specific examples (qualative analysis), explaining it and so on
-Figure \ref{fig:accuracy} shows the average accuracy across all datasets within techTC-100 over various feature selection levels. We show our method for both depths, compared to the non-relational case.  The left graph shows the accuracy using K-Nearest Neighbours \citep{fix1951discriminatory} as our classifier ($K=1$) and the right graph shows the accuracy using SVM \citep{cortes1995support} as our classifier (Linear kernel, $C=100$). Results ran using CART \citep{steinberg2009cart} as a classifier (requiring a consistent tree) yielded similar results in terms of accuracy to those of SVM, albeit with a higher base accuracy level ($0.73 instead of 0.7$).
-We see that the one-level application is better than the simple bag-of-words approach, and the two-level application yields a further improvement. This result is far more apparent in SVM based classification, as the impact of a single powerful feature is much clearer compared to a nearest neighbour approach. The two-level application yields a statistically significant improvement $ (p<0.05) $ over the simple bag-of-words approach for multiple feature selection levels. For instance, when taking $20\% $ of the features, we see a statistically significant improvement for both KNN and SVM classification accuracies (using a paired-t-test). 
+Figure \ref{fig:accuracy} shows the average accuracy across all datasets within techTC-100 over various feature selection levels. We show our method for both depths, compared to the non-relational case.  The left graph shows the accuracy using K-Nearest Neighbours \citep{fix1951discriminatory} as our classifier ($K=1$) and the right graph shows the accuracy using SVM \citep{cortes1995support} as our classifier (Linear kernel, $C=100$). Results ran using CART \citep{steinberg2009cart} as a classifier (requiring a consistent tree) yielded no discernible pattern of improvement or decrease in performance, except in very low feature selection levels, where there is a statistically significance decrease in accuracy $ (p<0.05) $.
+
+We see that the one-level application is better than the simple bag-of-words approach, and the two-level application yields a further improvement. We witness this for both algorithms, especially in high (over $20\%$) feature selection levels. This is slightly more apperant for SVM based classification, as the impact of a few powerful features is easier to identify. Both levels achieve a statistically significant improvement $ (p<0.05) $ over the simple bag-of-words approach for multiple feature selection levels. For instance, when taking $20\% $ of the features, we see a statistically significant improvement for both KNN and SVM classification accuracies (using a paired-t-test).  
+Furthermore, for SVM, there is a statistically significant improvement between the first and second levels at a $0.75\%$ feature selection level. For KNN, there is a statistically significant improvement between the levels for feature selection levels in the range $60\%-80\%$, but there is only statistically significant improvement between the second level and the baseline approach for a feature selection level of $70\%$
 
 Figure \ref{fig:accuracy_low} shows the average accuracy across all datasets within techTC-100 over very low feature selection levels. 
-We see that in lower feature selection levels the effect diminishes for both classifier types, as some of the generated features are filtered out by the feature selection process. The lowest feature selection level at which we found a statistically significant improvement is $7.5\%$ for SVM, and $15\%$ for KNN.
+We see that in lower feature selection levels the effect generally diminishes for both classifier types, as some of the generated features are filtered out by the feature selection process. The lowest feature selection level at which we found a statistically significant improvement is $0.75\%$ for SVM, and $15\%$ for KNN.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{accuracy.pdf}
+	\includegraphics[width=\linewidth]{acc2.pdf}
 	\caption{Average accuracy across all 100 datasets for various feature selection levels. Left side: KNN, Right side: SVM}
 	\label{fig:accuracy}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{accuracy_low.pdf}
+	\includegraphics[width=\linewidth]{acc_low2.pdf}
 	\caption{Average accuracy across all 100 datasets for very low feature selection levels. Left side: KNN, Right side: SVM}
 	\label{fig:accuracy_low}
 \end{figure}
 
-We note that due to the conservative feature generation process, very few features are generated: in nearly half of the datasets within techTC-100, no features are generated at all, and in no single dataset is the number of features greater than five. We also note that all of the generated features arise from local contexts, i.e, when looking at the entire dataset we would have difficulty identifying these features as especially useful. A more careful look at datasets where no features are generated reveals that they tend to have more relations where there are only very few objects in the newly generated problem. Since we only sample some of the possible relations to attempt feature generation, this may be a major factor to the reason no features have been generated.
+We note that due to the conservative feature generation process, very few features are generated: in nearly half of the datasets within techTC-100, no features are generated at all, and in no single dataset is the number of features greater than six. We also note that all generated features arise from local contexts, i.e, when looking at the entire dataset we would have difficulty identifying these features as especially useful. A more careful look at datasets where no features are generated reveals that they tend to have more relations where there are only very few objects in the newly generated problem. Since we only sample some of the possible relations to attempt feature generation, this is a major factor in the amount of features generated in general, as well as part of the reason why no features are generated for some datasets. Experiments with lowering the amount of sampled relations shows a noticeable decrease in both number of generated features and mean increase in accuracy compared to the baseline approach.
 
-Figure \ref{fig:ratios} shows the mean ratio between the accuracy of the base approach and the relational approach, and figures \ref{fig:ratios_max} and \ref{fig:ratios_min} show the minimal and maximal ratios accordingly. We note that while the average improvement in accuracy is not large, we can often achieve a $10\%-15\%$ increase, and potentially reach as much as a $30\%$ increase in accuracy for some datasets within TechTC-100. We also note that it is possible to have a decrease in accuracy, but we note that for most cases, especially when using SVM as the classification method, we can limit it to no more than a $10\%$ decrease. Results for CART are once again similar to those of SVM, but with higher variance in both directions.
+Figure \ref{fig:ratios} shows the mean ratio between the accuracy of the base approach and the relational approach, and figures \ref{fig:ratios_max} and \ref{fig:ratios_min} show the minimal and maximal ratios accordingly. We note that while the average improvement in accuracy is not large (due to many datasets where no features are generated), we can often achieve a $20\%-25\%$ increase, and potentially reach as much as a $40\%$ increase in accuracy for some datasets within TechTC-100. We also note that it is possible to have a decrease in accuracy, but we note that for most cases, especially when using SVM as the classification method, we can limit it to no more than a $10\%$ decrease. We also note that the level one application tends to be more conservative than the two level approach, yielding a lower average improvement and maximal improvement, but also a lower decrease in the worst cases.
+Results for CART show once again that the level one application tends to be more conservative. There is no clear trend regarding the mean ratios, and shows a much higher variance in terms of minimal and maximal ratios, offering as much as a $30\%$ difference in either direction.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{ratios.pdf}
+	\includegraphics[width=\linewidth]{ratios2.pdf}
 	\caption{Average accuracy ratio across all 100 datasets for various feature selection levels. Left side: KNN, Right side: SVM}
 	\label{fig:ratios}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{ratios_max.pdf}
+	\includegraphics[width=\linewidth]{ratios_max2.pdf}
 	\caption{Maximum accuracy ratio across all 100 datasets for various feature selection levels. Left side: KNN, Right side: SVM}
 	\label{fig:ratios_max}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{ratios_min.pdf}
+	\includegraphics[width=\linewidth]{ratios_min2.pdf}
 	\caption{Minimum accuracy ratio across all 100 datasets for various feature selection levels. Left side: KNN, Right side: SVM}
 	\label{fig:ratios_min}
 \end{figure}
 
 
 \subsection{Qualitative Analysis}
-In order to better understand the contribution of these features, let us look at several of them to try and better understand them. Figure \ref{fig:tree1} shows one of the features generated for single level feature generation. We can see %do this!!!
+In order to better understand the contribution of these features, let us look at several of them to try and better understand them. Figure \ref{fig:level1_good} shows one of the features generated for single level feature generation. We can see that the feature attempts to separate based on geographical location. Figure \ref{fig:level1_simple} shows a simple feature regarding people, and showcases the fact that when there is no need for overly complex features, our technique will not force such features. This feature yields a $10\%-15\%$ increase in accuracy (depending on feature selection level), and is generated by both the single and two level approaches.
 
-%more stuff
+Figure \ref{fig:level2_tree} showcases the additional power of the level two approach. The second level learning problem separates non-countries from countries, as well as countries which deal with Arabic nations who are not fuel manufactures from those who embargo them.
+
+Figure \ref{fig:weird_trees} showcases some of the unique oddities of using our technique with the YAGO2 knowledge base. Since YAGO groups together all entities which have a grammatical gender (including fictional characters and non-living objects) under a single relation, the constructed feature looks at both deceased individuals and words that are the same as Australian television channels (such as Gold and Galaxy) at the same time. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{level1_good.pdf}
+	\caption{A single level feature regarding nations and organizations with official websites}
+	\label{fig:level1_good}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{level1_simple.pdf}
+	\caption{A single level feature regarding people (real or fictional)}
+	\label{fig:level1_simple}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{level2_tree.pdf}
+	\caption{A two level feature regarding countries and organizations}
+	\label{fig:level2_tree}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{weird_trees.pdf}
+	\caption{A single level feature regarding things with a grammatical gender}
+	\label{fig:weird_trees}
+\end{figure}
+
 
 \section{Conclusions}
 %finishing up and summary
@@ -308,7 +343,7 @@ Another major potential avenue for improvement is to use such links in order to 
 				\State S'= (newOb,newY)
 				\State newClf= \Call {RI-Tree}{S', newF, R, $d-1$, min-leaf}
 				\State f= function(x): return newClf(feature(x))
-				\If {\Call{Info-Gain}{f, S} $>$ \Call{Best-Info-Gain}{F, S}}
+				\If {\Call{Info-Gain}{f, S} $\geq$ \Call{Best-Info-Gain}{F, S}}
 					\State addedF= addedF$\cup \{f\}$
 				\EndIf
 			\EndWhile

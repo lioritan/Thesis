@@ -1,0 +1,15 @@
+digraph Tree{
+ graph [compound=true];
+n0 [shape=box, style="filled", label="Is dead"];
+n0 -> n1 [label="y"];
+n1 [shape=box, style="filled", label="+
+"];
+n0 -> n2 [label="n"];
+n2 [shape=box, style="filled", label="Is it an Australian television channel"];
+n2 -> n3 [label="n"];
+n3 [shape=box, style="filled", label="-
+"];
+n2 -> n4 [label="y"];
+n4 [shape=box, style="filled", label="+
+"];
+}
