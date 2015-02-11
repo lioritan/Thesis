@@ -1,6 +1,6 @@
 digraph Tree{
  graph [compound=true];
-n0 [shape=box, style="filled", label="Is located in with Los Angeles"];
+n0 [shape=box, style="filled", label="Is located in Los Angeles"];
 n0 -> n1 [label="n"];
 n1 [shape=box, style="filled", label="Is located in Texas"];
 n1 -> n3 [label="n"];

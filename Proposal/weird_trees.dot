@@ -1,6 +1,6 @@
 digraph Tree{
  graph [compound=true];
-n0 [shape=box, style="filled", label="Is dead"];
+n0 [shape=box, style="filled", label="Is deceased"];
 n0 -> n1 [label="y"];
 n1 [shape=box, style="filled", label="+
 "];
