@@ -58,22 +58,21 @@ In recent years, a new resource in the form of Semantic Linked Data has begun to
 It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \citep{cheng2011automated, paulheim2012unsupervised}. 
 
 Existing feature generation approaches based on Linked Data can offer great benefits, as they can add useful type information, and often add semantic information such as actors playing in a given movie, or the population of a given city.
-However, we would also like to be capable of locating more complex relationships between entities.
+However, we would also like to be capable of identifying more complex relationships between entities.
 
 In this work, we present a new methodology for generating complex relational features.  Our algorithm constructs new learning problems from existing feature values, using relational data, such as the semantic web, as the features for the constructed problem.
-Using common induction algorithms, we can then construct a classifier which serves as a feature for the original problem. An important aspect of this approach is that it can be applied recursively within the new learning problem, allowing for an automated, data-driven, exploration of the large space of possible features.
-The use of classifiers on new problems can effectively capture complex relationships that are difficult to discover using existing feature-generation methods.
+Using common induction algorithms, we can then construct a classifier that serves as a feature for the original problem. An important aspect of this approach is that it can be applied recursively within the new learning problem, allowing for an automated, data-driven, exploration of the large space of possible  complex features that are difficult to discover using existing feature-generation methods.
 
 As an example of the potential use of such an approach, consider the following:
 Suppose we are given medical records of patients containing the full name as well as medically relevant information.
 Our task is to identify patients with high risk of developing a \emph{genetic} disease, which is more common in warm countries as well as countries with a lower GDP.
-The original set of features is not sufficient for inducing the target concept.  Assume, however, that we have access to an external knowledge base, containing, among others, relations specifying information about countries and connecting last names with country of origin.
-Our method would first formulate a new learning problem where the positive examples are last names of high-risk patients, and then, through a recursive process, formulate a new problem where the positive examples are countries of origin corresponding to last names of high risk patients. The resulting classifier could then be used as a regular binary feature when classifying patients, allowing us to capture the genetic component of the disease through the last name. While traditional feature generation methods could possibly find some relation-based trends, they would struggle to find the above relationship, as it is too complex.
+The original set of features is not sufficient for inducing the target concept.  Assume, however, that we have access to an external knowledge base containing, among others, relations specifying information about countries and connecting last names with country of origin.
+Our method would first formulate a new learning problem where the positive examples are last names of high-risk patients, and then, through a recursive process, formulate a new problem where the positive examples are countries of origin corresponding to last names of high risk patients. The resulting classifier could then be used as a regular binary feature when classifying patients, allowing us to capture the genetic component of the disease through the last name (figure \ref{fig:example}). While traditional feature generation methods could possibly find some relation-based trends, they would struggle to find such a complex relationship.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{example.pdf}
-	\caption{An example of a generated feature used in a decision tree classifier. Note that a classifier (which is created using relational data) is called on the value of a feature.}
+	\caption{An example of a recursive relational classifier}
 	\label{fig:example}
 \end{figure}
 
@@ -82,8 +81,7 @@ Our method would first formulate a new learning problem where the positive examp
 \section{Background} \label{background}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-One of the earliest methods of utilizing relational information, officially defined by \citet{muggleton1991inductive} and used even before then in the well-known FOIL algorithm \citep{quinlan1990learning}, is \emph{Inductive Logic Programming(ILP)}. This approach induces a set of first-order formulae
-that define a good separation of the given training set. Originally, ILP methods searched the space of first-order formulae to find the appropriate classifier.
+One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \citep{quinlan1990learning, muggleton1991inductive}. This approach induces a set of first-order formulae that define a good separation of the given training set.
 Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \citep{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
 
 One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \citep{kramer2000bottom}: Since we wish to allow the use of first-order predicates in propositional methods, we create possible (non recursive) first-order predicates in a process known as refinement search \citep{van1998completeness}.
