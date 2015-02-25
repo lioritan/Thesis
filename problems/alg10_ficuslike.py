@@ -465,10 +465,10 @@ class TreeRecursiveSRLStep(object):
             query=lambda x, b=classifier_chosen: b.predict(x, True)
             clf_tagging= array([query(x) for x in self.objects])
             tree_ig=ig_ratio(self.tagging, clf_tagging)
-            tree_ig_penalty=0.5 #TODO? something to do with tree size and depth?
+            tree_ig_penalty=1.0 #TODO? something to do with tree size and depth?
             
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
-            if tree_ig/tree_ig_penalty > self.ig: #if tree is better, it's the new classifier
+            if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
