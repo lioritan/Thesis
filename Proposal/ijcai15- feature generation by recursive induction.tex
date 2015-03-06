@@ -25,14 +25,14 @@
 \newtheorem{defn}{Definition}[section]
 
 \title{Feature Generation by Recursive Induction}
-%\author{Lior Friedman \and Shaul Markovitch\\
-%	Computer Science Department \\
-%	Technion-Israel Institute of Technology\\
-%	Haifa 32000, Israel\\
-%	\{liorf,shaulm\}@cs.technion.ac.il}
-\author{Paper ID 661 \\
-		Content Areas: Machine Learning, Feature Generation, Semantic Web, Natural Language Processing
-	}
+\author{Lior Friedman \and Shaul Markovitch\\
+	Computer Science Department \\
+	Technion-Israel Institute of Technology\\
+	Haifa 32000, Israel\\
+	\{liorf,shaulm\}@cs.technion.ac.il}
+%\author{Paper ID 661 \\
+%		Content Areas: Machine Learning, Feature Generation, Semantic Web, Natural Language Processing
+%	}
 
 \begin{document}
 
@@ -58,7 +58,7 @@ While feature combination has proven to enhance the performance of induction alg
 \citet{gabrilovich2009wikipedia} ,for example, present a method for generating features that are based on Wikipedia concepts. \citet{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
 
 In recent years, a new resource in the form of Semantic Linked Data has begun to take form, as part of the Semantic Web project (see survey, \citet{bizer2009linked}). This resource has led to the creation of several new approaches designed to utilize the new, ontology-based representation of knowledge \citep{losch2012graph,rios2014statistical}.
-It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \citep{cheng2011automated, paulheim2012unsupervised}. 
+It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \citep{cheng2011automated, paulheim2012unsupervised}.
 
 Existing feature generation approaches based on Linked Data can offer great benefits, as they can add useful type information, and often add semantic information such as actors playing in a given movie, or the population of a given city.
 However, we would also like to be capable of identifying more complex relationships between entities.
@@ -90,7 +90,7 @@ Solving the above learning problem through an induction algorithm yields a class
 	\label{fig:lvl1_tree}
 \end{figure}
 
-Suppose then, that we also have access to a knowledge base of facts about countries, such as average temperature, precipitation, and more (one such knowledge base is DBpedia). Using such a knowledge base, we can recursively apply our method while trying to learn the new problem. We create a new training set, the objects of which are countries of origin, and countries of surnames of people with the disease are labelled as positive. Note that this is a second level of recursion. This training set is given to an induction algorithm using the relational knowledge base about countries to construct features. The result is a classifier that tries to separate between countries of origin of people with the disease and those without the disease. The classifier is used as a feature by the first level recursive algorithm. The whole process is depicted in figure \ref{fig:moving_to_lvl2}. The resulting two-level recursive classifier is depicted in figure \ref{fig:lvl2_tree}. This constructed feature allows us to concisely and accurately capture the target concept. 
+Suppose then, that we also have access to a knowledge base of facts about countries, such as average temperature, precipitation, and more (one such knowledge base is DBpedia). Using such a knowledge base, we can recursively apply our method while trying to learn the new problem. We create a new training set, the objects of which are countries of origin, and countries of surnames of people with the disease are labelled as positive. Note that this is a second level of recursion. This training set is given to an induction algorithm using the relational knowledge base about countries to construct features. The result is a classifier that tries to separate between countries of origin of people with the disease and those without the disease. The classifier is used as a feature by the first level recursive algorithm. The whole process is depicted in figure \ref{fig:moving_to_lvl2}. The resulting two-level recursive classifier is depicted in figure \ref{fig:lvl2_tree}. This constructed feature allows us to concisely and accurately capture the target concept.
 
 \begin{figure*}[t]
 	\centering
@@ -121,7 +121,7 @@ Suppose then, that we also have access to a knowledge base of facts about countr
 
 %A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \citep{van2001upgrade} were suggested, where instead of creating predicates a-priori, we do so during the training phase, allowing us to avoid searching non-promising refinements.
 
-%As a continuation to this trend, \citet{popescul200716} suggest SGLR, an upgrade method which allows the generation of nominal attributes by using aggregation operators. Essentially, instead of simply checking whether a first-order predicate is satisfied, we perform aggregation over all objects which satisfy it. In addition, SGRL offers an initial insight into the issue of improving the search process by using Akaike's information criteria (AIC, see \citet{burnham2002model}) to select features based on a combination of complexity and predictive power. 
+%As a continuation to this trend, \citet{popescul200716} suggest SGLR, an upgrade method which allows the generation of nominal attributes by using aggregation operators. Essentially, instead of simply checking whether a first-order predicate is satisfied, we perform aggregation over all objects which satisfy it. In addition, SGRL offers an initial insight into the issue of improving the search process by using Akaike's information criteria (AIC, see \citet{burnham2002model}) to select features based on a combination of complexity and predictive power.
 
 %In the case where this external knowledge is organized as a set of relations between entities, several methods can be used. One such method is using \emph{Inductive Logic Programming} \citep{muggleton1991inductive} to generate features, in a process referred to as \emph{upgrading} \citep{van2001upgrade}. This is demonstrated through the ICL algorithm, which uses a refinement graph to search for logical formulae which serve as features. The SGLR algorithm \citep{popescul200716} extends this idea to numerical features, generated using aggregation-based techniques, and then utilizes regression for inference.
 
@@ -177,7 +177,7 @@ Note that during the process of learning $h_{i}$, we can once again call the fea
 We note that in order to prevent cycles which provide no new information, we disallow re-use of a reverse relations to already used ones.
 
 When performing feature generation, we often wish to evaluate the predictive power of generated features. When such evaluation is done in the context of the entire dataset, it is possible to lose the unique benefit of a potentially powerful feature. To address this phenomenon, we decided to apply our recursive feature generation algorithm in a divide-and-conquer approach through the use of a decision tree. It is important to note, however, that the features generated in this process can be used for any induction algorithm, not necessarily decision tree induction algorithms.
-Using decision trees has several advantages: 
+Using decision trees has several advantages:
 \begin{itemize}
 	\item We gain an innate way to evaluate and filter generated features: A feature generated in a node will be added to the final result only if it is no less informative than the existing feature with the highest information-gain ratio. %We further require that the features achieve a significantly better $\chi^2$ score on the training examples.->this part is not accurate!!!
 	\item Since we repeat this process within inner nodes of the tree, we allow for the discovery of locally relevant relationships which may be difficult to pick up when looking at the entirety of the data. We use pre-pruning based on minimal leaf size to avoid creating features which are poorly supported by actual training data.
@@ -253,10 +253,10 @@ In order to test the versatility of our approach, we also tried to look at a ver
 %results, specific examples (qualative analysis), explaining it and so on
 %Figure \ref{fig:accuracy} shows the average accuracy across all datasets within techTC-100 for various feature selection levels. We compare the baseline features to a combined pool of the original and generated features. The left graph shows the accuracy using K-Nearest Neighbours \citep{fix1951discriminatory} as our classifier ($K=1$) and the right graph shows the accuracy using SVM \citep{cortes1995support} as our classifier (Linear kernel, $C=100$). %Results ran using CART \citep{breiman1984classification} as a classifier (requiring a consistent tree) yielded no discernible pattern of improvement or decrease in performance, except in very low feature selection levels, where there is a significance decrease in accuracy $ (p<0.05) $.
 
-%We see that the depth one application is better than the bag-of-words approach, and the depth two application yields a further improvement. We witness this for both algorithms, especially in high (over $20\%$) feature selection levels. This is slightly more apparent for SVM-based classification. Both depths achieve a significant improvement $ (p<0.05) $ over the bag-of-words approach for multiple feature selection levels. For instance, when taking $20\% $ of the features, we see a statistically significant improvement for both KNN and SVM classification accuracies (using a paired-t-test).  
+%We see that the depth one application is better than the bag-of-words approach, and the depth two application yields a further improvement. We witness this for both algorithms, especially in high (over $20\%$) feature selection levels. This is slightly more apparent for SVM-based classification. Both depths achieve a significant improvement $ (p<0.05) $ over the bag-of-words approach for multiple feature selection levels. For instance, when taking $20\% $ of the features, we see a statistically significant improvement for both KNN and SVM classification accuracies (using a paired-t-test).
 %Furthermore, for SVM we see a significant improvement between the first and second depths at a $0.75\%$ feature selection level. For KNN, there is a statistically improvement between the depths for feature selection levels in the range $60\%-80\%$, though the depth two application is only significantly better than the baseline approach for a feature selection level of $70\%$
 
-%Figure \ref{fig:accuracy_low} shows the average accuracy across all datasets within techTC-100 for very low feature selection levels. 
+%Figure \ref{fig:accuracy_low} shows the average accuracy across all datasets within techTC-100 for very low feature selection levels.
 %We see that in lower feature selection levels the effect generally diminishes for both classifier types, as some of the generated features are filtered out by the feature selection process. The lowest feature selection levels at which we found a significant improvement are $0.75\%$ for SVM and $15\%$ for KNN.
 
 %\begin{figure}[]
@@ -273,11 +273,11 @@ In order to test the versatility of our approach, we also tried to look at a ver
 %	\label{fig:accuracy_low}
 %\end{figure}
 
-%We note that due to the conservative feature generation process, very few features are generated: in nearly half of the datasets within techTC-100, no features are generated at all, and in no single dataset is the number of features greater than six. We also note that most generated features arise from local contexts, i.e, when looking at the entire dataset we would have difficulty identifying these features as especially useful. 
+%We note that due to the conservative feature generation process, very few features are generated: in nearly half of the datasets within techTC-100, no features are generated at all, and in no single dataset is the number of features greater than six. We also note that most generated features arise from local contexts, i.e, when looking at the entire dataset we would have difficulty identifying these features as especially useful.
 
 %A more careful look at datasets where no features are generated reveals that they tend to result in a larger number of highly sparse recursive learning problems. Since we only sample some of the possible problems to attempt feature generation, this is a major factor in the amount of features generated in general, as well as part of the reason why no features are generated for some datasets. Experiments in lowering the amount of sampled relations show a noticeable decrease in both the number of generated features and the mean increase in accuracy compared to results discussed above.
 
-%Figure \ref{fig:ratios} shows the mean ratio between the accuracy of the base approach and our recursive approach across all 100 datasets, and figures \ref{fig:ratios_max} and \ref{fig:ratios_min} show the minimal and maximal ratios accordingly. We note that while the average improvement in accuracy is not large (due to many datasets where no features are generated), we can often achieve a $20\%-25\%$ increase, and potentially reach as much as a $40\%$ increase in accuracy for some datasets within TechTC-100. We also note that it is possible to have a decrease in accuracy, but that for most cases, especially when using SVM as the classification method, we can limit it to no more than a $10\%$ decrease. 
+%Figure \ref{fig:ratios} shows the mean ratio between the accuracy of the base approach and our recursive approach across all 100 datasets, and figures \ref{fig:ratios_max} and \ref{fig:ratios_min} show the minimal and maximal ratios accordingly. We note that while the average improvement in accuracy is not large (due to many datasets where no features are generated), we can often achieve a $20\%-25\%$ increase, and potentially reach as much as a $40\%$ increase in accuracy for some datasets within TechTC-100. We also note that it is possible to have a decrease in accuracy, but that for most cases, especially when using SVM as the classification method, we can limit it to no more than a $10\%$ decrease.
 
 %We also note that the depth one application tends to be more conservative than a depth two approach, yielding a lesser improvement on average and in the best case, but also a offers a more measured decrease in the worst cases.
 %Results for CART reaffirm this notion. However, there is no clear trend regarding the mean ratios, and there is a much higher variance in terms of minimal and maximal ratios, offering as much as a $30\%$ difference in either direction.
@@ -309,7 +309,7 @@ In order to test the versatility of our approach, we also tried to look at a ver
 
 %Figure \ref{fig:level2_tree} showcases the additional power of the level two approach. The second level learning problem separates non-countries from countries, as well as countries which deal with non fuel manufacturing Arabic nations from those who embargo them.
 
-%Figure \ref{fig:weird_trees} showcases some of the unique oddities of using our technique with the YAGO2 knowledge base. Since YAGO groups together all entities which have a grammatical gender (including fictional characters and non-living objects) under a single relation, the constructed feature looks at both deceased individuals and words that are the same as Australian television channels (such as Gold and Galaxy) at the same time. 
+%Figure \ref{fig:weird_trees} showcases some of the unique oddities of using our technique with the YAGO2 knowledge base. Since YAGO groups together all entities which have a grammatical gender (including fictional characters and non-living objects) under a single relation, the constructed feature looks at both deceased individuals and words that are the same as Australian television channels (such as Gold and Galaxy) at the same time.
 
 %\begin{figure}[]
 %	\centering
@@ -418,4 +418,4 @@ Another major potential avenue for improvement is to use the techniques discusse
 \bibliographystyle{plainnat}
 \bibliography{document}
 
-\end{document}
+\end{document} 
