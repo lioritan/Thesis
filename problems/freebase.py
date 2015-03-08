@@ -46,6 +46,7 @@ def filter_relational_data(sorted_entities, raw_facts, outfile):
     with open(outfile, 'w') as fptr_out:
         with open(raw_facts, 'r') as fptr_in:
             line= fptr_in.readline()
+            print line
             while i<len(sorted_entities) and line!='':
                 triplet=line.split('\t')[0:3]
                 if triplet[0].find('(') != -1:
@@ -120,6 +121,23 @@ def str_process(entity_name):
 #    return relations
 
 if __name__=='__main__': #TODO
+    with open('C:\Users\liorf\Documents\GitHub\Thesis\problems\ohsumed_titles_parsed_complete.pkl','rb') as fptr:
+        (articles,labels)= cPickle.load(fptr) 
+    
+    (articles,labels)= (array(articles), array(labels))  
+    print shape(articles), shape(labels)
+    label_names=array([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
+    data,data_labels=[],[]
+    for label in label_names:
+        idxs=find(labels==label)
+        data+=[x for x in articles[idxs]]
+        data_labels+=[x for x in labels[idxs]]
+    data, data_labels= array(data, dtype=object), array(data_labels)
+    print len(data)
+    
+    entity_list=make_sorted_entity_list(data)
+    print len(entity_list)
+    filter_relational_data(entity_list, 'freebase-easy-14-04-14/facts.txt', 'filtered_facts.txt')
 #    disambig_required= build_disambig_requirements('freebase-medicine')
 #    disambig_table= build_disabmig(disambig_required, 'freebase-common2')
 #    
