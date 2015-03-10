@@ -44,15 +44,14 @@ def filter_relational_data(sorted_entities, raw_facts, outfile):
     'take out all non-relevant relational data'''
     i=0
     with open(outfile, 'w') as fptr_out:
-        with open(raw_facts, 'r') as fptr_in:
-            line= fptr_in.readline()
-            print line
+        with open(raw_facts, 'rb') as fptr_in:
+            line= fptr_in.readline() #could do for line in fptr_in
             while i<len(sorted_entities) and line!='':
                 triplet=line.split('\t')[0:3]
                 if triplet[0].find('(') != -1:
                     line= fptr_in.readline()
                     continue
-                entity= str_process(triplet[0])
+                entity= triplet[0].replace(' ','_').lower()
                 if entity<sorted_entities[i]: 
                     line= fptr_in.readline()
                     continue
