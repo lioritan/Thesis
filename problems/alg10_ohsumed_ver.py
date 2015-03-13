@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov 04 17:39:06 2014
+Created on Sun Jan 18 16:46:57 2015
 
 @author: liorf
 """
 
 from numpy import *
 from matplotlib.mlab import find
-from scipy.stats import mode, chisquare, fisher_exact
-import sklearn.cross_validation as cv
+from scipy.stats import mode, chisquare
 
 import time
 
+
 def clean_tree_for_pickle(tree_node):
+#    tree_node.relations=None
     if tree_node.chosen_query is None:
         return
     try:
@@ -22,54 +23,70 @@ def clean_tree_for_pickle(tree_node):
     #for (tree_root,_,_) in tree_node.cool_things:
     #    clean_tree_for_pickle(tree_root)
     tree_node.chosen_query=None
-    clean_tree_for_pickle(tree_node.left_son)
-    clean_tree_for_pickle(tree_node.right_son)
+    for son in tree_node.sons.values():
+        clean_tree_for_pickle(son)
     return tree_node
         
 def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
     '''computes entropy on tags. Assumes binary 0-1 tagging only.(not +-1 !!!)
     entropy= sum(-f*log2(f)) where f are the frequencies of each value'''
-    freqs = bincount(tags)/(1.0*len(tags))
-    nonzeros= find(freqs !=0)
-    if size(nonzeros)<= 1:
-        return 0.0 #edge case
-    tmp = freqs[nonzeros]
-    return sum(-tmp*log2(tmp))
-    
-def confidence_criteria(tagging, feautre_values):
-    pass
+    length=len(tags)*1.0
+    value_list=frozenset(tags)
+    ent=0.0
+    for val in value_list:
+        count=count_nonzero(tags==val)/length
+        ent-=count*log2(count)
+    return ent 
  
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
+    return 0.0,0.0
+    if len(frozenset(feature_values))>2:
+        return 0.0,0.0 #only works for 2 values
     locs= find(feature_values==1)
     locs2= find(feature_values!=1)
     observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
     expected= array([len(find(tagging[locs2]==1)),len(find(tagging[locs2]!=1))])
-    table=vstack((observed,expected))
     if any(expected==0):
         if any(observed==0):
             return inf, 0.0 #this is good for us
-        #return chisquare(expected, observed)
-        return fisher_exact(table)
-    #return chisquare(observed, expected) #high stat+low p->good
-    return fisher_exact(table)
+        return chisquare(expected, observed)
+    return chisquare(observed, expected) #high stat+low p->good
     
-#MAYBE: info_gain_ratio for non binary features and possibly need to do AIC/BIC  ?  
 def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
     '''computes simple info-gain for a split. '''
 
     curr_ent = entropy(curr_node_tags) #current entropy H(T)
     #sum over all values: #elements with this value/#total elements * entropy(elements with this value)
     cond_ent = 0.0
-    total_elem_sz = 1.0*len(curr_node_tags)
+    total_elem_sz = 1.0*len(feature_values)
     
-    for value in [0,1]:
+    for value in frozenset(feature_values):
         locs= find(feature_values == value)
         value_prob = len(locs)/total_elem_sz
         cond_ent += value_prob*entropy(curr_node_tags[locs])
     return curr_ent- cond_ent
     
-
+def ig_ratio(curr_node_tags, feature_values, discard_na=False):
+    intrinsic_val= 0.0
+    if discard_na is True:
+        inds= find(feature_values!=-1)
+        if len(inds)==0:
+            print 'something has gone horribly wrong!'
+            return 0.0
+        feature_values= feature_values[inds]
+        curr_node_tags= curr_node_tags[inds]
+    
+    total_elem_sz = 1.0*len(feature_values)
+    
+    for value in frozenset(feature_values):
+        locs= find(feature_values == value)
+        value_prob = len(locs)/total_elem_sz
+        intrinsic_val += value_prob*log2(value_prob)
+    if intrinsic_val==0.0: #labels are all the same! can just return ig(thing) (which is 0)
+        return info_gain(curr_node_tags, feature_values)
+    return -1*info_gain(curr_node_tags, feature_values)/intrinsic_val
+    
 def is_relation_key(x, relation):
     res=[]
     for y in x:
@@ -99,56 +116,11 @@ def is_in_relation(x, relation,relname, *args):
         return res #list of strings
     return args[0] in res
 
-def relabel_statistic(complex_objs, old_tagging):
-    val_map={}
-    missing=[0,0]
-    for i,obj in enumerate(complex_objs):
-        if len(obj)==0:
-            if old_tagging[i]==1:
-                missing[0]+=1
-            else:
-                missing[1]+=1
-        for item in obj:
-            if not val_map.has_key(item):
-                val_map[item]=[0,0]
-            if old_tagging[i]==1:
-                val_map[item][0]+=1
-            else:
-                val_map[item][1]+=1
-    blarf=[[a] for a in val_map.keys()]
-    if sum(missing)>0:
-        blarf.append([])
-    items= array(blarf, dtype=object)
-    
-    tags=[]
-    for i,item in enumerate(items):
-        if sum(missing)>0 and i>=len(items)-1:
-            label_counts=missing
-        else:
-            label_counts=val_map[item[0]]
-        floob= array([label_counts[0], label_counts[1]])
-        t_val, p_val= chisquare(floob)
-        if any(floob==0) or p_val< 0.05: #consistent/significant majority
-            #TODO: the consistent is for the same reasons as other...is this good?
-            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
-        else:
-            tags.append(-1)
-    tags=array(tags)
-    idxs=find(tags>=0)
-    return items[idxs], tags[idxs]
 
-def relabel(complex_objs, old_tagging, majority=True, sig_maj=False):
+def relabel(complex_objs, old_tagging, majority=True):
     '''flatten+label(majority or consistent)'''
-    if sig_maj:
-        return relabel_statistic(complex_objs, old_tagging)
     val_map={}
-    missing=[0,0]
     for i,obj in enumerate(complex_objs):
-        if len(obj)==0:
-            if old_tagging[i]==1:
-                missing[0]+=1
-            else:
-                missing[1]+=1
         for item in obj:
             if not val_map.has_key(item):
                 val_map[item]=[0,0]
@@ -156,17 +128,12 @@ def relabel(complex_objs, old_tagging, majority=True, sig_maj=False):
                 val_map[item][0]+=1
             else:
                 val_map[item][1]+=1
-    blarf=[[a] for a in val_map.keys()]
-    if sum(missing)>0:
-        blarf.append([])
+    blarf=[[a] for a,counts in val_map.items() if counts[0]-counts[1]!=0] #only take items which are true majority
     items= array(blarf, dtype=object)
     
     tags=[]
     for i,item in enumerate(items):
-        if sum(missing)>0 and i>=len(items)-1:
-            label_counts=missing
-        else:
-            label_counts=val_map[item[0]]
+        label_counts=val_map[item[0]]
         if majority:
             tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
         else:
@@ -203,18 +170,27 @@ def apply_transforms(relations, transforms, objects):
 
 def split_and_subtree(query_chosen, recursive_step_obj):
     query_results=array([query_chosen(x) for x in recursive_step_obj.objects])
-    pos_inds=find(query_results==1)
-    neg_inds=find(query_results!=1)
-    recursive_step_obj.left_son= TreeRecursiveSRLStep(recursive_step_obj.objects[neg_inds], recursive_step_obj.tagging[neg_inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.cond)
-    recursive_step_obj.right_son=TreeRecursiveSRLStep(recursive_step_obj.objects[pos_inds], recursive_step_obj.tagging[pos_inds], recursive_step_obj.relations, recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, recursive_step_obj.SPLIT_THRESH, recursive_step_obj.cond)
-    return query_chosen,recursive_step_obj.left_son,recursive_step_obj.right_son
+    for val in frozenset(query_results):
+        inds=find(query_results==val)
+        recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds], recursive_step_obj.tagging[inds], recursive_step_obj.relations, 
+                                        recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, 
+                                        recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.stopthresh, recursive_step_obj.cond)
+    return query_chosen,recursive_step_obj.sons, recursive_step_obj.good_recs, recursive_step_obj.good_recs_justify, recursive_step_obj.good_recs_trees
+def ig_from_one_retag(tagging): 
+    curr_max= -1.0
+    for value in frozenset(tagging):
+        ind= find(tagging==value)[0]
+        tag_pos= zeros(len(tagging))
+        tag_pos[ind]= 1
+        curr_max= max(curr_max, ig_ratio(tagging, tag_pos))
+    return curr_max
         
-MAX_SIZE= 5000 #TODO: change this in future(needed to make it run fast)
+MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
 IGTHRESH=0.01
-P_THRESH=0.05
+P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
-    def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH,cond=False):
+    def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
         self.relations= relations
         self.objects =array(objects)
         self.tagging=tagging
@@ -231,8 +207,16 @@ class TreeRecursiveSRLStep(object):
         self.n=n
         self.MAX_DEPTH=MAX_DEPTH
         self.SPLIT_THRESH=SPLIT_THRESH
+        self.logfile= logfile
+        self.sons= {}
         
         self.cool_things=[]
+        self.is_rec= False
+        self.good_recs= []
+        self.good_recs_justify= []
+        self.good_recs_trees= []
+        self.stopthresh= stopthresh
+        self.logfile.write(' '*len(self.transforms)+'Created node. Num objects: '+str(len(self.tagging))+': '+str(len(find(self.tagging==1)))+' positive, '+str(len(find(self.tagging!=1)))+' negative.\n' )#'Positive: '+str(self.objects[find(self.tagging==1)])+' \n Negative: '+str(self.objects[find(self.tagging!=1)])+'\n')
 
     def pick_split_query(self):
         '''pick one query(if simple query on objects give high IG, do that, otherwise go recursive and build tree as query'''
@@ -240,17 +224,21 @@ class TreeRecursiveSRLStep(object):
         avg_word_ig=0.0
         all_words=set()
         for words in self.objects:
-            for word in words:
-                all_words.add(word)
+            all_words.update(words)
         max_ig,best_word=-1.0,''
         for word in all_words:
-            word_ig= info_gain(self.tagging, array([1 if (word in obj) else 0 for obj in self.objects]))
+            word_ig= ig_ratio(self.tagging, array([1 if (word in obj) else 0 for obj in self.objects]))
             avg_word_ig+=word_ig
             if word_ig>max_ig:
                 max_ig,best_word=word_ig,word
-        self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+best_word
+        self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+str(best_word)
         avg_word_ig=avg_word_ig/len(all_words)
-        if self.cond is True:
+        if self.cond is True or self.MAX_DEPTH==0 or len(self.objects)< self.stopthresh:
+            if self.ig <= ig_from_one_retag(self.tagging): #no query is useful enough
+                self.chosen_query=None
+                self.justify='nothing useful for tagging'
+                return None,self.sons, [], [], []
+            self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
         #Build relation-based features(super table) for objects, see if any query good enough
@@ -262,13 +250,14 @@ class TreeRecursiveSRLStep(object):
                 continue #not relevant
             relevant_features.append(relation)
         
-        if self.ig <= IGTHRESH:
+        min_ig_required= ig_from_one_retag(self.tagging)
+        if self.ig <= min_ig_required: #was IGTHRESH
             self.chosen_query=None
             self.justify='not good enough'
-            return None,None,None
+            return None,self.sons, [], [], []
         if len(relevant_features)==0:
             print 'no relations can be used on this problem!'
-        if self.MAX_DEPTH==0 or len(relevant_features)==0: 
+            self.logfile.write('chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
         #sample relevent features n times(with replacement, so recursive n is the amount chosen)
@@ -283,41 +272,57 @@ class TreeRecursiveSRLStep(object):
         
         worthy_relations= temp.items()
         self.bttoo=worthy_relations
-        
-        choose_deeper= self.cross_val_deepening(worthy_relations)
-        if not choose_deeper:
-            self.justify+= ' also decided not to go deeper'
-            return split_and_subtree(self.chosen_query, self)        
-        
         tree_ig=0.0
+        best_ig= self.ig
+        before_all= time.time()
         for relation_used_for_recursive,rel_n in worthy_relations:  
             
             feature_vals=[is_relation_key(obj, self.relations[relation_used_for_recursive]) for obj in self.objects]
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.logfile, self.cond)
+            inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
+            def rep_zero(x):
+                if x==0:
+                    return 1
+                return x
+            blop=0.
+            if len(new_tagging)!=0:
+                blop=len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging)
+            self.logfile.write('trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
+            (blop)/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
+            before=time.time()
             classifier_chosen.train_vld_local()
-            classifier_chosen.post_prune(self.objects, self.tagging)
-
+            self.logfile.write('tree tried! Time: '+str(time.time()-before)+'\n')
+            
+            #TODO: FIXME!!!!!! predict shouldn't work on x but rather do something smart...
             clf_labels=array([classifier_chosen.predict(x) for x in self.objects])
-            tree_ig=info_gain(self.tagging, clf_labels)
+            tree_ig=ig_ratio(self.tagging, clf_labels)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
                     
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
+            if tree_ig/tree_ig_penalty >= best_ig: #any better than non-rec
+                self.good_recs.append(lambda x,c=classifier_chosen: c.predict(x))
+                self.good_recs_justify.append(str(classifier_chosen.transforms))
+                self.good_recs_trees.append((relation_used_for_recursive,classifier_chosen))
+            
             if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier                
                 test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue
+                self.is_rec= True
+                self.logfile.write('chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
                 del classifier_chosen
+        self.logfile.write('finished recursive part for node. Time: '+str(time.time()-before_all)+'\n')
         
         if self.ig <= 0: #no query is useful
             self.chosen_query=None
             self.justify='nothing useful for tagging'
-            return None,None,None
+            return None,self.sons, [],[], []
+        self.logfile.write('chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
         return split_and_subtree(self.chosen_query, self)
     
     def filter_bad_rels(self, relations, value_things):
@@ -326,12 +331,10 @@ class TreeRecursiveSRLStep(object):
         new_rel_fet=[]
         new_avg_ig=[]
         for i,relation in enumerate(relations):
-            if len(self.transforms)>1 and (relation in self.transforms or 'reverse_'+relation in self.transforms or relation.replace('reverse_','') in self.transforms):
-                continue
-            
+            if len(self.transforms)>1 and (relation=='reverse_'+self.transforms[-1] or (relation==self.transforms[-1].replace('reverse_','') and relation!=self.transforms[-1]) or (len(self.transforms)>1 and relation==self.transforms[-1])) :
+                continue #no using the relation you came with on the way back...
             if value_things[i]<=0.0:
-                continue #ig is 0->no point
-            
+                continue #ig is 0->no point            
             barf=False
             new_objs=apply_transforms_other(self.relations, [relation], self.objects)
             if sum([len(obj) for obj in new_objs])==0:#all objects are []
@@ -359,7 +362,7 @@ class TreeRecursiveSRLStep(object):
         self.ig= -1.0#best known error: treat me as leaf
         best_ig, relation_used, constant= self.ig,None,''
         for relation in self.relations.keys():
-            if len(self.transforms)>1 and (relation==self.transforms[-1] or relation=='reverse_'+self.transforms[-1] or relation==self.transforms[-1].replace('reverse_','')):
+            if relation=='reverse_'+self.transforms[-1] or (relation==self.transforms[-1].replace('reverse_','') and relation!=self.transforms[-1]) or (len(self.transforms)>1 and relation==self.transforms[-1]) :
                 continue #no using the relation you came with on the way back...
             feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in self.objects] #apply_transforms_other(self.relations, [relation], self.objects) #
             val_lens=[len(val) for val in feature_vals]
@@ -369,8 +372,7 @@ class TreeRecursiveSRLStep(object):
             relation_constants= set()
             for obj in feature_vals:
                 for const in obj:
-                    relation_constants.add(const)
-            
+                    relation_constants.add(const)            
             sz=len(relation_constants)
             if sz>=MAX_SIZE:
                 continue #For now, skip. 
@@ -383,7 +385,7 @@ class TreeRecursiveSRLStep(object):
                 else:
                     query= lambda x: 1 if is_in_relation(x, self.relations[relation],relation,const) else 0
                 
-                ig_for_const= info_gain(self.tagging, array([query(x) for x in self.objects]))
+                ig_for_const= ig_ratio(self.tagging, array([query(x) for x in self.objects]))
 
                 avg_for_rel+=ig_for_const
                 if ig_for_const>best_ig:
@@ -396,34 +398,36 @@ class TreeRecursiveSRLStep(object):
         if len(relevant_features)==0:
             self.chosen_query=None
             self.justify='no features'
-            return None,None,None
+            return None,self.sons, [],[], []
         if constant is None:
             self.chosen_query= lambda x: 1 if len(is_in_relation(x, self.relations[relation_used],relation_used))==0 else 0
         else:
             self.chosen_query= lambda x: 1 if is_in_relation(x, self.relations[relation_used],relation_used,constant) else 0
         self.ig, self.justify= best_ig, 'hasword(X),X in relation: %s with %s'%(relation_used, constant)
         
-        if self.ig<= IGTHRESH:
+        min_ig_required= ig_from_one_retag(self.tagging)
+        if self.ig<= min_ig_required:
             self.chosen_query=None
             self.justify='not good enough'
-            return None,None,None
+            return None,self.sons, [],[], []
         
         clf_tagging= array([self.chosen_query(x) for x in self.objects])
         test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
         if p_val > P_THRESH: #10% confidence level
             self.chosen_query=None
             self.justify='not good enough'
-            return None,None,None       
+            return None,self.sons, [],[], []     
             
         if len(self.transforms)>= self.MAX_DEPTH: 
             self.justify=self.justify+' and max depth reached'
+            self.logfile.write(' '*len(self.transforms)+'chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
         relevant_features, relation_avg_igs =self.filter_bad_rels(relevant_features, relation_avg_igs)
         if len(relevant_features)==0: #had feature, now I don't
             self.justify=self.justify+' also cannot recurse'
+            self.logfile.write(' '*len(self.transforms)+'chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
-            
             
         #sample relevent features n times(with replacement, so recursive n is the amount chosen)
         choices=random.choice(relevant_features, self.n, True, relation_avg_igs/sum(relation_avg_igs))
@@ -436,90 +440,54 @@ class TreeRecursiveSRLStep(object):
         
         worthy_relations= temp.items()
         self.bttoo=worthy_relations
-        
-        choose_deeper= self.cross_val_deepening(worthy_relations)
-        if not choose_deeper:
-            self.justify+= ' also decided not to go deeper'
-            return split_and_subtree(self.chosen_query, self)
     
         tree_ig=0.0
+        before_all= time.time()
         for relation_used_for_recursive,new_n in worthy_relations:  
             feature_vals=[is_in_relation(obj, self.relations[relation_used_for_recursive],relation_used_for_recursive) for obj in self.objects]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)
+            inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
+            def rep_zero(x):
+                if x==0:
+                    return 1
+                return x
+            blop=0.
+            if len(new_tagging)!=0:
+                blop=len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging)
+            self.logfile.write(' '*len(self.transforms+['a'])+'trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
+            (blop)/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
+            before= time.time()
             classifier_chosen.train_vld_local()
-            classifier_chosen.post_prune(self.objects, self.tagging)
+            self.logfile.write(' '*len(self.transforms)+'tree tried! Time: '+str(time.time()-before)+'\n')
             
             query=lambda x, b=classifier_chosen: b.predict(x, True)
-            #DEBUG: what happens here?
-#            print self.transforms+[relation_used_for_recursive],self.objects, new_objs
-#            print apply_transforms(self.relations, [relation_used_for_recursive]*2, self.objects)
             clf_tagging= array([query(x) for x in self.objects])
-#            if len(self.transforms)>=2:
-#                print clf_tagging
-            tree_ig=info_gain(self.tagging, clf_tagging)
-            tree_ig_penalty=1 #TODO? something to do with tree size and depth?
+            tree_ig=ig_ratio(self.tagging, clf_tagging)
+            tree_ig_penalty=1.0 #TODO? something to do with tree size and depth?
             
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
-            if tree_ig/tree_ig_penalty > self.ig: #if tree is better, it's the new classifier
+            if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier
                 test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue #tree not good enough!
+                self.is_rec= True
+                self.logfile.write(' '*len(self.transforms)+'chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x, True)
                 self.ig, self.justify= tree_ig, classifier_chosen.query_tree
             else:
                 del classifier_chosen
+        self.logfile.write(' '*len(self.transforms)+'finished recursive part for node. Time: '+str(time.time()-before_all)+'\n')
         
         if self.ig <= 0 : #no query is useful
             self.justify='nothing useful for tagging'
-            return None,None,None
+            return None,self.sons, [],[], []         
+        self.logfile.write(' '*len(self.transforms)+'chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
         return split_and_subtree(self.chosen_query, self)
         
-    def cross_val_deepening(self, rel_n_pairs):
-        #can call this after we make pairs of relation+relative count? or take only relevant as input?        
-        FOLDS=min(5, len(self.objects))
-#        return True
-        
-        cv_results = array(zeros(FOLDS))
-        fold_pairs = cv.KFold(len(self.objects), FOLDS, shuffle=True) #pairs of trn_idxs,tst_idxs
-        for i, (trn_idxs, tst_idxs) in enumerate(fold_pairs):
-            new_trn, new_trn_lbl = self.objects[trn_idxs], self.tagging[trn_idxs]
-            new_tst, new_tst_lbl = self.objects[tst_idxs], self.tagging[tst_idxs]
-            
-            new_node=TreeRecursiveSRLStep(new_trn, new_trn_lbl, self.relations, self.transforms, self.n, 0, self.SPLIT_THRESH)
-            #this is non recursive choose best! now we train it
-            if len(self.transforms)==0:
-                query,left,right=new_node.pick_split_query()
-            else:
-                query,left,right=new_node.pick_split_vld_local()
-            if new_node.chosen_query is not None:
-                predicted= array([new_node.chosen_query(x) for x in new_tst])
-                nonrec_err = mean(new_tst_lbl!= predicted)
-            else:
-                nonrec_err = 1.0 #placeholder
-            #for each relation, build lvl 1 tree for node
-            tree_errs= []
-            for relation,n in rel_n_pairs:
-                feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in new_trn]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
-                new_objs, new_tagging= relabel(feature_vals, new_trn_lbl) #flatten+relabel
-                #print new_objs
-                #print self.transforms, relation
-                rel_tree= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms[-1:]+[relation], n, self.MAX_DEPTH-(len(self.transforms)-1), self.SPLIT_THRESH)
-                rel_tree.train_vld_local()
-                
-                predicted= array([rel_tree.predict(x) for x in new_tst]) #This line now works works
-                tree_errs+= [mean(new_tst_lbl!=predicted)]
-            best_tree_err= min(tree_errs)
-            #choose best of all. if it's a recursive one, set cv_results[i] to 1
-            if best_tree_err <= nonrec_err:
-                cv_results[i] = 1
-#        print cv_results, nonrec_err
-        return mean(cv_results)> 0.5 #if it's more than half of them
-        
 class TreeRecursiveSRLClassifier(object):
-    def __init__(self, objects, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, cond=False):
+    def __init__(self, objects, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, logfile, cond=False):
         self.relations= relations
         self.objects =objects
         self.tagging=tagging
@@ -528,113 +496,156 @@ class TreeRecursiveSRLClassifier(object):
         self.n=n
         self.MAX_DEPTH=MAX_DEPTH
         self.SPLIT_THRESH=SPLIT_THRESH
+        self.logfile= logfile
+        self.logfile.write(' '*len(self.transforms)+'Created tree with transforms: '+str(self.transforms)+'\n')
         
-    def train(self):
-        self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.cond)] #initally all in same node
+        self.recursive_features=[] #the important thing in the end!
+        self.feature_justify= [] #the relation used for tree?
+        self.feature_trees= []
+        
+    def train(self, stopthresh):
+        num_nodes= 0
+        depth= 0
+        self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.logfile, stopthresh, self.cond)] #initally all in same node
+        self.tree_sets[0].depth= 1
         for node in self.tree_sets:
-            if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0):#consistent/too small to split 
+            if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==node.chosen_tag):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
+                self.logfile.write('node became leaf\n')
                 continue #leaf
-            _,left, right=node.pick_split_query()
-            if left is None or right is None:
+            _,sons, rec_feature, justify, trees =node.pick_split_query()
+            if len(sons.keys())==0:
+                node.justify='leafed(weird stuff)'
                 node.chosen_query=None
+                self.logfile.write('node became leaf\n')
                 continue#another leaf case...
-            self.tree_sets.append(left)
-            self.tree_sets.append(right)            
+            num_nodes+=1
+            self.recursive_features.extend(rec_feature)
+            self.feature_justify.extend(justify)
+            self.feature_trees.extend(trees)
+            depth= max(depth, node.depth)
+            for son in sons.values():
+                son.depth= node.depth+1
+            self.tree_sets.extend(sons.values()) 
         self.query_tree=self.tree_sets[0] #root
+        self.logfile.write('training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
         
     def train_vld_local(self):
-        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH, self.cond)] #initally all in same node
+        num_nodes= 0
+        depth= 0
+        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, inf, self.cond)] #initally all in same node
+        self.tree_sets[0].depth= 1
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
-            if len(self.tree_sets)>1 and (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==1) or all(node.tagging==0)):#consistent/too small to split 
+            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==node.chosen_tag)):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
+                self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
                 continue #leaf            
-            _,left, right=node.pick_split_vld_local()
-            if left is None or right is None:
+            _,sons,_,_,_ =node.pick_split_vld_local()
+            if len(sons.keys())==0:
+                node.justify='leafed(weird stuff)'
                 node.chosen_query=None
-                continue#another leaf(local maxima/no operators)
-            self.tree_sets.append(left)
-            self.tree_sets.append(right)            
+                self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
+                continue#another leaf case...
+            num_nodes+=1
+            depth= max(depth, node.depth)
+            for son in sons.values():
+                son.depth= node.depth+1
+            self.tree_sets.extend(sons.values())
         self.query_tree=self.tree_sets[0] #root
-        
-    def predict(self, new_object, flag=False):        
+        self.logfile.write(' '*len(self.transforms)+'training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
+    
+    def predict(self, new_object, flag=False):  
+        NA_VAL= -100
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
             return 0#some arbitrary rule
         while curr_node.chosen_query is not None:            
-            if curr_node.right_son.chosen_tag is None: #query splits all to one side
-                curr_node=curr_node.left_son
+            if len(curr_node.sons.keys())==1: #only one son
+                curr_node=curr_node.sons[curr_node.sons.keys()[0]]
                 continue
-            if curr_node.left_son.chosen_tag is None: #other side
-                curr_node=curr_node.right_son
-                continue
+            
             transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
             if flag:
                 transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
-            query_val= curr_node.chosen_query(transformed_obj[0]) #this works
-            if query_val==1:
-                curr_node=curr_node.right_son
-            else:
-                curr_node=curr_node.left_son
+            query_val= None
+            if len(transformed_obj[0])==0:
+                query_val= NA_VAL
+                if len(self.transforms)>0:
+                    return NA_VAL
+                #if not lvl0, return -1 for this
+            elif not curr_node.is_rec:
+                query_val= curr_node.chosen_query(transformed_obj[0])
+            else: 
+                vals=[]
+                if len(self.transforms)==0: #need apply trans
+                    vals= [curr_node.chosen_query([x]) for x in transformed_obj[0] if len(apply_transforms(curr_node.relations, curr_node.justify.transforms, [[x]])[0])>0]
+                else:
+                    vals= [curr_node.chosen_query([x]) for x in transformed_obj[0] if len(apply_transforms_other(curr_node.relations, curr_node.justify.transforms[-1:], [[x]])[0])>0]
+                if len(vals)>0:
+                    query_val= int(mode(vals)[0][0]) #ISSUE: mode is problem if equal...
+                else:
+                    query_val= NA_VAL #query for tree is -1
+            
+            tmp= curr_node.chosen_tag
+            curr_node=curr_node.sons.get(query_val)
+            if curr_node is None: #tried tree that has no N/A in train, but does in test/ example was []
+                return tmp #best possible guess
         return int(curr_node.chosen_tag)
         
-    def post_prune(self, objects, tagging):
-        return #TODO: remove me
-        papa= None,''
-        curr_node= self.query_tree
-        curr_node.visited= False
-        while not curr_node.visited:
-            try:
-                if not hasattr(curr_node.left_son, 'visited'):
-                    curr_node.left_son.visited= False
-                if not hasattr(curr_node.right_son, 'visited'):
-                    curr_node.right_son.visited= False
-            except:
-                pass
-            if curr_node.chosen_query is not None:
-                if not curr_node.left_son.visited:
-                    papa= curr_node,'l'
-                    curr_node= curr_node.left_son                
-                    continue
-                if not curr_node.right_son.visited:
-                    papa= curr_node,'l'
-                    curr_node= curr_node.right_son                
-                    continue
-                break #done!
-                    
-            curr_node.visited= True
-            curr_ig= info_gain(tagging, array([self.predict(x) for x in objects]))
-            old_tag= curr_node.chosen_tag
-            curr_node.chosen_tag= None #will force the other branch
-            new_ig= info_gain(tagging, array([self.predict(x) for x in objects]))
-
-            if curr_ig> new_ig or papa[0] is None:
-                curr_node.chosen_tag= old_tag
-                continue
-            switcher= None
-            if papa[1]=='l':
-                switcher= papa[0].right_son
-            if papa[1]=='r':
-                switcher= papa[0].left_son
-                papa[0].visited= False
-            papa[0].chosen_query= switcher.chosen_query
-            papa[0].justify= switcher.justify
-            papa[0].ig= switcher.ig
-            papa[0].chosen_tag= switcher.chosen_tag
-            papa[0].objects= switcher.objects
-            papa[0].tagging= switcher.tagging
-            #papa[0].bttoo= switcher.bttoo
-            #papa[0].cool_things= switcher.cool_things
-            if switcher.chosen_query is not None:
-                papa[0].left_son= switcher.left_son
-                papa[0].right_son= switcher.right_son
-            curr_node= papa[0]
-        return
-            
+class FeatureGenerationFromRDF(object):
+    def __init__(self, objects, tagging, relations):
+        self.objects= objects
+        self.tagging= tagging
+        self.relations= relations
         
+        self.new_features= []
+        self.new_justify= []
+        self.feature_trees= []
+    
+    def generate_features(self, n, max_depth, split_thresh, logfile, STOPTHRESH= 10, version=1):
+        
+        
+        if version==1: #first version: stop-thresh+take all better.
+            tree= TreeRecursiveSRLClassifier(self.objects, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
+            tree.train(STOPTHRESH) #minimum number of objects!
+        
+            self.new_features= list(tree.recursive_features)
+            self.new_justify= list(tree.feature_justify)
+            self.feature_trees= list(tree.feature_trees)
+            return
+        elif version==2: #second version will be the stochastic thing on examples
+            for i in xrange(10):
+                inds= random.choice(len(self.objects), len(self.objects)/2, replace=False)
+                tree= TreeRecursiveSRLClassifier(self.objects[inds], self.tagging[inds], self.relations, [], n, max_depth, split_thresh, logfile)
+                tree.train(STOPTHRESH)
+                
+                self.new_features.extend(tree.recursive_features)
+                self.new_justify.extend(tree.feature_justify)
+                self.feature_trees.extend(tree.feature_trees)
+                return
+        
+    
+    def get_new_table(self, test):
+        all_words=set()
+        for words in self.objects:
+            all_words.update(words)
+        self.table= zeros((len(self.objects), len(all_words)+len(self.new_features)))
+        self.test= zeros((len(test), len(all_words)+len(self.new_features)))
+        self.feature_names=[]
+        for i,word in enumerate(all_words):
+            self.table[:,i]= array([1 if (word in obj) else 0 for obj in self.objects])
+            self.test[:, i]= array([1 if (word in obj) else 0 for obj in test])
+            self.feature_names.append('has word:%s'%(word))
+        for j,new_feature in enumerate(self.new_features):
+            self.table[:, len(all_words)+j]= array([new_feature(obj) for obj in self.objects])
+            self.test[:, len(all_words)+j]= array([new_feature(obj) for obj in test])
+            self.feature_names.append(self.new_justify[j])
+        return self.table, self.tagging, self.test, self.feature_names, self.feature_trees
+                    
+    
 if __name__=='__main__':
     #Toy example for debugging
     messages=['cocoa price increase in 1964 because of cuban_missile_crisis', 
@@ -665,7 +676,7 @@ if __name__=='__main__':
             '2016_olympics possible not take place in brazil but in mexico',
             'canada_squash soup recipe popular in u.s.'
             ] #messages on fruits/veggies that originally from america is concept. have some fruit, some america, some both, some neither
-    msg_objs=[a.split(' ') for a in messages]
+    msg_objs=array([a.split(' ') for a in messages], dtype=object)
     message_labels = (array([1,1,-1,1,-1,-1,-1,1,-1,1,1,-1,1,-1,1,-1,-1,
                              -1,1,-1,-1,1,1,-1,1,-1,1])+1)/2
     test_msgs= ['potato and tomato sound the same and also come from same continent list of 10 things from the new world which surprise',
@@ -693,11 +704,11 @@ if __name__=='__main__':
     vld=[a.split(' ') for a in vld_msgs]
     vld_lbls=(array([-1,-1,1,1,-1,-1,1,1,-1,1])+1)/2
     relations={}
-#    relations['type']={'potato':'vegetable', 'cuban_missile_crisis':'event', 'cocoa':'fruit', 'france':'country', 'rice':'cereal', 'china':'country', 'pineapple':'fruit', 'oslo_peace_conference':'event'
-#                        , 'apple':'fruit', 'pear':'fruit', 'turkey':'country', 'u.s.':'country', 'edward_snoden_leak':'event', 'nsa':'organization', 'obama':'person', 'dog':'animal', 'mit':'university',
-#                            'ireland_potato_famine':'event', 'wheat':'cereal', 'cucumber':'vegetable', 'chile':'country', 'cuba':'country', 'venezuela':'country', 'brazil':'country', 'norway':'country',
-#                            'italy':'country', 'syria':'country', 'india':'country', 'norway':'country', 'ireland':'country', 'north_america':'continent', 'south_america':'continent', 'europe':'continent', 
-#                            'asia':'continent', 'tomato':'fruit', '2014_israel_president_election':'event', 'israel':'country', 'mexico':'country'}
+    relations['type']={'potato':'vegetable', 'cuban_missile_crisis':'event', 'cocoa':'fruit', 'france':'country', 'rice':'cereal', 'china':'country', 'pineapple':'fruit', 'oslo_peace_conference':'event'
+                        , 'apple':'fruit', 'pear':'fruit', 'turkey':'country', 'u.s.':'country', 'edward_snoden_leak':'event', 'nsa':'organization', 'obama':'person', 'dog':'animal', 'mit':'university',
+                            'ireland_potato_famine':'event', 'wheat':'cereal', 'cucumber':'vegetable', 'chile':'country', 'cuba':'country', 'venezuela':'country', 'brazil':'country', 'norway':'country',
+                            'italy':'country', 'syria':'country', 'india':'country', 'norway':'country', 'ireland':'country', 'north_america':'continent', 'south_america':'continent', 'europe':'continent', 
+                            'asia':'continent', 'tomato':'fruit', '2014_israel_president_election':'event', 'israel':'country', 'mexico':'country'}
     relations['country_of_origin']={'potato':'chile', 'cocoa':'venezuela', 'rice':'china', 'pineapple':'brazil', 'apple':'turkey', 'pear':'italy', 'wheat':'syria', 'cucumber':'india', 'tomato':'mexico',
                                         'broccoli':'italy', 'corn':'mexico', 'avocado':'mexico', 'eggplant':'india', 'orange':'china', 'sweet_potato':'peru','pumpkin':'u.s.','pepper':'mexico','ginger':'china', 'canada_squash':'canada',
                                         'blarf':'ggg','nof':'fluff','poo':'goffof','fgfgfgfg':'gggg','a':'b', 'r':'f','t':'t'}#applys to fruits/vegs/crops
@@ -705,13 +716,13 @@ if __name__=='__main__':
                             'chile':'south_america', 'venezuela':'south_america', 'brazil':'south_america', 'italy':'europe', 'ireland':'europe', 'syria':'asia', 'india':'asia',
                             'mexico':'south_america', 'israel':'asia', 'vatican':'europe','russia':'asia', 'peru':'south_america', 'canada':'north_america',
                             'f':'g','b':'c','ggg':'fff','fluff':'t','t':'t','d':'d'}#apply to country
-    relations['capital_of']={'paris':'france', 'washington_dc':'u.s.','beijing':'china','mexico_city':'mexico','brasilia':'brazil','havana':'cuba','oslo':'norway','ankara':'turkey','santiago':'chile','caracas':'venezuela','rome':'italy','vatican_city':'vatican','dublin':'ireland','damascus':'syria','new_delhi':'india', 'muscow':'russia',
+    relations['capital_of']={'paris':'france', 'washington_dc':'u.s.','china':'beijing','mexico':'mexico_city','brazil':'brasilia','cuba':'havana','norway':'oslo','turkey':'ankara','chile':'santiago','venezuela':'caracas','italy':'rome','vatican':'vatican_city','ireland':'dublin','syria':'damascus','india':'new_delhi', 'russia':'muscow',
                             'f':'f','r':'r','d':'d','q':'p','fff':'ffg'}
-    relations['city_of']={'paris':'france','los_angeles':'u.s.', 'washington_dc':'u.s.','beijing':'china','mexico_city':'mexico','brasilia':'brazil','havana':'cuba','oslo':'norway','ankara':'turkey','santiago':'chile','caracas':'venezuela','rome':'italy','vatican_city':'vatican','dublin':'ireland','damascus':'syria','new_delhi':'india', 'muscow':'russia',
-                            'f':'f','r':'r','d':'d','q':'p','fff':'ffg','p':'p'}
+    relations['city_of']={'paris':'france','los_angeles':'u.s.', 'washington_dc':'u.s.','china':'beijing','mexico':'mexico_city','brazil':'brasilia','cuba':'havana','norway':'oslo','turkey':'ankara','chile':'santiago','venezuela':'caracas','italy':'rome','vatican':'vatican_city','ireland':'dublin','syria':'damascus','india':'new_delhi', 'russia':'muscow',
+                            'f':'f','t':'t','q':'q','p':'p'}
     relations['president_of']={'vladimir_putin':'russia','barrack_obama':'u.s.',
     'q':'f', 'r':'r', 'f':'f','b':'c','t':'t','d':'d'}
-    #relations['calorie_content_kcal']={'tomato':18, 'potato':77, 'rice':365, 'pineapple':50, 'apple':52, 'pear':57, 'wheat':327, 'cucumber':16}#apply to fruit/vegetable, numeric. missing for cocoa
+#    relations['calorie_content_kcal']={'tomato':18, 'potato':77, 'rice':365, 'pineapple':50, 'apple':52, 'pear':57, 'wheat':327, 'cucumber':16}#apply to fruit/vegetable, numeric. missing for cocoa
     relations['happend_in_place']={'cuban_missile_crisis':'cuba', 'oslo_peace_conference':'norway', 'edward_snoden_leak':'u.s.', 'ireland_potato_famine':'ireland', '2014_israel_president_election':'israel','french_revolution':'france','2016_olympics':'brazil', 'cocoa_ban':'china',
                                     'fu':'f','r':'r','b':'b','c':'c','d':'d'}#apply to event(cuba missile crisis)
     #relations['happend_on_date']={'cuban_missile_crisis':1962, 'oslo_peace_conference':1993, 'edward_snoden_leak':2013, 'ireland_potato_famine':1845, '2014_israel_president_election':2014} #apply to event, numeric
@@ -723,31 +734,33 @@ if __name__=='__main__':
                 relations[new_key][b].append(a)
                 continue
             relations[new_key][b]= [a]
-    
-    #now for actual stuff:
-#    blah1=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], True)#no recursive!
-#    before=time.time()
-#    blah1.train(vld, vld_lbls)
-#    print time.time()-before
-#    pred1trn=array([blah1.predict(x) for x in msg_objs])
-#    print mean(pred1trn!=message_labels)
-#    pred1tst=array([blah1.predict(x) for x in test])
-#    print mean(pred1tst!=test_lbl)
-#    MAX_DEPTH=0
-#    blah2=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [])#no recursive but has relation usage...
-#    before=time.time()
-#    blah2.train(vld, vld_lbls)
-#    print time.time()-before
-#    pred2trn=array([blah2.predict(x) for x in msg_objs])
-#    print mean(pred2trn!=message_labels)
-#    pred2tst=array([blah2.predict(x) for x in test])
-#    print mean(pred2tst!=test_lbl)
-#    MAX_DEPTH=2
-    blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3)
+
+    logfile= open('run_log.txt','w')
+    blor= FeatureGenerationFromRDF(msg_objs, message_labels, relations)
     before=time.time()
-    blah3.train()
+    blor.generate_features(200, 2, 3, logfile, 1, 1)    
+    #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
+    #blah3.train(1)
     print time.time()-before
-    pred3trn=array([blah3.predict(x) for x in msg_objs])
-    print mean(pred3trn!=message_labels)
-    pred3tst=array([blah3.predict(x) for x in test])
+    logfile.close()
+    trn, trn_lbl, tst, feature_names, floo= blor.get_new_table(test)
+    
+    from sklearn.svm import SVC
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.feature_selection import SelectKBest
+
+#    feature_selector= SelectKBest(chi2, k=100)
+#    filtered_trn= feature_selector.fit_transform(trn, trn_lbl)
+#    filtered_tst= feature_selector.transform(tst)
+    blah3= SVC(kernel='linear', C=inf)
+#    blah3= KNeighborsClassifier(n_neighbors=5)
+#    blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
+    blah3.fit(trn, trn_lbl)
+    
+    pred3trn=blah3.predict(trn)
+    print mean(pred3trn!=trn_lbl)
+    pred3tst=blah3.predict(tst)
     print mean(pred3tst!=test_lbl)
+    print len(blor.new_features)
+    
