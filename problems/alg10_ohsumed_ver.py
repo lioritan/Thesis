@@ -95,6 +95,7 @@ def is_relation_key(x, relation):
     return res
 
 def is_set_valued(relation,relname):
+    return True #new one for ohsumed
     return relname.startswith('reverse_') or relname=='type' or relname=='possible_cure' or (relname.startswith('drug_') and not relname=='drug_moiety')
     return relname.startswith('reverse_') or relname=='type' #yago
     return isinstance(relation.values()[0], list) #general, slow
@@ -172,7 +173,8 @@ def split_and_subtree(query_chosen, recursive_step_obj):
     query_results=array([query_chosen(x) for x in recursive_step_obj.objects])
     for val in frozenset(query_results):
         inds=find(query_results==val)
-        recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds], recursive_step_obj.tagging[inds], recursive_step_obj.relations, 
+        ents_son= [] if len(recursive_step_obj.entities)==0 else recursive_step_obj.entities[inds]
+        recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds],ents_son, recursive_step_obj.tagging[inds], recursive_step_obj.relations, 
                                         recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, 
                                         recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.stopthresh, recursive_step_obj.cond)
     return query_chosen,recursive_step_obj.sons, recursive_step_obj.good_recs, recursive_step_obj.good_recs_justify, recursive_step_obj.good_recs_trees
@@ -190,10 +192,11 @@ IGTHRESH=0.01
 P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
-    def __init__(self, objects, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
+    def __init__(self, objects, entities, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
         self.relations= relations
         self.objects =array(objects)
         self.tagging=tagging
+        self.entities= entities
         if len(objects) > 0:
             self.chosen_tag= mode(tagging)[0] 
         else:
@@ -244,7 +247,7 @@ class TreeRecursiveSRLStep(object):
         #Build relation-based features(super table) for objects, see if any query good enough
         relevant_features= [] #list of relation,direction pairs that are relevant(to pick from)
         for relation in self.relations.keys():    
-            feature_vals=[is_relation_key(obj, self.relations[relation]) for obj in self.objects] 
+            feature_vals=[is_relation_key(ents, self.relations[relation]) for ents in self.entities] 
             val_lens=[len(val) for val in feature_vals]
             if sum(val_lens)==0 : #no objects have relevant values. This may leave us with objects whose feature values are [], which means any query will return false...
                 continue #not relevant
@@ -277,10 +280,10 @@ class TreeRecursiveSRLStep(object):
         before_all= time.time()
         for relation_used_for_recursive,rel_n in worthy_relations:  
             
-            feature_vals=[is_relation_key(obj, self.relations[relation_used_for_recursive]) for obj in self.objects]
+            feature_vals=[is_relation_key(ents, self.relations[relation_used_for_recursive]) for ents in self.entities]
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.logfile, self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, [], new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.logfile, self.cond)
             inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
             def rep_zero(x):
                 if x==0:
@@ -296,7 +299,7 @@ class TreeRecursiveSRLStep(object):
             self.logfile.write('tree tried! Time: '+str(time.time()-before)+'\n')
             
             #TODO: FIXME!!!!!! predict shouldn't work on x but rather do something smart...
-            clf_labels=array([classifier_chosen.predict(x) for x in self.objects])
+            clf_labels=array([classifier_chosen.predict(x) for x in self.entities])
             tree_ig=ig_ratio(self.tagging, clf_labels)
             tree_ig_penalty=1 #TODO? something to do with tree size and depth?
                     
@@ -447,7 +450,7 @@ class TreeRecursiveSRLStep(object):
             feature_vals=[is_in_relation(obj, self.relations[relation_used_for_recursive],relation_used_for_recursive) for obj in self.objects]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, [], new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)
             inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
             def rep_zero(x):
                 if x==0:
@@ -487,9 +490,10 @@ class TreeRecursiveSRLStep(object):
         return split_and_subtree(self.chosen_query, self)
         
 class TreeRecursiveSRLClassifier(object):
-    def __init__(self, objects, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, logfile, cond=False):
+    def __init__(self, objects, entities, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, logfile, cond=False):
         self.relations= relations
         self.objects =objects
+        self.entities= entities
         self.tagging=tagging
         self.transforms=transforms
         self.cond=cond
@@ -506,7 +510,7 @@ class TreeRecursiveSRLClassifier(object):
     def train(self, stopthresh):
         num_nodes= 0
         depth= 0
-        self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.logfile, stopthresh, self.cond)] #initally all in same node
+        self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.logfile, stopthresh, self.cond)] #initally all in same node
         self.tree_sets[0].depth= 1
         for node in self.tree_sets:
             if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==node.chosen_tag):#consistent/too small to split 
@@ -534,7 +538,7 @@ class TreeRecursiveSRLClassifier(object):
     def train_vld_local(self):
         num_nodes= 0
         depth= 0
-        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, inf, self.cond)] #initally all in same node
+        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, inf, self.cond)] #initally all in same node
         self.tree_sets[0].depth= 1
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
@@ -557,7 +561,8 @@ class TreeRecursiveSRLClassifier(object):
         self.query_tree=self.tree_sets[0] #root
         self.logfile.write(' '*len(self.transforms)+'training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
     
-    def predict(self, new_object, flag=False):  
+    def predict(self, entities, flag=False):  
+        #if depth > 0, object is an entity list. otherwise, problem!!!!
         NA_VAL= -100
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
@@ -567,11 +572,13 @@ class TreeRecursiveSRLClassifier(object):
                 curr_node=curr_node.sons[curr_node.sons.keys()[0]]
                 continue
             
-            transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [new_object]) 
+            transformed_obj= apply_transforms(curr_node.relations, curr_node.transforms, [entities]) 
             if flag:
-                transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [new_object])
+                transformed_obj= apply_transforms_other(curr_node.relations, curr_node.transforms[-1:], [entities])
             query_val= None
-            if len(transformed_obj[0])==0:
+            #print transformed_obj
+
+            if len(transformed_obj[0])==0: #no entities
                 query_val= NA_VAL
                 if len(self.transforms)>0:
                     return NA_VAL
@@ -581,9 +588,9 @@ class TreeRecursiveSRLClassifier(object):
             else: 
                 vals=[]
                 if len(self.transforms)==0: #need apply trans
-                    vals= [curr_node.chosen_query([x]) for x in transformed_obj[0] if len(apply_transforms(curr_node.relations, curr_node.justify.transforms, [[x]])[0])>0]
+                    vals= [curr_node.chosen_query([x]) for x in transformed_obj[0] if len(apply_transforms(curr_node.relations, curr_node.justify.transforms, [x])[0])>0]
                 else:
-                    vals= [curr_node.chosen_query([x]) for x in transformed_obj[0] if len(apply_transforms_other(curr_node.relations, curr_node.justify.transforms[-1:], [[x]])[0])>0]
+                    vals= [curr_node.chosen_query([x]) for x in transformed_obj[0] if len(apply_transforms_other(curr_node.relations, curr_node.justify.transforms[-1:], [x])[0])>0]
                 if len(vals)>0:
                     query_val= int(mode(vals)[0][0]) #ISSUE: mode is problem if equal...
                 else:
@@ -596,8 +603,9 @@ class TreeRecursiveSRLClassifier(object):
         return int(curr_node.chosen_tag)
         
 class FeatureGenerationFromRDF(object):
-    def __init__(self, objects, tagging, relations):
+    def __init__(self, objects, entities, tagging, relations):
         self.objects= objects
+        self.entities= entities
         self.tagging= tagging
         self.relations= relations
         
@@ -606,10 +614,8 @@ class FeatureGenerationFromRDF(object):
         self.feature_trees= []
     
     def generate_features(self, n, max_depth, split_thresh, logfile, STOPTHRESH= 10, version=1):
-        
-        
         if version==1: #first version: stop-thresh+take all better.
-            tree= TreeRecursiveSRLClassifier(self.objects, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
+            tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
             tree.train(STOPTHRESH) #minimum number of objects!
         
             self.new_features= list(tree.recursive_features)
@@ -619,7 +625,7 @@ class FeatureGenerationFromRDF(object):
         elif version==2: #second version will be the stochastic thing on examples
             for i in xrange(10):
                 inds= random.choice(len(self.objects), len(self.objects)/2, replace=False)
-                tree= TreeRecursiveSRLClassifier(self.objects[inds], self.tagging[inds], self.relations, [], n, max_depth, split_thresh, logfile)
+                tree= TreeRecursiveSRLClassifier(self.objects[inds], self.entities[inds], self.tagging[inds], self.relations, [], n, max_depth, split_thresh, logfile)
                 tree.train(STOPTHRESH)
                 
                 self.new_features.extend(tree.recursive_features)
@@ -628,7 +634,7 @@ class FeatureGenerationFromRDF(object):
                 return
         
     
-    def get_new_table(self, test):
+    def get_new_table(self, test, test_ents):
         all_words=set()
         for words in self.objects:
             all_words.update(words)
@@ -640,8 +646,8 @@ class FeatureGenerationFromRDF(object):
             self.test[:, i]= array([1 if (word in obj) else 0 for obj in test])
             self.feature_names.append('has word:%s'%(word))
         for j,new_feature in enumerate(self.new_features):
-            self.table[:, len(all_words)+j]= array([new_feature(obj) for obj in self.objects])
-            self.test[:, len(all_words)+j]= array([new_feature(obj) for obj in test])
+            self.table[:, len(all_words)+j]= array([new_feature(ent) for ent in self.entities])
+            self.test[:, len(all_words)+j]= array([new_feature(ent) for ent in test_ents])
             self.feature_names.append(self.new_justify[j])
         return self.table, self.tagging, self.test, self.feature_names, self.feature_trees
                     
@@ -660,7 +666,7 @@ if __name__=='__main__':
             'dog not allergic to cocoa according to new study from mit',
             'ireland_potato_famine memorial day riot cause 4 dead', #hard one since potato is america but still stuff. Mby a noisy example?
             'wheat and cucumber consumption on worldwide decline except in u.s.',
-            'new corn based recipe will rock your word',
+            'new corn based recipe will rock your world',
             'broccoli vote funny word of year read more inside',
             'new president of mexico allergic to avocado cannot eat guacamole',
             'india origin of moussaka eggplant import to turkey from india',
@@ -676,6 +682,35 @@ if __name__=='__main__':
             '2016_olympics possible not take place in brazil but in mexico',
             'canada_squash soup recipe popular in u.s.'
             ] #messages on fruits/veggies that originally from america is concept. have some fruit, some america, some both, some neither
+    msg_entities= [['cocoa', 'cuban_missile_crisis'],
+                   ['cocoa', 'france'],
+                    ['rice', 'china'],
+                    ['pineapple', 'oslo_peace_conference'],
+                   ['apple', 'pear'],
+                   ['turkey'],
+                   ['u.s.'],
+                   ['u.s.', 'potato'],
+                   ['edward_snoden_leak', 'barrack_obama'],
+                   ['cocoa'],
+                   ['ireland_potato_famine'],
+                   ['wheat', 'cucumber', 'u.s.'],
+                   ['corn'],
+                   ['broccoli'],
+                   ['mexico', 'avocado'],
+                   ['india', 'eggplant', 'turkey'],
+                   ['oslo_peace_conference'],
+                   ['oslo_peace_conference'],
+                   ['cuban_missile_crisis', 'potato' ],
+                   ['paris', 'french_revolution'],
+                   ['orange'],
+                   ['sweet_potato'],
+                   ['pepper'],
+                   ['ginger', 'u.s.', 'los_angeles'],
+                   ['sweet_potato', 'israel'],
+                   ['2016_olympics', 'brazil', 'mexico'],
+                   ['canada_squash', 'u.s.']
+]
+    msg_entities= array(msg_entities, dtype=object)
     msg_objs=array([a.split(' ') for a in messages], dtype=object)
     message_labels = (array([1,1,-1,1,-1,-1,-1,1,-1,1,1,-1,1,-1,1,-1,-1,
                              -1,1,-1,-1,1,1,-1,1,-1,1])+1)/2
@@ -687,22 +722,22 @@ if __name__=='__main__':
                 'massive news coverage of 2016_olympics expect due to location',
                 'rice has medical quality according to mit research',
                 'pumpkin may color urine if consume in large quantity',
-                'religious riot in the_netherlands',
+                'religious riot in europe',
                 'cocoa ban in china lifted']#this test set is too hard. pumpkin is impossible, and cocoa_ban is kind of also impossible
+    tst_ents= [['potato', 'tomato'],
+                   ['2014_israel_president_election'],
+                   ['eggplant', 'asia'],
+                   ['pumpkin'],
+                   ['tomato', 'italy'],
+                   ['2016_olympics'],
+                   ['rice'],
+                   ['pumpkin'],
+                   ['europe'],
+                   ['cocoa','china']
+]
+    tst_ents= array(tst_ents, dtype=object)
     test=[a.split(' ') for a in test_msgs]
     test_lbl= (array([1,-1,-1,1,1,-1,-1,1,-1,1])+1)/2
-    vld_msgs=['rome less visit than vatican_city according to census data',
-               'why the french_revolution help shape the world today',
-               'sweet_potato famine suspect in ireland connection to ireland_potato_famine suspect',
-               'doctor treat cancer with salad claim pepper and tomato have medicinal effects',
-               'russia annex crimea_peninsula president vladimir_putin to make statement',
-               'fish cost worldwide increase due to over-fishing',
-               'cocoa flavor orange tree develop in mit',
-               'pineapple goes well with avocado according to flavor specialist',
-               'orange orange in the_netherlands',
-               'corn voted most corny new world food']
-    vld=[a.split(' ') for a in vld_msgs]
-    vld_lbls=(array([-1,-1,1,1,-1,-1,1,1,-1,1])+1)/2
     relations={}
     relations['type']={'potato':'vegetable', 'cuban_missile_crisis':'event', 'cocoa':'fruit', 'france':'country', 'rice':'cereal', 'china':'country', 'pineapple':'fruit', 'oslo_peace_conference':'event'
                         , 'apple':'fruit', 'pear':'fruit', 'turkey':'country', 'u.s.':'country', 'edward_snoden_leak':'event', 'nsa':'organization', 'obama':'person', 'dog':'animal', 'mit':'university',
@@ -736,14 +771,14 @@ if __name__=='__main__':
             relations[new_key][b]= [a]
 
     logfile= open('run_log.txt','w')
-    blor= FeatureGenerationFromRDF(msg_objs, message_labels, relations)
+    blor= FeatureGenerationFromRDF(msg_objs,msg_entities,  message_labels, relations)
     before=time.time()
     blor.generate_features(200, 2, 3, logfile, 1, 1)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before
     logfile.close()
-    trn, trn_lbl, tst, feature_names, floo= blor.get_new_table(test)
+    trn, trn_lbl, tst, feature_names, floo= blor.get_new_table(test, tst_ents)
     
     from sklearn.svm import SVC
     from sklearn.neighbors import KNeighborsClassifier
