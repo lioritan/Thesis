@@ -21,9 +21,17 @@ def feature_select_ig(trn, trn_lbl, tst, fraction):
     return trn[:, idxs], tst[:, idxs]
     
 def calc_stats(predicted, actual):
-    '''precision,recall,accuracy,F1'''
-    pass
-    return array([mean(predicted!=actual),0,0,0])
+    '''accuracy,precision,recall,F1'''
+    sums_of_things= [0.0,0.0,0.0]
+    for cat in frozenset(actual):
+        tp= len(find(predicted[find(predicted==cat)]==actual[find(actual==cat)]))
+        tp_fp= len(find(predicted==cat))
+        tp_fn= len(find(actual==cat))
+        sums_of_things[0]+= tp*1.0/tp_fp
+        sums_of_things[1]+= tp*1.0/tp_fn
+        sums_of_things[2]+= tp*2.0/(tp_fp+tp_fn)
+    means_of_things= [x/len(frozenset(actual)) for x in sums_of_things]
+    return array([mean(predicted==actual),means_of_things[0],means_of_things[1],means_of_things[2]])
 
 def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, d=0, stopthresh=10, version=1):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
@@ -35,7 +43,7 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
     from sklearn.svm import SVC
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.tree import DecisionTreeClassifier
-    blah1=zeros((19,4)) #precision,recall,accuracy,F1
+    blah1=zeros((19,4)) #accuracy,precision,recall,F1
     blah2=zeros((19,4))
     blah3=zeros((19,4))
     for i,fraction in enumerate(fractions):
@@ -52,8 +60,7 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
         clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=8, random_state=0)
         clf.fit(new_trn, trn_lbl)    
         blah3[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
-        
-        
+               
     return blah1, blah2, blah3, len(blor.new_features)
 
 if __name__=='__main__':
@@ -78,6 +85,9 @@ if __name__=='__main__':
     tree_errs=zeros((10,3,19, 4)) 
     feature_nums=zeros((10,3)) 
     i=0
+#    with open('folds.pkl','wb') as fptr:
+#        cPickle.dump(StratifiedKFold(data_labels, n_folds=10), fptr, -1)
+#    pass
     for trn_idxs, tst_idxs in StratifiedKFold(data_labels, n_folds=10):
         trn=articles[trn_idxs]
         trn_lbl=data_labels[trn_idxs]
