@@ -100,7 +100,7 @@ if __name__=='__main__':
             logfile1= open('run_log_rec%d_%d.txt'%(d,i), 'w')
             blah1, blah2, blah3, num_new= solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents, tst_lbl, relations,logfile1,
                                                               [0.005,0.0075,0.01,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2, 
-                                                               0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , 0, 1, 1)
+                                                               0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , d, 1, 1)
             logfile1.close()
             svm_errs[i, d, :, :]= blah1
             knn_errs[i, d, :, :]= blah2
