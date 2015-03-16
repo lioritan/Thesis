@@ -1,6 +1,5 @@
-\documentclass{article}
-% The file ijcai15.sty is the style file for IJCAI-15 (same as ijcai07.sty).
-\usepackage{ijcai15}
+\documentclass[twoside,11pt]{article}
+\usepackage{jair, theapa, rawfonts}
 
 % Use the postscript times font!
 \usepackage{times}
@@ -24,7 +23,26 @@
 \theoremstyle{definition}
 \newtheorem{defn}{Definition}[section]
 
+\jairheading{1}{1993}{1-15}{6/91}{9/91}
+\ShortHeadings{Minimizing Conflicts: A Heuristic Repair Method}
+{Minton, Philips, Johnston, \& Laird}
+\firstpageno{25}
+
 \title{Feature Generation by Recursive Induction}
+\author{\name Steven Minton \email minton@ptolemy.arc.nasa.gov \\
+	\name Andy Philips \email philips@ptolemy.arc.nasa.gov \\
+	\addr NASA Ames Research Center, Mail Stop: 244-7,\\
+	Moffett Field, CA  94035 USA
+	\AND
+	\name Mark D. Johnston \email johnston@stsci.edu \\
+	\addr Space Telescope Science Institute,
+	3700 San Martin Drive,\\
+	Baltimore, MD 21218 USA
+	\AND
+	\name Philip Laird \email laird@ptolemy.arc.nasa.gov \\
+	\addr NASA Ames Research Center,
+	AI Research Branch, Mail Stop: 269-2,\\
+	Moffett Field, CA  94035 USA}
 \author{Lior Friedman \and Shaul Markovitch\\
 	Computer Science Department \\
 	Technion-Israel Institute of Technology\\
@@ -414,8 +432,11 @@ Another major potential avenue for improvement is to use the techniques discusse
 	
 \end{appendices}
 
-\clearpage
-\bibliographystyle{plainnat}
+%\clearpage
+\vskip 0.2in
 \bibliography{document}
+\bibliographystyle{theapa}
+%\bibliographystyle{plainnat}
+%\bibliography{document}
 
 \end{document} 
