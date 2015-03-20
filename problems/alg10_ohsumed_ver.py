@@ -128,7 +128,9 @@ def relabel(complex_objs, old_tagging, majority=True):
             if not val_map[item].has_key(tag):
                 val_map[item][tag]=0
             val_map[item][tag]+=1
-    items= array([[a] for a,counts in val_map.items() if counts[0]-counts[1]!=0], dtype=object)
+    blorf= [[a] for a,counts in val_map.items() if len(counts.values())==1 or #it is not the case that there is full equality for all tags, so it's 1-1-1 or 2-2-2
+        sum(counts.values()) % len(counts.values()) != 0]
+    items= array(blorf, dtype=object)
     
     tags=[]
     for i,item in enumerate(items):
