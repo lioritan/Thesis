@@ -5,6 +5,7 @@ Created on Sun Jan 18 16:46:57 2015
 @author: liorf
 """
 
+from random import choice
 from numpy import *
 from matplotlib.mlab import find
 from scipy.stats import mode, chisquare
@@ -181,10 +182,11 @@ def split_and_subtree(query_chosen, recursive_step_obj):
     return query_chosen,recursive_step_obj.sons, recursive_step_obj.good_recs, recursive_step_obj.good_recs_justify, recursive_step_obj.good_recs_trees
 def ig_from_one_retag(tagging): 
     curr_max= -1.0
-    for value in frozenset(tagging):
+    possible_tags= frozenset(tagging)
+    for value in possible_tags:
         ind= find(tagging==value)[0]
         tag_pos= zeros(len(tagging))
-        tag_pos[ind]= 1
+        tag_pos[ind]= choice(list(possible_tags.difference([value]))) #this is not efficient!
         curr_max= max(curr_max, ig_ratio(tagging, tag_pos))
     return curr_max
         
