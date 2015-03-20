@@ -1,5 +1,5 @@
 \documentclass[twoside,11pt]{article}
-\usepackage{jair, theapa, rawfonts}
+\usepackage{jair,theapa, rawfonts}
 
 % Use the postscript times font!
 \usepackage{times}
@@ -16,41 +16,24 @@
 \usepackage{dblfloatfix}
 
 %mby
-\usepackage[authoryear]{natbib}
+%\usepackage[authoryear]{natbib}
 \usepackage[titletoc,toc,title]{appendix}
 \usepackage{graphicx}
 
 \theoremstyle{definition}
 \newtheorem{defn}{Definition}[section]
 
-\jairheading{1}{1993}{1-15}{6/91}{9/91}
-\ShortHeadings{Minimizing Conflicts: A Heuristic Repair Method}
-{Minton, Philips, Johnston, \& Laird}
-\firstpageno{25}
+%\jairheading{1}{2015}{3-17}{6/91}{9/91}
+\ShortHeadings{Feature Generation by Recursive Induction}
+{Friedman \& Markovitch}
+%\firstpageno{25}
 
 \title{Feature Generation by Recursive Induction}
-\author{\name Steven Minton \email minton@ptolemy.arc.nasa.gov \\
-	\name Andy Philips \email philips@ptolemy.arc.nasa.gov \\
-	\addr NASA Ames Research Center, Mail Stop: 244-7,\\
-	Moffett Field, CA  94035 USA
-	\AND
-	\name Mark D. Johnston \email johnston@stsci.edu \\
-	\addr Space Telescope Science Institute,
-	3700 San Martin Drive,\\
-	Baltimore, MD 21218 USA
-	\AND
-	\name Philip Laird \email laird@ptolemy.arc.nasa.gov \\
-	\addr NASA Ames Research Center,
-	AI Research Branch, Mail Stop: 269-2,\\
-	Moffett Field, CA  94035 USA}
-\author{Lior Friedman \and Shaul Markovitch\\
-	Computer Science Department \\
-	Technion-Israel Institute of Technology\\
-	Haifa 32000, Israel\\
-	\{liorf,shaulm\}@cs.technion.ac.il}
-%\author{Paper ID 661 \\
-%		Content Areas: Machine Learning, Feature Generation, Semantic Web, Natural Language Processing
-%	}
+\author{\name Lior Friedman \email liorf@cs.technion.ac.il \\
+	\name Shaul Markovitch \email shaulm@cs.technion.ac.il \\
+	\addr Technion-Israel Institute of Technology\\
+	Haifa 32000, Israel
+	}
 
 \begin{document}
 
@@ -65,18 +48,18 @@
 \section{Introduction}
 \label{sec:Intro}
 In recent decades, we have seen an increasing prevalence of machine learning techniques used in a wide variety of fields such as medical diagnosis, vision, and biology.
-Most machine learning methods assume a given set of labeled examples, represented by a set of
+Most machine learning methods assume a given set of labelled examples, represented by a set of
 pre-defined features. These methods have proven to be successful when a collection of good,
 distinguishing features is available.
 In many real-world applications, however, the given set of features is not sufficient for inducing a high quality classifier.
 
-One approach for overcoming the difficulty resulting from an insufficiently expressive set of features, is to generate new features.  Most feature generation algorithms produce new features by combining the original ones in various ways.  For example, the LFC algorithm \citep{ragavan1993complex} combines the original feature using logical operators.  The LDMT algorithm \citep{utgo1991linear} uses linear combinations of the original features to construct more informative ones.  The FICUS algorithm \citep{markovitch2002feature} presents a general framework for using any set of constructors to combine features.
+One approach for overcoming the difficulty resulting from an insufficiently expressive set of features, is to generate new features.  Most feature generation algorithms produce new features by combining the original ones in various ways.  For example, the LFC algorithm \cite{ragavan1993complex} combines the original feature using logical operators.  The LDMT algorithm \cite{utgo1991linear} uses linear combinations of the original features to construct more informative ones.  The FICUS algorithm \cite{markovitch2002feature} presents a general framework for using any set of constructors to combine features.
 
 While feature combination has proven to enhance the performance of induction algorithms, there are many cases where a mere combination of existing features is not enough. A new approach aims to incorporate additional knowledge from external sources in order to construct new and informative features.
-\citet{gabrilovich2009wikipedia} ,for example, present a method for generating features that are based on Wikipedia concepts. \citet{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
+\citeA{gabrilovich2009wikipedia} ,for example, present a method for generating features that are based on Wikipedia concepts. \citeA{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
 
-In recent years, a new resource in the form of Semantic Linked Data has begun to take form, as part of the Semantic Web project (see survey, \citet{bizer2009linked}). This resource has led to the creation of several new approaches designed to utilize the new, ontology-based representation of knowledge \citep{losch2012graph,rios2014statistical}.
-It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \citep{cheng2011automated, paulheim2012unsupervised}.
+In recent years, a new resource in the form of Semantic Linked Data has begun to take form, as part of the Semantic Web project (see survey, \citeR{bizer2009linked}). This resource has led to the creation of several new approaches designed to utilize the new, ontology-based representation of knowledge \cite{losch2012graph,rios2014statistical}.
+It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \cite{cheng2011automated, paulheim2012unsupervised}.
 
 Existing feature generation approaches based on Linked Data can offer great benefits, as they can add useful type information, and often add semantic information such as actors playing in a given movie, or the population of a given city.
 However, we would also like to be capable of identifying more complex relationships between entities.
@@ -217,7 +200,7 @@ The aforementioned feature generation approach offers some unique contributions:
 
 
 \subsection{Applications for Text Categorization}
-In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts, as in the bag-of-words \citep{Wu:1981:CST:1013228.511759, salton1983introduction} approach. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach.
+In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts, as in the bag-of-words \cite{Wu:1981:CST:1013228.511759, salton1983introduction} approach. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach.
 The resulting features will locate sets of words which are connected in the relational domain. This allows us to better generalize compared to the standard bag-of-words method, and find potentially complex semantic relationships, especially when using Semantic Linked Data as our relational database.
 
 An important side effect of this usage is that, since each label in the semantic data defines a relation and texts may contain words from different contexts, there are often multiple relations which apply and thus ${\cal G}(S,{\cal R})$ is often large. For example, a text referring to William Shakespeare's play of "Hamlet" may connect to relations on people (for William Shakespeare himself), on theatre plays (for "Hamlet"), and possibly locations (for the country of Denmark, where the play is set).
@@ -225,17 +208,17 @@ In order to make the process more computationally tractable, especially if it is
 
 A second relevant difference to note is that generated feature may be non-applicable to a specific object, as it may be the case that none of the words within the text appear in a given relation (or, in fact, within the knowledge base at large). Therefore, we decided to use a third value for cases where the generated feature does not apply.
 
-In order to correctly match a given word to an entity, we must make capture multiple word entities. Following the work of \citet{paulheim2012unsupervised}, we used \emph{Named Entity Recognition} (NER) to locate such cases. We used the Stanford Named Entity Recognizer \citep{finkel2005incorporating} to find and group such entities to allow entity matching. We then performed stopword elimination using NLTK \citep{bird2009natural} , removed punctuation marks and performed stemming using the Porter Stemmer \citep{van1980new}.
+In order to correctly match a given word to an entity, we must make capture multiple word entities. Following the work of \citeA{paulheim2012unsupervised}, we used \emph{Named Entity Recognition} (NER) to locate such cases. We used the Stanford Named Entity Recognizer \cite{finkel2005incorporating} to find and group such entities to allow entity matching. We then performed stopword elimination using NLTK \cite{bird2009natural} , removed punctuation marks and performed stemming using the Porter Stemmer \cite{van1980new}.
 
 
 %this entire section!
 \section{Empirical Evaluation}
 In this section, we discuss our experimental methodology and display our main results.
 \subsection{Methodology}
-We have evaluated our method on the TechTC-100 collection \citep{gabrilovich2004text}, a collection of 100 different datasets containing binary text categorization problems of varying difficulty extracted from the Open Directory Project.
+%We have evaluated our method on the TechTC-100 collection \cite{gabrilovich2004text}, a collection of 100 different datasets containing binary text categorization problems of varying difficulty extracted from the Open Directory Project.
 
 %expand?
-As a knowledge base, we used YAGO2 \citep{hoffart2013yago2}, omitting any relations with literal data such as dates or geographic coordinates. This served as a "common knowledge" database. We also made limited use of type information within the database, opting to simply use it as an additional relation.
+As a knowledge base, we used YAGO2 \cite{hoffart2013yago2}, omitting any relations with literal data such as dates or geographic coordinates. This served as a "common knowledge" database. We also made limited use of type information within the database, opting to simply use it as an additional relation.
 In addition, we stripped semantic information regarding entities, such as "TV series" or "fictional character". For each relation within YAGO2, we created both the relation itself as well as the inverse relation, and then removed inverse relations that map very few values to very many, such as the inverse of the "has gender" relation, which maps "male" and "female" to all to all existing people within the YAGO database.
 
 We ran our feature generation algorithm for both a depth of one, creating a recursive learning problem for the original problem, and a depth of two, creating recursive learning problems for the original problem and the first order recursive problem.
@@ -243,7 +226,7 @@ We ran our feature generation algorithm for both a depth of one, creating a recu
 We compared the new set of features (our new features combined with the original features) to the binary bag-of-words features at various feature selection levels. We used information gain ratio as the feature selection criterion.
 
 \subsection{Results}
-Figure \ref{fig:svm_regular} shows the accuracies achieved on all 100 datasets, using a SVM \citep{cortes1995support} classifier (Linear kernel, $C=100$), comparing the accuracy of the baseline using only the original features to a combined pool of original and generated features (with a depth limit of two). In both cases, feature selection was performed, leaving only $20\%$ of the features. The $y=x$ line represents a case where there was no change in performance, and any point above that line represents a dataset upon which we have attained an improvement. In addition, we show lines representing a $5\%$ and $10\%$ difference in accuracy. Results for a feature selection level of $10\%$ are similar, and are also statistically significant $(p<0.05)$.
+Figure \ref{fig:svm_regular} shows the accuracies achieved on all 100 datasets, using a SVM \cite{cortes1995support} classifier (Linear kernel, $C=100$), comparing the accuracy of the baseline using only the original features to a combined pool of original and generated features (with a depth limit of two). In both cases, feature selection was performed, leaving only $20\%$ of the features. The $y=x$ line represents a case where there was no change in performance, and any point above that line represents a dataset upon which we have attained an improvement. In addition, we show lines representing a $5\%$ and $10\%$ difference in accuracy. Results for a feature selection level of $10\%$ are similar, and are also statistically significant $(p<0.05)$.
 
 \begin{figure}[]
 	\centering
@@ -256,7 +239,7 @@ We see that the results are quite positive, with many more datasets showing an a
 
 One can not ignore there are many datasets where there was no change in performance. A closer look at these datasets reveals that the cause for this is that  no features were generated. Further analysis reveals that this occurs due to a large number of highly sparse recursive learning problems. Since we only sample some of the possible problems to attempt feature generation, this is a factor in the amount of features generated in general, as well as part of the reason why no features are generated for some datasets. Experiments in lowering the amount of sampled relations show a decrease in both the number of generated features and the mean increase in accuracy.
 
-In order to test the versatility of our approach, we also tried to look at a very different type of classifier, and therefore used a K-Nearest Neighbours \citep{fix1951discriminatory} classifier ($K=1$). As before, we performed feature selection, leaving only $20\%$ of the features. The results are shown in figure \ref{fig:knn_clean}. We see a similar trend to that of SVM, albeit at a lower base accuracy level. These results also show a statistically significant improvement $(p<0.01)$ using a two-tailed paired t-test.
+In order to test the versatility of our approach, we also tried to look at a very different type of classifier, and therefore used a K-Nearest Neighbours \cite{fix1951discriminatory} classifier ($K=1$). As before, we performed feature selection, leaving only $20\%$ of the features. The results are shown in figure \ref{fig:knn_clean}. We see a similar trend to that of SVM, albeit at a lower base accuracy level. These results also show a statistically significant improvement $(p<0.01)$ using a two-tailed paired t-test.
 
 
 %any good qualtive examples
@@ -359,21 +342,21 @@ In order to test the versatility of our approach, we also tried to look at a ver
 
 
 \section{Related Work}
-One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \citep{quinlan1990learning, muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
-Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \citep{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
+One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning, muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
+Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \cite{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
 Unlike View Learning and other Relational Learning methods, our approach constructs a new learning problem in a new domain using the existing problem as a guide. Due to this distinction, we essentially try to re-think about our problem from a new direction, rather than trying to fit increasingly less connected entities to the original problem. Furthermore, the ability of our approach to locate locally beneficial features which may be difficult to otherwise detect is invaluable. Finally, we note that the use of decision trees during the feature generation process allows for a natural method by which to filter out features even before applying feature selection mechanisms.
 
-One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \citep{kramer2000bottom}, which allows an unsupervised creations of first-order predicates which can then be used as features for propositional methods. A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \citep{van2001upgrade} and SGLR \citep{popescul200716} were suggested, where instead of creating predicates a-priori, feature generation is performed during the training phase, in a more structured manner. While upgrade approaches bear some similarities to our approach, there are several critical differences, the key of which is the ability to more easily locate complex features through the use of existing induction algorithms.
+One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \cite{kramer2000bottom}, which allows an unsupervised creations of first-order predicates which can then be used as features for propositional methods. A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \cite{van2001upgrade} and SGLR \cite{popescul200716} were suggested, where instead of creating predicates a-priori, feature generation is performed during the training phase, in a more structured manner. While upgrade approaches bear some similarities to our approach, there are several critical differences, the key of which is the ability to more easily locate complex features through the use of existing induction algorithms.
 
-Recently, there has been a strong trend of utilizing \emph{Deep Learning} \citep{lecun1998gradient, bengio2009learning} as a feature generation technique. Good examples of this can be seen in FEX \citep{plotz2011feature} and DBN2 \citep{kim2013deep}. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features. Our approach can be seen as a variation on the same concept, with the transformations being the construction of recursive learning problems, and the combinations being the classifiers constructed in the new problem domain. Our approach differs from those rooted in Deep Learning in both the use of relational data to enrich the feature space, and in that we allow more complex combinations in general.
+Recently, there has been a strong trend of utilizing \emph{Deep Learning} \cite{lecun1998gradient, bengio2009learning} as a feature generation technique. Good examples of this can be seen in FEX \cite{plotz2011feature} and DBN2 \cite{kim2013deep}. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features. Our approach can be seen as a variation on the same concept, with the transformations being the construction of recursive learning problems, and the combinations being the classifiers constructed in the new problem domain. Our approach differs from those rooted in Deep Learning in both the use of relational data to enrich the feature space, and in that we allow more complex combinations in general.
 
 \section{Conclusions}
 %finishing up and summary
 We presented a novel new approach to feature generation using relational data, based on constructing and solving new learning problems in the relational domain. While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. While there is no simple way to generalize this approach to numeric features, we believe there are numerous domains where feature values do have semantic meaning, even excluding text categorization problems.
 
-While our approach only generates binary features, aggregation based techniques such as those used in SGLR apply here as well. A major source for potential improvement is the subject of matching values to semantic objects. Given the major advances in the field of Wikification \citep{bunescu2006using} in general and Entity Linking\citep{rao2013entity} in particular, these approaches can be used to link the initial text to entities within the semantic data without losing information, which may lead to better results.
+While our approach only generates binary features, aggregation based techniques such as those used in SGLR apply here as well. A major source for potential improvement is the subject of matching values to semantic objects. Given the major advances in the field of Wikification \cite{bunescu2006using} in general and Entity Linking\cite{rao2013entity} in particular, these approaches can be used to link the initial text to entities within the semantic data without losing information, which may lead to better results.
 
-Another major potential avenue for improvement is to use the techniques discussed in the algorithmic section as a way to directly label entities within the semantic net, which yields a Collective Classification \citep{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn gives us a feature which can then be applied to the non-relational problem domain.
+Another major potential avenue for improvement is to use the techniques discussed in the algorithmic section as a way to directly label entities within the semantic net, which yields a Collective Classification \cite{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn gives us a feature which can then be applied to the non-relational problem domain.
 
 %\appendix
 \begin{appendices}
@@ -434,8 +417,8 @@ Another major potential avenue for improvement is to use the techniques discusse
 
 %\clearpage
 \vskip 0.2in
-\bibliography{document}
 \bibliographystyle{theapa}
+\bibliography{document}
 %\bibliographystyle{plainnat}
 %\bibliography{document}
 

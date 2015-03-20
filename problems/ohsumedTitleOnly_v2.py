@@ -24,8 +24,9 @@ def calc_stats(predicted, actual):
     '''accuracy,precision,recall,F1'''
     sums_of_things= [0.0,0.0,0.0]
     for cat in frozenset(actual):
-        tp= len(find(predicted[find(predicted==cat)]==actual[find(actual==cat)]))
-        tp_fp= len(find(predicted==cat))
+        pos_idxs= find(predicted==cat)
+        tp= len(find(predicted[pos_idxs]==actual[pos_idxs]))
+        tp_fp= len(pos_idxs)
         tp_fn= len(find(actual==cat))
         sums_of_things[0]+= tp*1.0/tp_fp
         sums_of_things[1]+= tp*1.0/tp_fn

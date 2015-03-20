@@ -41,17 +41,17 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
 def statistic_test(tagging, feature_values):
     '''need to compare the two sides I split (how many of each label in each one)'''
     return 0.0,0.0
-    if len(frozenset(feature_values))>2:
-        return 0.0,0.0 #only works for 2 values
-    locs= find(feature_values==1)
-    locs2= find(feature_values!=1)
-    observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
-    expected= array([len(find(tagging[locs2]==1)),len(find(tagging[locs2]!=1))])
-    if any(expected==0):
-        if any(observed==0):
-            return inf, 0.0 #this is good for us
-        return chisquare(expected, observed)
-    return chisquare(observed, expected) #high stat+low p->good
+#    if len(frozenset(feature_values))>2:
+#        return 0.0,0.0 #only works for 2 values
+#    locs= find(feature_values==1)
+#    locs2= find(feature_values!=1)
+#    observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
+#    expected= array([len(find(tagging[locs2]==1)),len(find(tagging[locs2]!=1))])
+#    if any(expected==0):
+#        if any(observed==0):
+#            return inf, 0.0 #this is good for us
+#        return chisquare(expected, observed)
+#    return chisquare(observed, expected) #high stat+low p->good
     
 def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
     '''computes simple info-gain for a split. '''
@@ -116,32 +116,31 @@ def is_in_relation(x, relation,relname, *args):
     if len(args)==0:
         return res #list of strings
     return args[0] in res
-
-
+    
 def relabel(complex_objs, old_tagging, majority=True):
     '''flatten+label(majority or consistent)'''
     val_map={}
     for i,obj in enumerate(complex_objs):
-        for item in obj:
+        tag= old_tagging[i]
+        for item in obj: #each entity
             if not val_map.has_key(item):
-                val_map[item]=[0,0]
-            if old_tagging[i]==1:
-                val_map[item][0]+=1
-            else:
-                val_map[item][1]+=1
-    blarf=[[a] for a,counts in val_map.items() if counts[0]-counts[1]!=0] #only take items which are true majority
-    items= array(blarf, dtype=object)
+                val_map[item]={}
+            if not val_map[item].has_key(tag):
+                val_map[item][tag]=0
+            val_map[item][tag]+=1
+    items= array([[a] for a,counts in val_map.items() if counts[0]-counts[1]!=0], dtype=object)
     
     tags=[]
     for i,item in enumerate(items):
         label_counts=val_map[item[0]]
+        #label counts is mapping of tag->apperances
         if majority:
-            tags.append((1+sign(label_counts[0]-label_counts[1]))/2)
+            tags.append(label_counts.keys()[argmax(label_counts.values())])
         else:
-            if label_counts[0]==0:
-                tags.append(0)
-            elif label_counts[1]==0:
-                tags.append(1)
+            vals=array(label_counts.values())
+            inds= find(vals>0)
+            if len(inds) == 1: #exactly one class
+                tags.append(array(label_counts.keys())[inds])
             else:
                 tags.append(-1)
     tags=array(tags)
@@ -761,15 +760,20 @@ if __name__=='__main__':
     relations['happend_in_place']={'cuban_missile_crisis':'cuba', 'oslo_peace_conference':'norway', 'edward_snoden_leak':'u.s.', 'ireland_potato_famine':'ireland', '2014_israel_president_election':'israel','french_revolution':'france','2016_olympics':'brazil', 'cocoa_ban':'china',
                                     'fu':'f','r':'r','b':'b','c':'c','d':'d'}#apply to event(cuba missile crisis)
     #relations['happend_on_date']={'cuban_missile_crisis':1962, 'oslo_peace_conference':1993, 'edward_snoden_leak':2013, 'ireland_potato_famine':1845, '2014_israel_president_election':2014} #apply to event, numeric
+    for rel in relations.keys():
+        for key,val in relations[rel].items():
+            relations[rel][key]=set([val])
+
     for key in relations.keys():
         new_key= 'reverse_'+key
         relations[new_key]= {}
         for (a,b) in relations[key].items():
-            if relations[new_key].has_key(b):
-                relations[new_key][b].append(a)
-                continue
-            relations[new_key][b]= [a]
-
+            for i in b:
+                if relations[new_key].has_key(i):
+                    relations[new_key][i].add(a)
+                    continue
+                relations[new_key][i]= set([a])
+            
     logfile= open('run_log.txt','w')
     blor= FeatureGenerationFromRDF(msg_objs,msg_entities,  message_labels, relations)
     before=time.time()
