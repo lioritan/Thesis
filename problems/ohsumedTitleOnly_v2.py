@@ -70,7 +70,6 @@ if __name__=='__main__':
         
     with open('ohsumed_titles_final.pkl','rb') as fptr:
         (articles,entities,labels)= cPickle.load(fptr) 
-    
     (articles,entities,labels)= (array(articles), array(entities), array(labels))  
     print shape(articles), shape(labels)
     label_names=array([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
