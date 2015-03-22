@@ -42,7 +42,7 @@
 \begin{abstract}
   Induction algorithms have steadily improved over the years, resulting in powerful methods for learning. However, these methods are constrained to use knowledge within the supplied feature vectors. Recently, a large collection of common-sense and domain specific relational knowledge bases have become available on the web. The natural question is how these knowledge bases can be exploited by existing induction algorithms.
   In this work we propose a novel algorithm for using relational data to generate recursive features. Given a feature, the algorithm recursively defines a new learning task over its set of values, and uses the relational data to construct feature vectors for the new task. The resulting classifier is then added as a new feature.
-  We have applied our algorithm to the domain of text categorization, using large semantic knowledge bases such as YAGO. We have shown that generated recursive features significantly improve the performance of existing induction algorithms.
+  We have applied our algorithm to the domain of text categorization, using large semantic knowledge bases such as Freebase. We have shown that generated recursive features significantly improve the performance of existing induction algorithms.
 \end{abstract}
 
 \section{Introduction}
@@ -56,10 +56,10 @@ In many real-world applications, however, the given set of features is not suffi
 One approach for overcoming the difficulty resulting from an insufficiently expressive set of features, is to generate new features.  Most feature generation algorithms produce new features by combining the original ones in various ways.  For example, the LFC algorithm \cite{ragavan1993complex} combines the original feature using logical operators.  The LDMT algorithm \cite{utgo1991linear} uses linear combinations of the original features to construct more informative ones.  The FICUS algorithm \cite{markovitch2002feature} presents a general framework for using any set of constructors to combine features.
 
 While feature combination has proven to enhance the performance of induction algorithms, there are many cases where a mere combination of existing features is not enough. A new approach aims to incorporate additional knowledge from external sources in order to construct new and informative features.
-\citeA{gabrilovich2009wikipedia} ,for example, present a method for generating features that are based on Wikipedia concepts. \citeA{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
+\citeA{gabrilovich2009wikipediafull} ,for example, present a method for generating features that are based on Wikipedia concepts. \citeA{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features.
 
-In recent years, a new resource in the form of Semantic Linked Data has begun to take form, as part of the Semantic Web project (see survey, \citeR{bizer2009linked}). This resource has led to the creation of several new approaches designed to utilize the new, ontology-based representation of knowledge \cite{losch2012graph,rios2014statistical}.
-It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \cite{cheng2011automated, paulheim2012unsupervised}.
+In recent years, a new resource in the form of Semantic Linked Data has begun to take form, as part of the Semantic Web project (see survey, \citeR{bizer2009linkedfull}). This resource has led to the creation of several new approaches designed to utilize the new, ontology-based representation of knowledge \cite{losch2012graph,rios2014statistical}.
+It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \cite{cheng2011automatedfull,paulheim2012unsupervisedfull}.
 
 Existing feature generation approaches based on Linked Data can offer great benefits, as they can add useful type information, and often add semantic information such as actors playing in a given movie, or the population of a given city.
 However, we would also like to be capable of identifying more complex relationships between entities.
@@ -67,7 +67,7 @@ However, we would also like to be capable of identifying more complex relationsh
 In this work, we present a new methodology for generating complex relational features.  Our algorithm constructs new learning problems from existing feature values, using relational data, such as the semantic web, as the features for the constructed problem.
 Using common induction algorithms, we can then construct a classifier that serves as a feature for the original problem. An important aspect of this approach is that it can be applied recursively within the new learning problem, allowing for an automated, data-driven, exploration of the large space of possible  complex features that are difficult to discover using existing feature-generation methods.
 
-\section{Illustrative Example}
+\subsection{Illustrative Example}
 
 Before we delve into the exact description of our algorithm, we would like to illustrate its main ideas using an illustrative example.
 Suppose we are attempting to identify people with a high risk to be suffering from a certain genetic disease. Assume that the target concept to be discovered is that those at risk are women with ancestors originating from desert areas. To do so, we are given a training sample of sick and healthy people, containing various features, including gender and their full name.
@@ -106,6 +106,9 @@ Suppose then, that we also have access to a knowledge base of facts about countr
 	\caption{A two-level constructed feature used within a decision tree}
 	\label{fig:lvl2_tree}
 \end{figure*}
+
+\section{Feature Generation using Open Linked Data}
+%blah
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\section{Background} \label{background}
@@ -200,15 +203,15 @@ The aforementioned feature generation approach offers some unique contributions:
 
 
 \subsection{Applications for Text Categorization}
-In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts, as in the bag-of-words \cite{Wu:1981:CST:1013228.511759, salton1983introduction} approach. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach.
+In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts, as in the bag-of-words \cite{Wu:1981:CST:1013228.511759,salton1983introduction} approach. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach.
 The resulting features will locate sets of words which are connected in the relational domain. This allows us to better generalize compared to the standard bag-of-words method, and find potentially complex semantic relationships, especially when using Semantic Linked Data as our relational database.
 
-An important side effect of this usage is that, since each label in the semantic data defines a relation and texts may contain words from different contexts, there are often multiple relations which apply and thus ${\cal G}(S,{\cal R})$ is often large. For example, a text referring to William Shakespeare's play of "Hamlet" may connect to relations on people (for William Shakespeare himself), on theatre plays (for "Hamlet"), and possibly locations (for the country of Denmark, where the play is set).
+An important side effect of this usage is that, since each label in the semantic data defines a relation and texts may contain words from different contexts, there are often multiple relations which apply and thus ${\cal G}(S,{\cal R})$ is often large. For example, a text referring to William Shakespeare's play of ``Hamlet" may connect to relations on people (for William Shakespeare himself), on theatre plays (for ``Hamlet"), and possibly locations (for the country of Denmark, where the play is set).
 In order to make the process more computationally tractable, especially if it is performed recursively, we choose a sub-sample of ${\cal G}(S,{\cal R})$ for which we construct new learning problems. For the initial level of recursive activation we do so uniformly, but in later levels we perform a weighted sampling on relations in ${\cal R}$ based on the mean information-gain ratio of features using a given relation $r\in{\cal R}$.
 
 A second relevant difference to note is that generated feature may be non-applicable to a specific object, as it may be the case that none of the words within the text appear in a given relation (or, in fact, within the knowledge base at large). Therefore, we decided to use a third value for cases where the generated feature does not apply.
 
-In order to correctly match a given word to an entity, we must make capture multiple word entities. Following the work of \citeA{paulheim2012unsupervised}, we used \emph{Named Entity Recognition} (NER) to locate such cases. We used the Stanford Named Entity Recognizer \cite{finkel2005incorporating} to find and group such entities to allow entity matching. We then performed stopword elimination using NLTK \cite{bird2009natural} , removed punctuation marks and performed stemming using the Porter Stemmer \cite{van1980new}.
+In order to correctly match a given word to an entity, we must make capture multiple word entities. Following the work of \citeA{paulheim2012unsupervised}, we used \emph{Named Entity Recognition} (NER) to locate such cases. We used the Stanford Named Entity Recognizer \cite{finkel2005incorporatingfull} to find and group such entities to allow entity matching. We then performed stopword elimination using NLTK \cite{bird2009natural} , removed punctuation marks and performed stemming using the Porter Stemmer \cite{van1980new}.
 
 
 %this entire section!
@@ -218,8 +221,8 @@ In this section, we discuss our experimental methodology and display our main re
 %We have evaluated our method on the TechTC-100 collection \cite{gabrilovich2004text}, a collection of 100 different datasets containing binary text categorization problems of varying difficulty extracted from the Open Directory Project.
 
 %expand?
-As a knowledge base, we used YAGO2 \cite{hoffart2013yago2}, omitting any relations with literal data such as dates or geographic coordinates. This served as a "common knowledge" database. We also made limited use of type information within the database, opting to simply use it as an additional relation.
-In addition, we stripped semantic information regarding entities, such as "TV series" or "fictional character". For each relation within YAGO2, we created both the relation itself as well as the inverse relation, and then removed inverse relations that map very few values to very many, such as the inverse of the "has gender" relation, which maps "male" and "female" to all to all existing people within the YAGO database.
+As a knowledge base, we used YAGO2 \cite{hoffart2013yago2}, omitting any relations with literal data such as dates or geographic coordinates. This served as a ``common knowledge" database. We also made limited use of type information within the database, opting to simply use it as an additional relation.
+In addition, we stripped semantic information regarding entities, such as ``TV series" or ``fictional character". For each relation within YAGO2, we created both the relation itself as well as the inverse relation, and then removed inverse relations that map very few values to very many, such as the inverse of the ``has gender" relation, which maps ``male" and ``female" to all to all existing people within the YAGO database.
 
 We ran our feature generation algorithm for both a depth of one, creating a recursive learning problem for the original problem, and a depth of two, creating recursive learning problems for the original problem and the first order recursive problem.
 
@@ -342,13 +345,13 @@ In order to test the versatility of our approach, we also tried to look at a ver
 
 
 \section{Related Work}
-One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning, muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
+One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning,muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
 Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \cite{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
 Unlike View Learning and other Relational Learning methods, our approach constructs a new learning problem in a new domain using the existing problem as a guide. Due to this distinction, we essentially try to re-think about our problem from a new direction, rather than trying to fit increasingly less connected entities to the original problem. Furthermore, the ability of our approach to locate locally beneficial features which may be difficult to otherwise detect is invaluable. Finally, we note that the use of decision trees during the feature generation process allows for a natural method by which to filter out features even before applying feature selection mechanisms.
 
 One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \cite{kramer2000bottom}, which allows an unsupervised creations of first-order predicates which can then be used as features for propositional methods. A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \cite{van2001upgrade} and SGLR \cite{popescul200716} were suggested, where instead of creating predicates a-priori, feature generation is performed during the training phase, in a more structured manner. While upgrade approaches bear some similarities to our approach, there are several critical differences, the key of which is the ability to more easily locate complex features through the use of existing induction algorithms.
 
-Recently, there has been a strong trend of utilizing \emph{Deep Learning} \cite{lecun1998gradient, bengio2009learning} as a feature generation technique. Good examples of this can be seen in FEX \cite{plotz2011feature} and DBN2 \cite{kim2013deep}. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features. Our approach can be seen as a variation on the same concept, with the transformations being the construction of recursive learning problems, and the combinations being the classifiers constructed in the new problem domain. Our approach differs from those rooted in Deep Learning in both the use of relational data to enrich the feature space, and in that we allow more complex combinations in general.
+Recently, there has been a strong trend of utilizing \emph{Deep Learning} \cite{lecun1998gradient,bengio2009learning} as a feature generation technique. Good examples of this can be seen in FEX \cite{plotz2011featurefull} and DBN2 \cite{kim2013deepfull}. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features. Our approach can be seen as a variation on the same concept, with the transformations being the construction of recursive learning problems, and the combinations being the classifiers constructed in the new problem domain. Our approach differs from those rooted in Deep Learning in both the use of relational data to enrich the feature space, and in that we allow more complex combinations in general.
 
 \section{Conclusions}
 %finishing up and summary

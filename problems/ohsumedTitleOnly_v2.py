@@ -28,6 +28,7 @@ def calc_stats(predicted, actual):
         tp= len(find(predicted[pos_idxs]==actual[pos_idxs]))
         tp_fp= len(pos_idxs)
         tp_fn= len(find(actual==cat))
+        print tp, tp_fp, tp_fn, cat, predicted, mean(predicted!=actual)
         sums_of_things[0]+= tp*1.0/tp_fp
         sums_of_things[1]+= tp*1.0/tp_fn
         sums_of_things[2]+= tp*2.0/(tp_fp+tp_fn)
@@ -70,6 +71,7 @@ if __name__=='__main__':
         
     with open('ohsumed_titles_final.pkl','rb') as fptr:
         (articles,entities,labels)= cPickle.load(fptr) 
+    
     (articles,entities,labels)= (array(articles), array(entities), array(labels))  
     print shape(articles), shape(labels)
     label_names=array([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
@@ -84,11 +86,11 @@ if __name__=='__main__':
     knn_errs=zeros((10,3,19, 4)) 
     tree_errs=zeros((10,3,19, 4)) 
     feature_nums=zeros((10,3)) 
-    i=0
-#    with open('folds.pkl','wb') as fptr:
-#        cPickle.dump(StratifiedKFold(data_labels, n_folds=10), fptr, -1)
-#    pass
-    for trn_idxs, tst_idxs in StratifiedKFold(data_labels, n_folds=10):
+    with open('folds.pkl','rb') as fptr:
+        kfold=cPickle.load(fptr)
+    for f,(trn_idxs, tst_idxs) in enumerate(kfold):
+        if f!=0:
+            continue
         trn=articles[trn_idxs]
         trn_lbl=data_labels[trn_idxs]
         trn_ents=ents[trn_idxs]
@@ -97,18 +99,17 @@ if __name__=='__main__':
         tst_ents=ents[tst_idxs]
         
         for d in [0,1,2]:
-            logfile1= open('run_log_rec%d_%d.txt'%(d,i), 'w')
+            logfile1= open('run_log_rec%d_%d.txt'%(d,f), 'w')
             blah1, blah2, blah3, num_new= solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents, tst_lbl, relations,logfile1,
                                                               [0.005,0.0075,0.01,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2, 
                                                                0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , d, 1, 1)
             logfile1.close()
-            svm_errs[i, d, :, :]= blah1
-            knn_errs[i, d, :, :]= blah2
-            tree_errs[i,d, :, :]= blah3
-            feature_nums[i, d]=num_new
-        with open('result_%d.pkl'%(i), 'wb') as fptr:
-            cPickle.dump((svm_errs[i,:,:], knn_errs[i,:,:], tree_errs[i,:,:], feature_nums[i,:]), fptr, -1)
-        i+=1
+            svm_errs[f, d, :, :]= blah1
+            knn_errs[f, d, :, :]= blah2
+            tree_errs[f,d, :, :]= blah3
+            feature_nums[f, d]=num_new
+        with open('result_fold_%d.pkl'%(f), 'wb') as fptr:
+            cPickle.dump((svm_errs[f,:,:], knn_errs[f,:,:], tree_errs[f,:,:], feature_nums[f,:]), fptr, -1)
         
         
     
