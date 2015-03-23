@@ -29,7 +29,7 @@ def calc_stats(predicted, actual):
         tp_fp= len(pos_idxs)
         tp_fn= len(find(actual==cat))
         print tp, tp_fp, tp_fn, cat, predicted, mean(predicted!=actual)
-        sums_of_things[0]+= tp*1.0/tp_fp
+        sums_of_things[0]+= tp*1.0/tp_fp if tp_fp>0 else 0.0
         sums_of_things[1]+= tp*1.0/tp_fn
         sums_of_things[2]+= tp*2.0/(tp_fp+tp_fn)
     means_of_things= [x/len(frozenset(actual)) for x in sums_of_things]
