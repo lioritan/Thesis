@@ -599,7 +599,7 @@ class TreeRecursiveSRLClassifier(object):
                 else:
                     query_val= NA_VAL #query for tree is -1
             
-            tmp= curr_node.chosen_tag
+            tmp= int(curr_node.chosen_tag)
             curr_node=curr_node.sons.get(query_val)
             if curr_node is None: #tried tree that has no N/A in train, but does in test/ example was []
                 return tmp #best possible guess
