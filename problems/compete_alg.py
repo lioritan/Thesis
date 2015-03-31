@@ -50,16 +50,19 @@ class FeatureGenerationAlt(object):
         self.new_justify= []
         
     def generate_features(self, depth):
+        NA_VAL=-100
+        if depth<1:
+            return
         for relation in self.relations:
             new_obs_for_rel= apply_transforms(self.relations, [relation], self.entities)
             for ob in frozenset(flatten(new_obs_for_rel)):
-                self.new_features.append(lambda x, rel=relation, t=ob: 1 if is_in_relation(x, self.relations[rel], rel, t) else 0)
+                self.new_features.append(lambda x, rel=relation, t=ob: 1 if is_in_relation(x, self.relations[rel], rel, t) else NA_VAL if len(is_in_relation(x, self.relations[rel], rel))==0 else 0 )
                 self.new_justify.append('is in relation %s with %s'%(relation, ob))
             if depth==2:
                 for relation2 in self.relations:
                     newer_obs= apply_transforms(self.relations, [relation2], new_obs_for_rel)
                     for ob in frozenset(flatten(newer_obs)):
-                        self.new_features.append(lambda x, trans=[relation,relation2], t=ob: 1 if t in apply_transforms(self.relations, trans, [x])[0] else 0)
+                        self.new_features.append(lambda x, trans=[relation,relation2], t=ob: 1 if t in apply_transforms(self.relations, trans, [x])[0] else NA_VAL if len(apply_transforms(self.relations, trans, [x])[0])==0 else 0)
                         self.new_justify.append('is in relations %s,%s with %s'%(relation, relation2, ob))
         pass #if depth=1, go one relation. if depth=2 go 2 relations and so on...
     
