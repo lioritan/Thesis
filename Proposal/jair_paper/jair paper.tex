@@ -209,17 +209,18 @@ Naturally, we use decision trees as the classifiers for the newly constructed le
 Finally, the features generated during the decision tree training procedure are collected and returned for use as general, black-box features which can be used along with any induction algorithm. The decision tree itself is discarded.
 
 %TODO: pseudo-code! "using a tree to generate and evaluate features"
-%\begin{algorithm}[H]
-%	\caption{Using a decision tree for feature generation and evaluation}
-%	\label{code-tree-thing}
-%	\small
+\begin{algorithm}[H]
+	\caption{Using a decision tree for feature generation and evaluation}
+	\label{code-tree-thing}
+	\small
 		%insert param stuff
-%		\begin{algorithmic}
-%			\Function{}{}
-%			\EndFunction
+		\begin{algorithmic}
+			\Function{TreeBasedFeatureConstruction}{$S$, $F$, $\bar{R}$}
+                \State 
+			\EndFunction
 			
-%		\end{algorithmic}
-%	\end{algorithm}
+		\end{algorithmic}
+	\end{algorithm}
 
 The aforementioned feature generation approach offers some unique contributions:
 \begin{itemize}
@@ -239,6 +240,16 @@ An important side effect of this usage is that, since each label in the semantic
 In order to make the process more computationally tractable, especially if it is performed recursively, we choose a sub-sample of ${\cal G}(S,\bar{R})$ for which we construct new learning problems. For the initial level of recursive activation we do so uniformly. In later levels we perform a weighted sampling on applicable relations in $\bar{R}$ based on the mean information-gain ratio of features within the current level: We take all features in current level for some relation $r\in\bar{R}$, measure the mean information-gain ratio, and use this as the weight for picking $r$ as a target for recursive activation of the FEAGURE algorithm. 
 
 A second relevant difference to note is that generated feature may be non-applicable to a specific object, as it may be the case that none of the entities within the text come from the relation's key set \footnote{In fact, it is possible that the text contains no entities at all}. Therefore, we decided to have generated features yield a third value for cases where the generated feature does not apply.
+
+A final difference is that it may be the case that multiple words in the text are entities of the same domain \footnote{For example, a text mentioning multiple countries}. In such cases, a constructed feature may return differing values for different entities within the text. To best resolve this, in cases where a feature is applicable to multiple unique words within the text, we return a majority vote of the classification returned by the feature as applied to each such word. 
+
+%TODO: figure showing a feature for text. so text goes in, multiple entities apply(show entities->applicable and non applicable), we use our f on each applicable and then majority vote
+%\begin{figure}[t]
+%	\centering
+%	\includegraphics[width=\linewidth]{}
+%	\caption{}
+%	\label{}
+%\end{figure}
 
 %this entire section!
 \section{Empirical Evaluation}
@@ -379,7 +390,7 @@ In order to test the versatility of our approach, we also tried to look at a ver
 \section{Related Work}
 One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning,muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
 Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \cite{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
-Unlike View Learning and other Relational Learning methods, our approach constructs a new learning problem in a new domain using the existing problem as a guide. Due to this distinction, we essentially try to re-think about our problem from a new direction, rather than trying to fit increasingly less connected entities to the original problem. Furthermore, the ability of our approach to locate locally beneficial features which may be difficult to otherwise detect is invaluable. Finally, we note that the use of decision trees during the feature generation process allows for a natural method by which to filter out features even before applying feature selection mechanisms.
+Unlike View Learning and other Relational Learning methods, our approach constructs a new learning problem in a new domain using the existing problem as a guide. Due to this distinction, we essentially try to re-think about our problem from a new direction, rather than trying to fit increasingly less connected entities to the original problem. Furthermore, the ability of our approach to locate locally beneficial features which may be difficult to otherwise detect is invaluable. Finally, we note that the use of decision trees during the feature generation process allows for a natural method by which to filter out features even before applying traditional feature selection mechanisms.
 
 One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \cite{kramer2000bottom}, which allows an unsupervised creations of first-order predicates which can then be used as features for propositional methods. A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \cite{van2001upgrade} and SGLR \cite{popescul200716} were suggested, where instead of creating predicates a-priori, feature generation is performed during the training phase, in a more structured manner. While upgrade approaches bear some similarities to our approach, there are several critical differences, the key of which is the ability to more easily locate complex features through the use of existing induction algorithms.
 
@@ -387,11 +398,11 @@ Recently, there has been a strong trend of utilizing \emph{Deep Learning} \cite{
 
 \section{Conclusions}
 %finishing up and summary
-We presented a novel new approach to feature generation using relational data, based on constructing and solving new learning problems in the relational domain. While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. While there is no simple way to generalize this approach to numeric features, we believe there are numerous domains where feature values do have semantic meaning, even excluding text categorization problems.
+We presented a novel new approach to feature generation using relational data, based on constructing and solving new learning problems in the relational domain. While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. While there is no simple way to generalize this approach to numeric features, we believe there are numerous domains where feature values do have semantic meaning, even excluding text-based domains.
 
 While our approach only generates binary features, aggregation based techniques such as those used in SGLR apply here as well. A major source for potential improvement is the subject of matching values to semantic objects. Given the major advances in the field of Wikification \cite{bunescu2006using} in general and Entity Linking\cite{rao2013entity} in particular, these approaches can be used to link the initial text to entities within the semantic data without losing information, which may lead to better results.
 
-Another major potential avenue for improvement is to use the techniques discussed in the algorithmic section as a way to directly label entities within the semantic net, which yields a Collective Classification \cite{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn gives us a feature which can then be applied to the non-relational problem domain.
+Another major potential avenue for improvement is to use the techniques discussed in the algorithmic section as a way to directly label entities within the semantic net, which yields a Collective Classification \cite{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn allows us to label any entity within the semantic net, which gives us a potential feature to apply to the original problem domain.
 
 %\appendix
 \begin{appendices}
