@@ -263,15 +263,15 @@ In order to make the process more computationally tractable, especially if it is
 
 A second relevant difference to note is that generated feature may be non-applicable to a specific object, as it may be the case that none of the entities within the text come from the relation's key set \footnote{In fact, it is possible that the text contains no entities at all}. Therefore, we decided to have generated features yield a third value for cases where the generated feature does not apply.
 
-A final difference is that it may be the case that multiple words in the text are entities of the same domain \footnote{For example, a text mentioning multiple countries}. In such cases, a constructed feature may return differing values for different entities within the text. To best resolve this, in cases where a feature is applicable to multiple unique words within the text, we return a majority vote of the classification returned by the feature as applied to each such word, as seen in figure \ref{figure5}
+A final difference is that it may be the case that multiple words in the text are entities of the same domain \footnote{For example, a text mentioning multiple countries}. In such cases, a constructed feature may return differing values for different entities within the text. To best resolve this, in cases where a feature is applicable to multiple unique words within the text, we return a majority vote of the classification returned by the feature as applied to each such word. 
 
 %TODO: figure showing a feature for text. so text goes in, multiple entities apply(show entities->applicable and non applicable), we use our f on each applicable and then majority vote
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{fig5.pdf}
-	\caption{Using a constructed feature in text: $(1)$-Relevant entities are extracted. $(2)$-Each entity is sent to the constructed feature. $(3)$-A majority vote between responses is performed.}
-	\label{figure5}
-\end{figure}
+%\begin{figure}[t]
+%	\centering
+%	\includegraphics[width=\linewidth]{}
+%	\caption{}
+%	\label{}
+%\end{figure}
 
 %this entire section!
 \section{Empirical Evaluation}
