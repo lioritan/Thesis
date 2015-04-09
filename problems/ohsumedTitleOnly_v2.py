@@ -74,10 +74,10 @@ if __name__=='__main__':
     
     (articles,entities,labels)= (array(articles), array(entities), array(labels))  
     print shape(articles), shape(labels)
-    label_names=array([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
+    label_names=array([1,20])#([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
     data,ents,data_labels=[],[],[]
     for label in label_names:
-        idxs=find(labels==label)[:100]
+        idxs=find(labels==label)#[:100]
         data+=[x for x in articles[idxs]]
         ents+=[x for x in entities[idxs]]
         data_labels+=[x for x in labels[idxs]]
@@ -86,9 +86,9 @@ if __name__=='__main__':
     knn_errs=zeros((10,3,19, 4)) 
     tree_errs=zeros((10,3,19, 4)) 
     feature_nums=zeros((10,3)) 
-    with open('folds_small.pkl','wb') as fptr:
-        cPickle.dump(StratifiedKFold(data_labels, n_folds=10),fptr,-1)
-    ffff.ggg()
+#    with open('folds_small_2cats.pkl','wb') as fptr:
+#        cPickle.dump(StratifiedKFold(data_labels, n_folds=10),fptr,-1)
+    dgdgdg.dfddg()
     with open('folds.pkl','rb') as fptr:
         kfold=cPickle.load(fptr)
     for f,(trn_idxs, tst_idxs) in enumerate(kfold):
@@ -112,7 +112,7 @@ if __name__=='__main__':
             tree_errs[f,d, :, :]= blah3
             feature_nums[f, d]=num_new
         with open('result_fold_%d.pkl'%(f), 'wb') as fptr:
-            cPickle.dump((svm_errs[f,:,:], knn_errs[f,:,:], tree_errs[f,:,:], feature_nums[f,:]), fptr, -1)
+            cPickle.dump((svm_errs[f,:,:,:], knn_errs[f,:,:,:], tree_errs[f,:,:,:], feature_nums[f,:]), fptr, -1)
         
         
     

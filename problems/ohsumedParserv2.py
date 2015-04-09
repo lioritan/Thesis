@@ -8,6 +8,7 @@ Created on Mon Mar 09 16:51:16 2015
 import requests
 import string
 
+#Note: a lot here is customized for wikipedia miner
 def find_wiki_tags(text): #need to wait like 1 second between requests. also, send RAW text!
     reply= requests.get('http://wikipedia-miner.cms.waikato.ac.nz/services/wikify?',
                         params={'source':text,'responseFormat':'json'})
