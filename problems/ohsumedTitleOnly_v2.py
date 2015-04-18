@@ -37,7 +37,7 @@ def calc_stats(predicted, actual):
 
 def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, d=0, stopthresh=10, version=1):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
-    blor.generate_features(30*(d**2), d, 7, logfile, stopthresh, version)  
+    blor.generate_features(400*(d**2), d, 7, logfile, stopthresh, version)  
     trn, trn_lbl, tst, feature_names,_= blor.get_new_table(tst, tst_ents)
 
     #TODO: selection, run all 5...
