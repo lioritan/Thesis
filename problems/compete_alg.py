@@ -49,17 +49,17 @@ class FeatureGenerationAlt(object):
         self.new_features= []
         self.new_justify= []
         
-    def generate_features(self, depth):
+    def generate_features(self, depth, subsample_n):
         NA_VAL=-100
         if depth<1:
             return
-        for relation in self.relations:
+        for relation in random.choice(self.relations.keys(), subsample_n, True):
             new_obs_for_rel= apply_transforms(self.relations, [relation], self.entities)
             for ob in frozenset(flatten(new_obs_for_rel)):
                 self.new_features.append(lambda x, rel=relation, t=ob: 1 if is_in_relation(x, self.relations[rel], rel, t) else NA_VAL if len(is_in_relation(x, self.relations[rel], rel))==0 else 0 )
                 self.new_justify.append('is in relation %s with %s'%(relation, ob))
             if depth==2:
-                for relation2 in self.relations:
+                for relation2 in random.choice(self.relations.keys(), 1):
                     newer_obs= apply_transforms(self.relations, [relation2], new_obs_for_rel)
                     for ob in frozenset(flatten(newer_obs)):
                         self.new_features.append(lambda x, trans=[relation,relation2], t=ob: 1 if t in apply_transforms(self.relations, trans, [x])[0] else NA_VAL if len(apply_transforms(self.relations, trans, [x])[0])==0 else 0)
@@ -208,7 +208,7 @@ if __name__=='__main__':
             
     blor= FeatureGenerationAlt(msg_objs,msg_entities,  message_labels, relations)
     before=time.time()
-    blor.generate_features(2)    
+    blor.generate_features(2, 200)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before
