@@ -23,7 +23,7 @@
 \theoremstyle{definition}
 \newtheorem{defn}{Definition}[section]
 
-%\jairheading{1}{2015}{3-17}{6/91}{9/91}
+\jairheading{1}{2015}{3-17}{6/91}{9/91}
 \ShortHeadings{Feature Generation by Recursive Induction}
 {Friedman \& Markovitch}
 %\firstpageno{25}
@@ -132,6 +132,13 @@ Suppose then, that we also have access to a knowledge base of facts about countr
 
 %In the case where this external knowledge is organized as a set of relations between entities, several methods can be used. One such method is using \emph{Inductive Logic Programming} \citep{muggleton1991inductive} to generate features, in a process referred to as \emph{upgrading} \citep{van2001upgrade}. This is demonstrated through the ICL algorithm, which uses a refinement graph to search for logical formulae which serve as features. The SGLR algorithm \citep{popescul200716} extends this idea to numerical features, generated using aggregation-based techniques, and then utilizes regression for inference.
 
+%TODO: this section to talk about propo as chain of joins? add that needs serious filtering/subsampling to be tractable, and give newish citations (proposizitonaliztion: wordification blah blah paper?)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{Using relational knowledge to generate features: A traditional approach}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Before we discuss our approach, it is prudent to consider existing techniques for turning relational knowledge into additional features.
+%Discuss propositionalization?
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Generating Features through Recursive Induction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -187,12 +194,15 @@ Note that during the process of learning $h_{i}$, we can once again call the fea
 
 We note that in order to prevent cycles which provide no new information, we do not allow the use of any relation that is the inverse of a previously used relation. This is not a major concern, as it is often the case that even relations using similar sets of keys will have often have differing targets (so even if $R_{i}:K\rightarrow Dom_{i}, R_{j}:K\rightarrow Dom_{j}$, usually $Dom_{i}$ and $Dom_{j}$ will be dissimilar).
 
-When performing feature generation, we often wish to evaluate the predictive power of generated features. When such evaluation is done in the context of the entire dataset, it is possible to lose the unique benefit of a potentially powerful feature. To address this phenomenon, we decided to apply our recursive feature generation algorithm in a divide-and-conquer approach through the use of a decision tree. It is important to note, however, that the features generated in this process can be used for any induction algorithm, not necessarily decision tree induction algorithms.
-Using decision trees has several advantages:
+
+\subsection{Finding Locally improving features} \label{tree_usage}
+
+When performing feature generation, we often wish to evaluate the predictive power of generated features. When such evaluation is done in the context of the entire dataset, it is possible to lose the unique benefit of a potentially powerful feature. To address this phenomenon, we decided to apply our recursive feature generation algorithm in a divide-and-conquer approach through the use of a decision tree, thus allowing us to better identify features with a strong local impact which may be difficult to see in a more global context. It is important to note, however, that the features generated in this process can be used for any induction algorithm, not necessarily decision tree induction algorithms.
+Using decision trees for this divide-and-conquer approach for feature generation offers several advantages:
 \begin{itemize}
-	\item We gain an innate way to evaluate and filter generated features: A feature generated in a node will be added to the final result only if it is no less informative than the existing feature with the highest information-gain ratio. 
-	\item Since we repeat this process within inner nodes of the tree, we allow for the discovery of locally relevant relationships which may be difficult to pick up when looking at the entirety of the data. We use pre-pruning based on minimal leaf size to avoid creating features which are poorly supported by actual training data.
+	\item Since we repeat this process within inner nodes of the tree, we allow for the discovery of locally relevant relationships which may be difficult to pick up when looking at the entirety of the data. We use pre-pruning based on minimal leaf size to avoid creating features which are poorly supported by actual training data and thus may overfit to the training set.
 	\item Since a decision tree classifier tests features one at a time, we can easily isolate the impact of a specific generated feature.
+	\item We gain an innate way to evaluate and filter generated features: A feature generated in a node will be added to the final result only if it is no less informative than any existing feature for that node.
 	\item Since we use generated features in the constructed tree, we can ensure that features generated afterwards within the tree will be largely orthogonal to it, thus ensuring variety in the generated features. 
 	\item Decision trees are relatively interpretable, which leads to features which are easier to understand.
 \end{itemize}
@@ -200,7 +210,6 @@ Naturally, we use decision trees as the classifiers for the newly constructed le
 
 Finally, the features generated during the decision tree training procedure are collected and returned for use as general, black-box features which can be used along with any induction algorithm. The decision tree itself is discarded.
 
-%TODO: pseudo-code! "using a tree to generate and evaluate features"
 \begin{algorithm}[H]
 	\caption{Using a decision tree for feature generation and evaluation}
 	\label{code-tree-thing}
@@ -244,14 +253,6 @@ Finally, the features generated during the decision tree training procedure are 
 		\end{algorithmic}
 	\end{algorithm}
 
-The aforementioned feature generation approach offers some unique contributions:
-\begin{itemize}
-	\item By moving our domain space when constructing a new problem, we essentially look at the problem from another perspective, which allows for the discovery of complex relationships.
-	\item The process of re-labeling allows noise reduction and emphasizes more general trends within the data that may be harder to otherwise notice.
-	\item We can exploit the power of existing, well-developed learning algorithms when we create a classifier, and possibly use different ones as we take recursive steps.
-	\item By using a decision tree, we can find locally good features, which often translate to globally good features.
-\end{itemize}
-
 
 \subsection{Applications for Text Categorization}
 In order to apply our feature generation technique to the domain of text categorization, we make the standard assumption that our basic features are the words that appear in the texts, as in the bag-of-words \cite{Wu:1981:CST:1013228.511759,salton1983introduction} approach. We can therefore take words which also exist as entities within the relational database as feature values $v_i$ for the sake of our approach. To successfully do so, we naturally turn to \emph{Named Entity Recognition} (NER) approaches in order to better locate such entitles within the text.
@@ -265,7 +266,6 @@ A second relevant difference to note is that generated feature may be non-applic
 
 A final difference is that it may be the case that multiple words in the text are entities of the same domain \footnote{For example, a text mentioning multiple countries}. In such cases, a constructed feature may return differing values for different entities within the text. To best resolve this, in cases where a feature is applicable to multiple unique words within the text, we return a majority vote of the classification returned by the feature as applied to each such word, as seen in figure \ref{figure5}
 
-%TODO: figure showing a feature for text. so text goes in, multiple entities apply(show entities->applicable and non applicable), we use our f on each applicable and then majority vote
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{fig5.pdf}
@@ -273,13 +273,28 @@ A final difference is that it may be the case that multiple words in the text ar
 	\label{figure5}
 \end{figure}
 
+\subsection{Discussion and Analysis of the FEAGURE algorithm}
+We note that the process of re-labeling and constructing recursive problems as detalied in section \ref{algorithm_section} offers some unique contributions:
+\begin{itemize}
+	\item By moving our domain space when constructing a new problem, we essentially look at the problem from another perspective, which allows for the discovery of complex relationships.
+	\item The process of re-labeling allows noise reduction and emphasizes more general trends within the data that may be harder to otherwise notice.
+	\item We can exploit the power of existing, well-developed learning algorithms when we create a classifier, and possibly use different ones as we take recursive steps.
+\end{itemize}
+Furthermore, we note that FEAGURE can locate locally useful features which may be difficult to identify when looking at the dataset as a whole.
+
+The resulting features of the FEAGURE algorithm %TODO: discuss that they are classifiers on feature values. also talk on the fact that we expect a few powerful&complex features, rather than many simple ones
+
+In terms of runtime performance, while FEAGURE has a large overhead, we note two major things: Firstly, the critical section of re-labeling and constructing recursive problems can be parallelized for different recursive problems within a decision tree node.
+Secondly, we note that existing approaches such as the ones described by  \citeA{cheng2011automatedfull} and \citeA{paulheim2012unsupervisedfull}, as well as propositionalization approaches %TODO: citations. possibly this is mentioned earlier?
+perform a chain of join operations ($\Join$) between existing feature values and external knowledge bases, which require similar overheads in terms of performance.
+
 %this entire section!
 \section{Empirical Evaluation}
 In this section, we discuss our experimental methodology and display our main results.
 \subsection{Methodology}
 %We have evaluated our method on the TechTC-100 collection \cite{gabrilovich2004text}, a collection of 100 different datasets containing binary text categorization problems of varying difficulty extracted from the Open Directory Project.
 
-%expand?
+%TODO: expand. more on each dataset, experimental setup and settings, processing how's and why's
 As a knowledge base, we used YAGO2 \cite{hoffart2013yago2}, omitting any relations with literal data such as dates or geographic coordinates. This served as a ``common knowledge" database. We also made limited use of type information within the database, opting to simply use it as an additional relation.
 In addition, we stripped semantic information regarding entities, such as ``TV series" or ``fictional character". For each relation within YAGO2, we created both the relation itself as well as the inverse relation, and then removed inverse relations that map very few values to very many, such as the inverse of the ``has gender" relation, which maps ``male" and ``female" to all to all existing people within the YAGO database.
 
@@ -409,6 +424,7 @@ In order to test the versatility of our approach, we also tried to look at a ver
 %\end{figure}
 
 
+%TODO: this is not great: too short, propo and upgrade should probably go to the new top part. this should be used to compare to specific papers as well
 \section{Related Work}
 One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning,muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
 Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \cite{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
@@ -420,11 +436,15 @@ Recently, there has been a strong trend of utilizing \emph{Deep Learning} \cite{
 
 \section{Conclusions}
 %finishing up and summary
-We presented a novel new approach to feature generation using relational data, based on constructing and solving new learning problems in the relational domain. While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. While there is no simple way to generalize this approach to numeric features, we believe there are numerous domains where feature values do have semantic meaning, even excluding text-based domains.
 
-While our approach only generates binary features, aggregation based techniques such as those used in SGLR apply here as well. A major source for potential improvement is the subject of matching values to semantic objects. Given the major advances in the field of Wikification \cite{bunescu2006using} in general and Entity Linking\cite{rao2013entity} in particular, these approaches can be used to link the initial text to entities within the semantic data without losing information, which may lead to better results.
+We presented a novel new approach to feature generation using relational data, based on constructing and solving new learning problems in the relational domain. 
+Our feature generation algorithm constructs powerful and complex features, and can identify locally useful features as well as general trends. These features can be used along with any traditional machine learning algorithm.
+While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. Although there is no simple way to generalize this approach to numeric features, we believe there are numerous domains where feature values do have semantic meaning, even excluding text-based domains.
+While our approach only generates binary features, aggregation based techniques such as those used in SGLR apply here as well. We furthermore note that when solving non-binary classification problems, we can construct categorical features with, at most, the same amount of values as there are labels in the dataset.
 
-Another major potential avenue for improvement is to use the techniques discussed in the algorithmic section as a way to directly label entities within the semantic net, which yields a Collective Classification \cite{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn allows us to label any entity within the semantic net, which gives us a potential feature to apply to the original problem domain.
+A major source for potential improvement is the subject of matching values to semantic objects. Given the major advances in the field of Wikification \cite{bunescu2006using} in general and Entity Linking\cite{rao2013entity} in particular, these approaches can be used to link the initial text to entities within the semantic data without losing information, which may lead to better results, especially for text calssification problems.
+
+Another major potential avenue for improvement is to use the techniques discussed section  \ref{algorithm_section}} as a way to directly label entities within the semantic graph, which yields a Collective Classification \cite{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn allows us to label any entity within the semantic net, which gives us a potential feature to apply to the original problem domain.
 
 %\appendix
 \begin{appendices}
