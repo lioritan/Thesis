@@ -249,7 +249,7 @@ class TreeRecursiveSRLStep(object):
         
         #Build relation-based features(super table) for objects, see if any query good enough
         relevant_features= [] #list of relation,direction pairs that are relevant(to pick from)
-        for relation in self.relations.keys():    
+        for relation in random.choice(self.relations.keys(), self.n, True):    
             feature_vals=[is_relation_key(ents, self.relations[relation]) for ents in self.entities] 
             val_lens=[len(val) for val in feature_vals]
             if sum(val_lens)==0 : #no objects have relevant values. This may leave us with objects whose feature values are [], which means any query will return false...
@@ -267,10 +267,9 @@ class TreeRecursiveSRLStep(object):
             return split_and_subtree(self.chosen_query, self)
         
         #sample relevent features n times(with replacement, so recursive n is the amount chosen)
-        choices=random.choice(relevant_features, self.n, True)
         
         temp={}
-        for relation in choices:
+        for relation in relevant_features:
             if temp.has_key(relation):
                 temp[relation]+=1
                 continue
@@ -330,44 +329,15 @@ class TreeRecursiveSRLStep(object):
             return None,self.sons, [],[], []
         self.logfile.write('chose query: '+str(self.justify)+'. ig is '+str(self.ig)+'\n')
         return split_and_subtree(self.chosen_query, self)
-    
-    def filter_bad_rels(self, relations, value_things):
-        #filter transforms+non-relevant since doesn't apply
-        #relations-relations I consider moving to
-        new_rel_fet=[]
-        new_avg_ig=[]
-        for i,relation in enumerate(relations):
-            if len(self.transforms)>1 and (relation=='reverse_'+self.transforms[-1] or (relation==self.transforms[-1].replace('reverse_','') and relation!=self.transforms[-1]) or (len(self.transforms)>1 and relation==self.transforms[-1])) :
-                continue #no using the relation you came with on the way back...
-            if value_things[i]<=0.0:
-                continue #ig is 0->no point            
-            barf=False
-            new_objs=apply_transforms_other(self.relations, [relation], self.objects)
-            if sum([len(obj) for obj in new_objs])==0:#all objects are []
-                continue
-            for other_rel in self.relations.keys():
-                if other_rel==relation or other_rel=='reverse_'+relation or other_rel==relation.replace('reverse_',''):
-                    continue
-                feature_vals= [is_in_relation(obj, self.relations[other_rel],other_rel) for obj in new_objs]#apply_transforms_other(self.relations, [other_rel],new_objs)# 
-                val_lens=[len(val) for val in feature_vals]
-                if sum(val_lens)>0 :
-                    barf=True
-                    break
-            if barf:   
-                new_rel_fet.append(relation)
-                new_avg_ig.append(value_things[i]) 
-        return new_rel_fet, array(new_avg_ig)
-                   
                 
     def pick_split_vld_local(self):
         '''never have to worry about len(transforms==0)'''
         relevant_features= [] #list of relation,direction pairs that are relevant(to pick from)
-        relation_avg_igs= [] #in alg 3 we only 
         self.chosen_query=None 
         
         self.ig= -1.0#best known error: treat me as leaf
         best_ig, relation_used, constant= self.ig,None,''
-        for relation in self.relations.keys():
+        for relation in random.choice(self.relations.keys(), self.n, True):
             if relation=='reverse_'+self.transforms[-1] or (relation==self.transforms[-1].replace('reverse_','') and relation!=self.transforms[-1]) or (len(self.transforms)>1 and relation==self.transforms[-1]) :
                 continue #no using the relation you came with on the way back...
             feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in self.objects] #apply_transforms_other(self.relations, [relation], self.objects) #
@@ -398,12 +368,11 @@ class TreeRecursiveSRLStep(object):
                     best_ig, relation_used, constant= ig_for_const, relation,const            
             
             relevant_features.append(relation)
-            relation_avg_igs.append(avg_for_rel/len(relation_constants))
             
         #1)pick some relation from relevant_features(how?) 
         if len(relevant_features)==0:
             self.chosen_query=None
-            self.justify='no features'
+            self.justify='no features found'
             return None,self.sons, [],[], []
         if constant is None:
             self.chosen_query= lambda x: 1 if len(is_in_relation(x, self.relations[relation_used],relation_used))==0 else 0
@@ -416,29 +385,16 @@ class TreeRecursiveSRLStep(object):
             self.chosen_query=None
             self.justify='not good enough'
             return None,self.sons, [],[], []
-        
-        clf_tagging= array([self.chosen_query(x) for x in self.objects])
-        test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
-        if p_val > P_THRESH: #10% confidence level
-            self.chosen_query=None
-            self.justify='not good enough'
-            return None,self.sons, [],[], []     
-            
+                    
         if len(self.transforms)>= self.MAX_DEPTH: 
             self.justify=self.justify+' and max depth reached'
             self.logfile.write(' '*len(self.transforms)+'chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
             return split_and_subtree(self.chosen_query, self)
         
-        relevant_features, relation_avg_igs =self.filter_bad_rels(relevant_features, relation_avg_igs)
-        if len(relevant_features)==0: #had feature, now I don't
-            self.justify=self.justify+' also cannot recurse'
-            self.logfile.write(' '*len(self.transforms)+'chose query: '+self.justify+'. ig is '+str(self.ig)+'\n')
-            return split_and_subtree(self.chosen_query, self)
             
         #sample relevent features n times(with replacement, so recursive n is the amount chosen)
-        choices=random.choice(relevant_features, self.n, True, relation_avg_igs/sum(relation_avg_igs))
         temp={}
-        for relation in choices:
+        for relation in relevant_features:
             if temp.has_key(relation):
                 temp[relation]+=1
                 continue
@@ -475,9 +431,6 @@ class TreeRecursiveSRLStep(object):
             
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
             if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier
-                test_val, p_val= statistic_test(self.tagging, clf_tagging) #high stat+low p->good
-                if p_val > P_THRESH: #1% confidence level
-                    continue #tree not good enough!
                 self.is_rec= True
                 self.logfile.write(' '*len(self.transforms)+'chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x, True)
