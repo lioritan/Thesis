@@ -28,16 +28,16 @@ def calc_stats(predicted, actual):
         tp= len(find(predicted[pos_idxs]==actual[pos_idxs]))
         tp_fp= len(pos_idxs)
         tp_fn= len(find(actual==cat))
-        print tp, tp_fp, tp_fn, cat, predicted, mean(predicted!=actual)
+        #print tp, tp_fp, tp_fn, cat, predicted, mean(predicted!=actual)
         sums_of_things[0]+= tp*1.0/tp_fp if tp_fp>0 else 0.0
         sums_of_things[1]+= tp*1.0/tp_fn
         sums_of_things[2]+= tp*2.0/(tp_fp+tp_fn)
     means_of_things= [x/len(frozenset(actual)) for x in sums_of_things]
     return array([mean(predicted==actual),means_of_things[0],means_of_things[1],means_of_things[2]])
 
-def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, d=0, stopthresh=10, version=1):
+def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, d=0, stopthresh=10):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
-    blor.generate_features(400*(d**2), d, 7, logfile, stopthresh, version)  
+    blor.generate_features(200*(d**2), d, 7, logfile, stopthresh)  
     trn, trn_lbl, tst, feature_names,_= blor.get_new_table(tst, tst_ents)
 
     #TODO: selection, run all 5...
@@ -66,7 +66,7 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
     return blah1, blah2, blah3, len(blor.new_features)
 
 if __name__=='__main__':
-    with open('ohsumed_relations_new.pkl','rb') as fptr:
+    with open('ohsumed_relations_new_small.pkl','rb') as fptr:
         relations= cPickle.load(fptr) 
         
     with open('ohsumed_titles_final.pkl','rb') as fptr:
@@ -77,7 +77,7 @@ if __name__=='__main__':
     label_names=array([1,20])#([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
     data,ents,data_labels=[],[],[]
     for label in label_names:
-        idxs=find(labels==label)[:249]
+        idxs=find(labels==label)
         data+=[x for x in articles[idxs]]
         ents+=[x for x in entities[idxs]]
         data_labels+=[x for x in labels[idxs]]
@@ -86,9 +86,9 @@ if __name__=='__main__':
     knn_errs=zeros((10,3,19, 4)) 
     tree_errs=zeros((10,3,19, 4)) 
     feature_nums=zeros((10,3)) 
-    with open('folds_small500_2cats.pkl','wb') as fptr:
-        cPickle.dump(StratifiedKFold(data_labels, n_folds=10),fptr,-1)
-    dgdgdg.dfddg()
+    #with open('folds_2cats.pkl','wb') as fptr:
+    #    cPickle.dump(StratifiedKFold(data_labels, n_folds=10),fptr,-1)
+    #gdgdg.dfddg()
     with open('folds.pkl','rb') as fptr:
         kfold=cPickle.load(fptr)
     for f,(trn_idxs, tst_idxs) in enumerate(kfold):
@@ -103,9 +103,9 @@ if __name__=='__main__':
         
         for d in [0,1,2]:
             logfile1= open('run_log_rec%d_%d.txt'%(d,f), 'w')
-            blah1, blah2, blah3, num_new= solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents, tst_lbl, relations,logfile1,
+            blah1, blah2, blah3, num_new= solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents, tst_lbl, relations, logfile1,
                                                               [0.005,0.0075,0.01,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2, 
-                                                               0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , d, 1, 1)
+                                                               0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , d, 17)
             logfile1.close()
             svm_errs[f, d, :, :]= blah1
             knn_errs[f, d, :, :]= blah2
