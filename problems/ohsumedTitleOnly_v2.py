@@ -37,7 +37,7 @@ def calc_stats(predicted, actual):
 
 def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, d=0, stopthresh=10):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
-    blor.generate_features(200*(d**2), d, 7, logfile, stopthresh)  
+    blor.generate_features(400*(d**2), d, 81, logfile, stopthresh)  
     trn, trn_lbl, tst, feature_names,_= blor.get_new_table(tst, tst_ents)
 
     #TODO: selection, run all 5...
@@ -82,9 +82,9 @@ if __name__=='__main__':
         ents+=[x for x in entities[idxs]]
         data_labels+=[x for x in labels[idxs]]
     data,ents, data_labels= array(data, dtype=object), array(ents, dtype=object), array(data_labels)
-    svm_errs=zeros((10,3,19, 4)) 
-    knn_errs=zeros((10,3,19, 4)) 
-    tree_errs=zeros((10,3,19, 4)) 
+    svm_accs=zeros((10,3,19, 4)) 
+    knn_accs=zeros((10,3,19, 4)) 
+    tree_accs=zeros((10,3,19, 4)) 
     feature_nums=zeros((10,3)) 
     #with open('folds_2cats.pkl','wb') as fptr:
     #    cPickle.dump(StratifiedKFold(data_labels, n_folds=10),fptr,-1)
@@ -107,12 +107,12 @@ if __name__=='__main__':
                                                               [0.005,0.0075,0.01,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2, 
                                                                0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , d, 17)
             logfile1.close()
-            svm_errs[f, d, :, :]= blah1
-            knn_errs[f, d, :, :]= blah2
-            tree_errs[f,d, :, :]= blah3
+            svm_accs[f, d, :, :]= blah1
+            knn_accs[f, d, :, :]= blah2
+            tree_accs[f,d, :, :]= blah3
             feature_nums[f, d]=num_new
         with open('result_fold_%d.pkl'%(f), 'wb') as fptr:
-            cPickle.dump((svm_errs[f,:,:,:], knn_errs[f,:,:,:], tree_errs[f,:,:,:], feature_nums[f,:]), fptr, -1)
+            cPickle.dump((svm_accs[f,:,:,:], knn_accs[f,:,:,:], tree_accs[f,:,:,:], feature_nums[f,:]), fptr, -1)
         
         
     
