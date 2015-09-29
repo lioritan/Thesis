@@ -195,7 +195,7 @@ IGTHRESH=0.01
 P_THRESH=0.001
 #BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
-    def __init__(self, objects, entities, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, logfile, stopthresh, cond=False):
+    def __init__(self, objects, entities, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, d, logfile, stopthresh, cond=False):
         self.relations= relations
         self.objects =array(objects)
         self.tagging=tagging
@@ -211,6 +211,7 @@ class TreeRecursiveSRLStep(object):
         self.chosen_query=None
         self.cond=cond
         self.n=n
+        self.d=d
         self.MAX_DEPTH=MAX_DEPTH
         self.SPLIT_THRESH=SPLIT_THRESH
         self.logfile= logfile
@@ -285,7 +286,7 @@ class TreeRecursiveSRLStep(object):
             feature_vals=[is_relation_key(ents, self.relations[relation_used_for_recursive]) for ents in self.entities]
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, [], new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.logfile, self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, [], new_tagging, self.relations, self.transforms+[relation_used_for_recursive], rel_n, self.MAX_DEPTH,self.SPLIT_THRESH, self.d, self.logfile, self.cond)
             inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
             def rep_zero(x):
                 if x==0:
@@ -409,7 +410,7 @@ class TreeRecursiveSRLStep(object):
             feature_vals=[is_in_relation(obj, self.relations[relation_used_for_recursive],relation_used_for_recursive) for obj in self.objects]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
             #3)call TreeRecursiveSRLClassifier
-            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, [], new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, self.cond)
+            classifier_chosen= TreeRecursiveSRLClassifier(new_objs, [], new_tagging, self.relations, self.transforms+[relation_used_for_recursive], new_n ,self.MAX_DEPTH, self.SPLIT_THRESH,self.d,self.logfile, self.cond)
             inds= [i for i,v in enumerate(feature_vals) if len(v)>0]
             def rep_zero(x):
                 if x==0:
@@ -446,7 +447,7 @@ class TreeRecursiveSRLStep(object):
         return split_and_subtree(self.chosen_query, self)
         
 class TreeRecursiveSRLClassifier(object):
-    def __init__(self, objects, entities, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, logfile, cond=False):
+    def __init__(self, objects, entities, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, d, logfile, cond=False):
         self.relations= relations
         self.objects =objects
         self.entities= entities
@@ -454,6 +455,7 @@ class TreeRecursiveSRLClassifier(object):
         self.transforms=transforms
         self.cond=cond
         self.n=n
+        self.d=d
         self.MAX_DEPTH=MAX_DEPTH
         self.SPLIT_THRESH=SPLIT_THRESH
         self.logfile= logfile
@@ -466,10 +468,10 @@ class TreeRecursiveSRLClassifier(object):
     def train(self, stopthresh):
         num_nodes= 0
         depth= 0
-        self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.logfile, stopthresh, self.cond)] #initally all in same node
+        self.tree_sets= [TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.d, self.logfile, stopthresh, self.cond)] #initally all in same node
         self.tree_sets[0].depth= 1
         for node in self.tree_sets:
-            if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==node.chosen_tag):#consistent/too small to split 
+            if len(node.objects)<=self.SPLIT_THRESH or all(node.tagging==node.chosen_tag) or node.depth>=self.d:#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 #self.logfile.write('node became leaf\n')
@@ -494,11 +496,11 @@ class TreeRecursiveSRLClassifier(object):
     def train_vld_local(self):
         num_nodes= 0
         depth= 0
-        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.logfile, inf, self.cond)] #initally all in same node
+        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.d, self.logfile, inf, self.cond)] #initally all in same node
         self.tree_sets[0].depth= 1
         self.query_tree=self.tree_sets[0] #root
         for node in self.tree_sets:
-            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==node.chosen_tag)):#consistent/too small to split 
+            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==node.chosen_tag) or node.depth>=self.d):#consistent/too small to split 
                 node.justify='leafed(thresh/constistant)'
                 node.chosen_query=None
                 #self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
@@ -569,26 +571,13 @@ class FeatureGenerationFromRDF(object):
         self.new_justify= []
         self.feature_trees= []
     
-    def generate_features(self, n, max_depth, split_thresh, logfile, STOPTHRESH= 10, version=1):
-        if version==1: #first version: stop-thresh+take all better.
-            tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, logfile)
-            tree.train(STOPTHRESH) #minimum number of objects!
+    def generate_features(self, n, max_depth, split_thresh, d, logfile, STOPTHRESH= 10):
+        tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, d, logfile)
+        tree.train(STOPTHRESH) #minimum number of objects!
         
-            self.new_features= list(tree.recursive_features)
-            self.new_justify= list(tree.feature_justify)
-            self.feature_trees= list(tree.feature_trees)
-            return
-        elif version==2: #second version will be the stochastic thing on examples
-            for i in xrange(10):
-                inds= random.choice(len(self.objects), len(self.objects)/2, replace=False)
-                tree= TreeRecursiveSRLClassifier(self.objects[inds], self.entities[inds], self.tagging[inds], self.relations, [], n, max_depth, split_thresh, logfile)
-                tree.train(STOPTHRESH)
-                
-                self.new_features.extend(tree.recursive_features)
-                self.new_justify.extend(tree.feature_justify)
-                self.feature_trees.extend(tree.feature_trees)
-                return
-        
+        self.new_features= list(tree.recursive_features)
+        self.new_justify= list(tree.feature_justify)
+        self.feature_trees= list(tree.feature_trees)
     
     def get_new_table(self, test, test_ents):
         all_words=set()
@@ -734,7 +723,7 @@ if __name__=='__main__':
     logfile= open('run_log.txt','w')
     blor= FeatureGenerationFromRDF(msg_objs,msg_entities,  message_labels, relations)
     before=time.time()
-    blor.generate_features(200, 2, 3, logfile, 1, 1)    
+    blor.generate_features(500, 2, 3, 3, logfile, 1)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before

@@ -35,10 +35,13 @@ def calc_stats(predicted, actual):
     means_of_things= [x/len(frozenset(actual)) for x in sums_of_things]
     return array([mean(predicted==actual),means_of_things[0],means_of_things[1],means_of_things[2]])
 
-def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, d=0, stopthresh=10):
+def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, f, d=0, stopthresh=10):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
-    blor.generate_features(400*(d**2), d, 81, logfile, stopthresh)  
+    blor.generate_features(300*(d**2), d, 81, 4, logfile, stopthresh)  
     trn, trn_lbl, tst, feature_names,_= blor.get_new_table(tst, tst_ents)
+    with open('trn_and_tst_%d_%d.pkl'%(d, f), 'wb') as fptr:
+        cPickle.dump((trn, trn_lbl, tst, tst_lbl, feature_names), fptr, -1)
+        #TODO: feature trees also. can analyze them!
 
     #TODO: selection, run all 5...
     
@@ -105,7 +108,7 @@ if __name__=='__main__':
             logfile1= open('run_log_rec%d_%d.txt'%(d,f), 'w')
             blah1, blah2, blah3, num_new= solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents, tst_lbl, relations, logfile1,
                                                               [0.005,0.0075,0.01,0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2, 
-                                                               0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] , d, 17)
+                                                               0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0] ,f, d, 81)
             logfile1.close()
             svm_accs[f, d, :, :]= blah1
             knn_accs[f, d, :, :]= blah2
