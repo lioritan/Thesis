@@ -37,10 +37,12 @@ def calc_stats(predicted, actual):
 
 def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, f, d=0, stopthresh=10):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
-    blor.generate_features(300*(d**2), d, 81, 4, logfile, stopthresh)  
-    trn, trn_lbl, tst, feature_names,_= blor.get_new_table(tst, tst_ents)
+    blor.generate_features(500*(d**2), d, 81, 20, logfile, stopthresh)  
+    trn, trn_lbl, tst, feature_names,feature_trees= blor.get_new_table(tst, tst_ents)
+    for (rel, tree) in feature_trees:
+        alg.clean_tree_for_pickle(tree.query_tree)
     with open('trn_and_tst_%d_%d.pkl'%(d, f), 'wb') as fptr:
-        cPickle.dump((trn, trn_lbl, tst, tst_lbl, feature_names), fptr, -1)
+        cPickle.dump((trn, trn_lbl, tst, tst_lbl, feature_names,feature_trees), fptr, -1)
         #TODO: feature trees also. can analyze them!
 
     #TODO: selection, run all 5...
@@ -92,7 +94,7 @@ if __name__=='__main__':
     #with open('folds_2cats.pkl','wb') as fptr:
     #    cPickle.dump(StratifiedKFold(data_labels, n_folds=10),fptr,-1)
     #gdgdg.dfddg()
-    with open('folds.pkl','rb') as fptr:
+    with open('folds_2cats.pkl','rb') as fptr:
         kfold=cPickle.load(fptr)
     for f,(trn_idxs, tst_idxs) in enumerate(kfold):
         if f!=0:
