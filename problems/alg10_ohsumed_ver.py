@@ -178,7 +178,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         ents_son= [] if len(recursive_step_obj.entities)==0 else recursive_step_obj.entities[inds]
         recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds],ents_son, recursive_step_obj.tagging[inds], recursive_step_obj.relations, 
                                         recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, 
-                                        recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.stopthresh, recursive_step_obj.cond)
+                                        recursive_step_obj.SPLIT_THRESH, recursive_step_obj.d, recursive_step_obj.logfile, recursive_step_obj.stopthresh, recursive_step_obj.cond)
     return query_chosen,recursive_step_obj.sons, recursive_step_obj.good_recs, recursive_step_obj.good_recs_justify, recursive_step_obj.good_recs_trees
 def ig_from_one_retag(tagging): 
     curr_max= -1.0
