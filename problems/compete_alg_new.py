@@ -74,12 +74,12 @@ class FeatureGenerationAlt(object):
             if max_depth==2:
                 relation2 = choice(self.relations.keys())
                 newer_obs= apply_transforms(self.relations, [relation2], new_obs_for_rel)
-                flattened_obs = list(frozenset(flatten(new_obs_for_rel)))
-                if len(flattened_obs)==0:
+                flattened_obs_2 = list(frozenset(flatten(newer_obs)))
+                if len(flattened_obs_2)==0:
                     continue
-                ob = random.choice(flattened_obs, 1)
-                self.new_features.append(lambda x, trans=[relation,relation2], t=ob: 1 if t in apply_transforms(self.relations, trans, [x])[0] else NA_VAL if len(apply_transforms(self.relations, trans, [x])[0])==0 else 0)
-                self.new_justify.append('is in relations %s,%s with %s'%(relation, relation2, ob))        
+                new_ob = random.choice(flattened_obs_2, 1)
+                self.new_features.append(lambda x, trans=[relation,relation2], t=new_ob: 1 if t in apply_transforms(self.relations, trans, [x])[0] else NA_VAL if len(apply_transforms(self.relations, trans, [x])[0])==0 else 0)
+                self.new_justify.append('is in relations %s,%s with %s'%(relation, relation2, new_ob))        
     
     def get_new_table(self, test, test_ents):
         all_words=set()
@@ -247,3 +247,4 @@ if __name__=='__main__':
     pred3tst=blah3.predict(tst)
     print mean(pred3tst!=test_lbl)
     print len(blor.new_features)
+    print blor.feature_names[-30:]
