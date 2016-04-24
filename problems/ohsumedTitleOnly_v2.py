@@ -37,7 +37,7 @@ def calc_stats(predicted, actual):
 
 def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, f, d=0, stopthresh=10):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
-    blor.generate_features(500*(d**2), d, 81, 20, logfile, stopthresh)  
+    blor.generate_features(1000*(d**2), d, 81, 20, logfile, stopthresh)  
     trn, trn_lbl, tst, feature_names,feature_trees= blor.get_new_table(tst, tst_ents)
     for (rel, tree) in feature_trees:
         alg.clean_tree_for_pickle(tree.query_tree)
@@ -56,7 +56,7 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
     for i,fraction in enumerate(fractions):
         new_trn, new_tst= feature_select_ig(trn, trn_lbl, tst, fraction)
         
-        clf= SVC(kernel='linear', C=100)
+        clf= SVC(kernel='linear', C=10)
         clf.fit(new_trn, trn_lbl)    
         blah1[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
         
@@ -64,7 +64,7 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
         clf.fit(new_trn, trn_lbl)    
         blah2[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
         
-        clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=8, random_state=0)
+        clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=21, random_state=0)
         clf.fit(new_trn, trn_lbl)    
         blah3[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
                

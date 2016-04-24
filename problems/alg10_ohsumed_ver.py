@@ -178,7 +178,7 @@ def split_and_subtree(query_chosen, recursive_step_obj):
         ents_son= [] if len(recursive_step_obj.entities)==0 else recursive_step_obj.entities[inds]
         recursive_step_obj.sons[val]= TreeRecursiveSRLStep(recursive_step_obj.objects[inds],ents_son, recursive_step_obj.tagging[inds], recursive_step_obj.relations, 
                                         recursive_step_obj.transforms, recursive_step_obj.n, recursive_step_obj.MAX_DEPTH, 
-                                        recursive_step_obj.SPLIT_THRESH, recursive_step_obj.d, recursive_step_obj.logfile, recursive_step_obj.stopthresh, recursive_step_obj.cond)
+                                        recursive_step_obj.SPLIT_THRESH, recursive_step_obj.logfile, recursive_step_obj.stopthresh, recursive_step_obj.cond)
     return query_chosen,recursive_step_obj.sons, recursive_step_obj.good_recs, recursive_step_obj.good_recs_justify, recursive_step_obj.good_recs_trees
 def ig_from_one_retag(tagging): 
     curr_max= -1.0
@@ -578,6 +578,7 @@ class FeatureGenerationFromRDF(object):
         self.new_features= list(tree.recursive_features)
         self.new_justify= list(tree.feature_justify)
         self.feature_trees= list(tree.feature_trees)
+        self.blah=tree
     
     def get_new_table(self, test, test_ents):
         all_words=set()
@@ -723,7 +724,7 @@ if __name__=='__main__':
     logfile= open('run_log.txt','w')
     blor= FeatureGenerationFromRDF(msg_objs,msg_entities,  message_labels, relations)
     before=time.time()
-    blor.generate_features(500, 2, 3, 3, logfile, 1)    
+    blor.generate_features(800, 2, 3, 2, logfile, 1)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before
@@ -748,4 +749,9 @@ if __name__=='__main__':
     pred3tst=blah3.predict(tst)
     print mean(pred3tst!=test_lbl)
     print len(blor.new_features)
+    
+    print blor.blah.d
+    print blor.blah.query_tree.d
+    print 3>=blor.blah.query_tree.sons[0].d
+    print 3>=blor.blah.query_tree.sons[0].sons[0].d
     
