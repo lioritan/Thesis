@@ -21,6 +21,7 @@ Basically, this is for later mby and probably don't go more than 1 level deep be
 
 import cPickle
 from numpy import *
+import codecs
 
 #def build_disambig_requirements(medical_dump):
 #    '''for all entities in medical domain, build a list of them'''
@@ -41,10 +42,34 @@ def make_sorted_entity_list(ohsumed_docs):
     return sorted(entity_list)
     
 def filter_relational_data(sorted_entities, raw_facts, outfile):
-    'take out all non-relevant relational data'''
+    '''take out all non-relevant relational data'''
     i=0
-    with open(outfile, 'w') as fptr_out:
-        with open(raw_facts, 'rb') as fptr_in:
+    target_ents=set()
+    with codecs.open(outfile, 'wb', encoding='utf-8') as fptr_out:
+        with codecs.open(raw_facts, 'rb', encoding='utf-8') as fptr_in:
+            line= fptr_in.readline() #could do for line in fptr_in
+            while i<len(sorted_entities) and line!='':
+                triplet=line.split('\t')[0:3]
+                if triplet[0].find('(') != -1:
+                    line= fptr_in.readline()
+                    continue
+                entity= triplet[0].replace(' ','_').lower()
+                if entity<sorted_entities[i]: 
+                    line= fptr_in.readline()
+                    continue
+                if entity> sorted_entities[i]:
+                    i+=1
+                    continue
+                fptr_out.write(line)
+                target_ents.add(str_process(triplet[2]))
+                line= fptr_in.readline()
+    return target_ents
+    
+def add_more_relational_data(sorted_entities, raw_facts, outfile):
+    '''take out all non-relevant relational data'''
+    i=0
+    with codecs.open(outfile, 'wb', encoding='utf-8') as fptr_out:
+        with codecs.open(raw_facts, 'rb', encoding='utf-8') as fptr_in:
             line= fptr_in.readline() #could do for line in fptr_in
             while i<len(sorted_entities) and line!='':
                 triplet=line.split('\t')[0:3]
@@ -77,7 +102,8 @@ def build_relations(facts):
 import string
 def str_process(entity_name):
     #single word, lowercaps, remove punctuation marks. anything else?
-    entity_name=  entity_name.translate(string.maketrans("",""), string.punctuation)
+    trans_table = dict((ord(char), None) for char in string.punctuation)
+    entity_name=  entity_name.translate(trans_table)
     return entity_name.replace(' ','_').lower()
 
 #OBJECT_NAME= '<http://rdf.freebase.com/ns/type.object.name>'
@@ -120,23 +146,26 @@ def str_process(entity_name):
 #    return relations
 
 if __name__=='__main__': #TODO
-    with open('C:\Users\liorf\Documents\GitHub\Thesis\problems\ohsumed_titles_parsed_complete.pkl','rb') as fptr:
-        (articles,labels)= cPickle.load(fptr) 
+    with open('C:\Users\Lior\Documents\GitHub\Thesis\problems\ohsumed_titles_final.pkl','rb') as fptr:
+        (articles,entities,labels)= cPickle.load(fptr) 
     
-    (articles,labels)= (array(articles), array(labels))  
-    print shape(articles), shape(labels)
-    label_names=array([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
-    data,data_labels=[],[]
-    for label in label_names:
-        idxs=find(labels==label)
-        data+=[x for x in articles[idxs]]
-        data_labels+=[x for x in labels[idxs]]
-    data, data_labels= array(data, dtype=object), array(data_labels)
-    print len(data)
+    #(articles,labels)= (array(articles), array(labels))  
+    #print shape(articles), shape(labels)
+    #label_names=array([1, 4, 6, 8, 10, 13, 14, 17, 20, 23])   
+    #data,data_labels=[],[]
+    #for label in label_names:
+    #    idxs=find(labels==label)
+    #    data+=[x for x in articles[idxs]]
+    #    data_labels+=[x for x in labels[idxs]]
+    #data, data_labels= array(data, dtype=object), array(data_labels)
+    #print len(data)
     
-    entity_list=make_sorted_entity_list(data)
+    entity_list=make_sorted_entity_list(entities)
     print len(entity_list)
-    filter_relational_data(entity_list, 'freebase-easy-14-04-14/facts.txt', 'filtered_facts.txt')
+    target_ents = filter_relational_data(entity_list, 'D:/Thesis archive/freebase-easy-14-04-14/facts.txt', 'filtered_facts.txt')
+    sorted_target_ents=sorted(target_ents)
+    add_more_relational_data(sorted_target_ents, 'D:/Thesis archive/freebase-easy-14-04-14/facts.txt', 'filtered_facts2.txt')
+
 #    disambig_required= build_disambig_requirements('freebase-medicine')
 #    disambig_table= build_disabmig(disambig_required, 'freebase-common2')
 #    
@@ -144,5 +173,5 @@ if __name__=='__main__': #TODO
     #Now: build the reverse:
     pass
 
-#    with open('', 'wb') as fptr:
-#        cPickle.dump(relations, fptr, -1)
+    #with open('another_relations.pkl', 'wb') as fptr:
+    #    cPickle.dump(build_relations('filtered_facts.txt'), fptr, -1)

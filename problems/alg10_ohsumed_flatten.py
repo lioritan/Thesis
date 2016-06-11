@@ -575,10 +575,20 @@ class FeatureGenerationFromRDF(object):
         tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, d, logfile)
         tree.train(STOPTHRESH) #minimum number of objects!
         
-        self.new_features= list(tree.recursive_features)
-        self.new_justify= list(tree.feature_justify)
+        #self.new_features= list(tree.recursive_features)
+        #self.new_justify= list(tree.feature_justify)
         self.feature_trees= list(tree.feature_trees)
         self.blah=tree
+        self.new_features = []
+        self.new_justify = []
+        #spreads out the non-recursive features
+        for relation,f_tree in self.feature_trees:
+            for node in f_tree.tree_sets:
+                if node.chosen_query is not None:
+                    self.new_features.append(node.chosen_query)
+                    self.new_justify.append(node.justify)
+                
+        
     
     def get_new_table(self, test, test_ents):
         all_words=set()
