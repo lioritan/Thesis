@@ -9,6 +9,7 @@ from random import choice
 from numpy import *
 from matplotlib.mlab import find
 from scipy.stats import mode, chisquare
+from matplotlib.cbook import flatten
 
 import time
 
@@ -462,9 +463,7 @@ class TreeRecursiveSRLClassifier(object):
         self.logfile= logfile
         #self.logfile.write(' '*len(self.transforms)+'Created tree with transforms: '+str(self.transforms)+'\n')
         
-        self.recursive_features=[] #the important thing in the end!
-        self.feature_justify= [] #the relation used for tree?
-        self.feature_trees= []
+        self.feature_trees= {}
         
     def train(self, stopthresh):
         num_nodes= 0
@@ -484,9 +483,9 @@ class TreeRecursiveSRLClassifier(object):
                 #self.logfile.write('node became leaf\n')
                 continue#another leaf case...
             num_nodes+=1
-            self.recursive_features.extend(rec_feature)
-            self.feature_justify.extend(justify)
-            self.feature_trees.extend(trees)
+            if not self.feature_trees.has_key(node.depth):
+                self.feature_trees[node.depth] = []
+            self.feature_trees[node.depth].extend(trees)
             depth= max(depth, node.depth)
             for son in sons.values():
                 son.depth= node.depth+1
@@ -568,45 +567,41 @@ class FeatureGenerationFromRDF(object):
         self.tagging= tagging
         self.relations= relations
         
-        self.new_features= []
-        self.new_justify= []
-        self.feature_trees= []
+        self.new_features= {}
     
     def generate_features(self, n, max_depth, split_thresh, d, logfile, STOPTHRESH= 10):
         tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, d, logfile)
         tree.train(STOPTHRESH) #minimum number of objects!
         
-        #self.new_features= list(tree.recursive_features)
-        #self.new_justify= list(tree.feature_justify)
-        self.feature_trees= list(tree.feature_trees)
         self.blah=tree
-        self.new_features = []
-        self.new_justify = []
         #spreads out the non-recursive features
-        for relation,f_tree in self.feature_trees:
-            for node in f_tree.tree_sets:
-                if node.chosen_query is not None:
-                    self.new_features.append(node.chosen_query)
-                    self.new_justify.append(node.justify)
+        for depth in tree.feature_trees.keys():
+            for relation,f_tree in tree.feature_trees[depth]:
+                for node in f_tree.tree_sets:
+                    if node.chosen_query is not None:
+                        if self.new_features.has_key(depth):
+                            self.new_features[depth].append(node.chosen_query)
+                        else:
+                            self.new_features[depth] = [node.chosen_query]
                 
         
     
-    def get_new_table(self, test, test_ents):
+    def get_new_table(self, test, test_ents, depth):
         all_words=set()
         for words in self.objects:
             all_words.update(words)
-        self.table= zeros((len(self.objects), len(all_words)+len(self.new_features)))
-        self.test= zeros((len(test), len(all_words)+len(self.new_features)))
+        new_features = list(flatten([self.new_features[i] for i in self.new_features.keys() if i<=depth]))
+        self.table= zeros((len(self.objects), len(all_words)+len(new_features)))
+        self.test= zeros((len(test), len(all_words)+len(new_features)))
         self.feature_names=[]
         for i,word in enumerate(all_words):
             self.table[:,i]= array([1 if (word in obj) else 0 for obj in self.objects])
             self.test[:, i]= array([1 if (word in obj) else 0 for obj in test])
             self.feature_names.append('has word:%s'%(word))
-        for j,new_feature in enumerate(self.new_features):
+        for j,new_feature in enumerate(new_features):
             self.table[:, len(all_words)+j]= array([new_feature(ent) for ent in self.entities])
             self.test[:, len(all_words)+j]= array([new_feature(ent) for ent in test_ents])
-            self.feature_names.append(self.new_justify[j])
-        return self.table, self.tagging, self.test, self.feature_names, self.feature_trees
+        return self.table, self.tagging, self.test, len(new_features)
                     
     
 if __name__=='__main__':
@@ -740,7 +735,8 @@ if __name__=='__main__':
     #blah3.train(1)
     print time.time()-before
     logfile.close()
-    trn, trn_lbl, tst, feature_names, floo= blor.get_new_table(test, tst_ents)
+    print(max(blor.new_features.keys()))
+    trn, trn_lbl, tst, new_features= blor.get_new_table(test, tst_ents, 1)
     
     from sklearn.svm import SVC
     from sklearn.neighbors import KNeighborsClassifier
@@ -759,10 +755,4 @@ if __name__=='__main__':
     print mean(pred3trn!=trn_lbl)
     pred3tst=blah3.predict(tst)
     print mean(pred3tst!=test_lbl)
-    print len(blor.new_features)
-    
-    print blor.blah.d
-    print blor.blah.query_tree.d
-    print 3>=blor.blah.query_tree.sons[0].d
-    print 3>=blor.blah.query_tree.sons[0].sons[0].d
-    
+            

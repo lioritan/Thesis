@@ -9,6 +9,7 @@ from random import choice
 from numpy import *
 from matplotlib.mlab import find
 from scipy.stats import mode, chisquare
+from sklearn.svm import SVC        
 
 import time
 
@@ -208,7 +209,6 @@ class TreeRecursiveSRLStep(object):
             self.chosen_tag=None
         self.transforms= steps_to_curr        
         self.ig = None
-        self.avg_ig = None
         self.chosen_query=None
         self.cond=cond
         self.n=n
@@ -239,7 +239,7 @@ class TreeRecursiveSRLStep(object):
             avg_word_ig+=word_ig
             if word_ig>max_ig:
                 max_ig,best_word=word_ig,word
-        self.chosen_query, self.ig, self.justify=lambda x,w=best_word: 1 if (w in x) else 0, max_ig, 'hasword:'+str(best_word)
+        self.chosen_query, self.ig, self.justify=lambda x: 1 if (best_word in x) else 0, max_ig, 'hasword:'+str(best_word)
         avg_word_ig=avg_word_ig/len(all_words)
         if self.cond is True or self.MAX_DEPTH==0 or len(self.objects)< self.stopthresh:
             if self.ig <= ig_from_one_retag(self.tagging): #no query is useful enough
@@ -308,12 +308,12 @@ class TreeRecursiveSRLStep(object):
             tree_ig_penalty=0.5 #TODO? something to do with tree size and depth?
                     
             self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
-            if tree_ig >= avg_word_ig: #any better than non-rec
+            if tree_ig/tree_ig_penalty >= best_ig: #any better than non-rec
                 self.good_recs.append(lambda x,c=classifier_chosen: c.predict(x))
                 self.good_recs_justify.append(str(classifier_chosen.transforms))
                 self.good_recs_trees.append((relation_used_for_recursive,classifier_chosen))
             
-            if tree_ig >= avg_word_ig: #if tree is better, it's the new classifier                
+            if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier                
                 test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
                 if p_val > P_THRESH: #1% confidence level
                     continue
@@ -359,9 +359,9 @@ class TreeRecursiveSRLStep(object):
             avg_for_rel=0.0                        
             for const in relation_constants:
                 if const is None:
-                    query= lambda x,r=relation: 1 if len(is_in_relation(x, self.relations[r],r))==0 else 0
+                    query= lambda x: 1 if len(is_in_relation(x, self.relations[relation],relation))==0 else 0
                 else:
-                    query= lambda x,r=relation,c=const: 1 if is_in_relation(x, self.relations[r],r,c) else 0
+                    query= lambda x: 1 if is_in_relation(x, self.relations[relation],relation,const) else 0
                 
                 ig_for_const= ig_ratio(self.tagging, array([query(x) for x in self.objects]))
 
@@ -377,9 +377,9 @@ class TreeRecursiveSRLStep(object):
             self.justify='no features found'
             return None,self.sons, [],[], []
         if constant is None:
-            self.chosen_query= lambda x,r=relation_used: 1 if len(is_in_relation(x, self.relations[r],r))==0 else 0
+            self.chosen_query= lambda x: 1 if len(is_in_relation(x, self.relations[relation_used],relation_used))==0 else 0
         else:
-            self.chosen_query= lambda x,r=relation_used,c=constant: 1 if is_in_relation(x, self.relations[r],r,c) else 0
+            self.chosen_query= lambda x: 1 if is_in_relation(x, self.relations[relation_used],relation_used,constant) else 0
         self.ig, self.justify= best_ig, 'hasword(X),X in relation: %s with %s'%(relation_used, constant)
         
         min_ig_required= ig_from_one_retag(self.tagging)
@@ -450,6 +450,7 @@ class TreeRecursiveSRLStep(object):
 class TreeRecursiveSRLClassifier(object):
     def __init__(self, objects, entities, tagging, relations, transforms, n, MAX_DEPTH, SPLIT_THRESH, d, logfile, cond=False):
         self.relations= relations
+        self.is_svm=False
         self.objects =objects
         self.entities= entities
         self.tagging=tagging
@@ -493,36 +494,63 @@ class TreeRecursiveSRLClassifier(object):
             self.tree_sets.extend(sons.values()) 
         self.query_tree=self.tree_sets[0] #root
         #self.logfile.write('training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
-        
     def train_vld_local(self):
         num_nodes= 0
         depth= 0
-        self.tree_sets=[TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms,self.n,  self.MAX_DEPTH, self.SPLIT_THRESH,self.d, self.logfile, inf, self.cond)] #initally all in same node
-        self.tree_sets[0].depth= 1
-        self.query_tree=self.tree_sets[0] #root
-        for node in self.tree_sets:
-            if (len(node.objects)<self.SPLIT_THRESH or all(node.tagging==node.chosen_tag) or node.depth>=self.d):#consistent/too small to split 
-                node.justify='leafed(thresh/constistant)'
-                node.chosen_query=None
-                #self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
-                continue #leaf            
-            _,sons,_,_,_ =node.pick_split_vld_local()
-            if len(sons.keys())==0:
-                node.justify='leafed(weird stuff)'
-                node.chosen_query=None
-                #self.logfile.write(' '*len(self.transforms)+'node became leaf\n')
-                continue#another leaf case...
-            num_nodes+=1
-            depth= max(depth, node.depth)
-            for son in sons.values():
-                son.depth= node.depth+1
-            self.tree_sets.extend(sons.values())
-        self.query_tree=self.tree_sets[0] #root
+        self.query_tree= TreeRecursiveSRLStep(self.objects, self.entities, self.tagging, self.relations, self.transforms, self.n, self.MAX_DEPTH, self.SPLIT_THRESH, self.d, self.logfile, inf, self.cond)
+        if  len(self.tagging)==0 or all(self.tagging==self.tagging[0]):#consistent/too small to split 
+                self.query_tree.justify='leafed(thresh/constistant)'
+                self.query_tree.chosen_query=None
+                return
+        self.features = []
+        for relation in random.choice(self.relations.keys(), self.n, True):
+            if relation=='reverse_'+self.transforms[-1] or (relation==self.transforms[-1].replace('reverse_','') and relation!=self.transforms[-1]) or (len(self.transforms)>1 and relation==self.transforms[-1]) :
+                continue #no using the relation you came with on the way back...
+            feature_vals=[is_in_relation(obj, self.relations[relation],relation) for obj in self.objects] #apply_transforms_other(self.relations, [relation], self.objects) #
+            val_lens=[len(val) for val in feature_vals]
+            if sum(val_lens)==0 : #no objects have relevant values. This may leave us with objects whose feature values are [], which means any query will return false...
+                continue #not relevant
+            
+            relation_constants= set()
+            for obj in feature_vals:
+                for const in obj:
+                    relation_constants.add(const)            
+            sz=len(relation_constants)
+            if sz>=MAX_SIZE:
+                continue #For now, skip. 
+            
+            for const in relation_constants:
+                self.features.append(lambda x,c=const,r=relation: 1 if is_in_relation(x, self.relations[r],r,c) else 0)
+        
+        if len(self.features)==0:
+            self.query_tree.justify='leafed(thresh/constistant)'
+            self.query_tree.chosen_query=None
+            return
+        
+        self.table= zeros((len(self.objects), len(self.features)))
+        for j,new_feature in enumerate(self.features):
+            self.table[:, j]= array([new_feature(ent) for ent in self.objects])
+        clf = SVC(kernel='linear', C=10)
+        clf.fit(self.table, self.tagging)
+        
+        self.query_tree=clf #my SVM classifier #root
+        self.is_svm=True
+        
+        
         #self.logfile.write(' '*len(self.transforms)+'training done. num_nodes: '+str(num_nodes)+'. depth: '+str(depth)+'\n')
     
     def predict(self, entities, flag=False):  
         #if depth > 0, object is an entity list. otherwise, problem!!!!
         NA_VAL= -100
+        if self.is_svm:
+            
+            transformed_obj= apply_transforms(self.relations, self.transforms, [entities]) 
+            if flag:
+                transformed_obj= apply_transforms_other(self.relations, self.transforms[-1:], [entities])
+            self.table= zeros((len(transformed_obj), len(self.features)))
+            for j,new_feature in enumerate(self.features):
+                self.table[:, j]= array([new_feature(ent) for ent in transformed_obj])
+            return int(mode(self.query_tree.predict(self.table))[0][0])
         curr_node= self.query_tree
         if curr_node.chosen_tag is None:#edge case in the case of consistent
             return 0#some arbitrary rule
@@ -576,19 +604,13 @@ class FeatureGenerationFromRDF(object):
         tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, d, logfile)
         tree.train(STOPTHRESH) #minimum number of objects!
         
-        #self.new_features= list(tree.recursive_features)
-        #self.new_justify= list(tree.feature_justify)
+        self.new_features= list(tree.recursive_features)
+        self.new_justify= list(tree.feature_justify)
         self.feature_trees= list(tree.feature_trees)
         self.blah=tree
-        self.new_features = []
-        self.new_justify = []
+        #self.new_features = []
+        #self.new_justify = []
         #spreads out the non-recursive features
-        for relation,f_tree in self.feature_trees:
-            for node in f_tree.tree_sets:
-                if node.chosen_query is not None:
-                    self.new_features.append(node.chosen_query)
-                    self.new_justify.append(node.justify)
-                
         
     
     def get_new_table(self, test, test_ents):
@@ -763,6 +785,4 @@ if __name__=='__main__':
     
     print blor.blah.d
     print blor.blah.query_tree.d
-    print 3>=blor.blah.query_tree.sons[0].d
-    print 3>=blor.blah.query_tree.sons[0].sons[0].d
     

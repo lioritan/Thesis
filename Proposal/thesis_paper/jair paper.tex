@@ -30,7 +30,7 @@
 {Friedman \& Markovitch}
 %\firstpageno{25}
 
-\title{Feature Generation by Recursive Induction}
+\title{Deep Feature Generation by Recursive Induction}
 \author{\name Lior Friedman \email liorf@cs.technion.ac.il \\
 	\name Shaul Markovitch \email shaulm@cs.technion.ac.il \\
 	\addr Technion-Israel Institute of Technology\\
@@ -199,7 +199,7 @@ Note that during the process of learning $h_{i}$, we can once again call the fea
 We note that while this algorithm deterministically defines a learning problem for a single feature $f_i$, we can use a variety of known machine learning techniques to create $h_i$.
 We also note that we can re-apply our approach for this new problem, by simply picking $f_j\in F_{new}$ and applying algorithm \ref{code-creating-prob}.
 
-\subsection{From a Learning Problem to a Feature}
+\subsection{From a Learning Problem to a Feature} \label{why_tree}
 
 Let us discuss how to create $h_i$ from the new learning problem $\langle S'_i,F_{new},R(v,{\cal R})\rangle$.
 To begin with, we utilized a Decision Tree classifier \cite{quinlan1986} on the new learning problem. While training the decision tree classifier, we measure information gain for all $f\in F_{new}$, and we can also re-apply our approach as discussed above, creating new features to measure against features in $F_{new}$.
@@ -379,11 +379,40 @@ For TechTC-100, we ran our algorithm on all 100 datasets, use the pre-defined tr
 For OHSUMED, we used 10-fold cross-validation to divide our dataset to ten sets of training and testing data. We then proceeded to run our algorithm, measured its accuracy, and ran a paired t-test on the resulting accuracies.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Results}
+\subsection{Main Results}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Table \ref{table:acc} shows average accuracies across all 10 folds for OHSUMED, as well as the average accuracies for datasets in techTC-100, using $80\%$ of all available (chosen by highest information gain ratio). Statistical significance over baseline is shown in parenthesis. We also note that results in bold are  significantly better compared to the competing non-recursive approach discussed in algorithm \ref{code-compete}.
+For the TechTC-100 dataset, we see a significant improvement over the baseline and competing approaches, even though fewer features are generated than the competing algorithm. We also see that for SVM, the two-level application gives poorer results than the single level FEAGURE algorithm. This can be attributed to over-fitting effects resulting from a combination of mistakes in entity extraction as well as the small dataset size. Due to the nature of linear SVM, such a feature will have significant impact on performance.
+
+Analysis of the results for the OHSUMED datasets show that for K-NN, we do not achieve an improvement over the baseline approach (and neither does the non recursive relation-based algorithm). For SVM, we see a significant improvement over the baseline approach, with a single level application achieving a $2.4\%$ increase in accuracy, and a two-level application giving a total of $2.8\%$ improvement. This is much better than the $1\%$ improvement offered by a non-recursive feature generation algorithm (algorithm \ref{code-compete}). 
+
+\begin{table}[]
+	\centering
+	\caption{Average Number of Generated Features}
+	\label{table:features}
+	\begin{tabular}{llll}
+		& \# Features(FEAGURE)  & \# Features(FEAGURE 2-level)  & \# Features(Competing) \\
+		OHSUMED      & 506.2           & 732        & 27162.2                \\
+		TechTC-100  & 63.3       & 65.06      & 5004.66               
+	\end{tabular}
+\end{table}
+
+\begin{table}[]
+	\centering
+	\caption{Average accuracy}
+	\label{table:acc}
+	\begin{tabular}{lllll}
+		& Baseline       & Competing & FEAGURE   & FEAGURE 2-level    \\
+		OHSUMED KNN    & \textbf{0.777} & 0.756 & 0.769   & 0.75                \\
+		OHSUMED SVM    & 0.797 & 0.804   & 0.816    & \textbf{0.819 ($p<.05$)}  \\
+		TechTC-100 KNN & 0.527 & 0.523 & 0.533 ($p<.05$) & \textbf{0.557 ($p<.0001$)}  \\
+		TechTC-100 SVM & 0.688 & 0.694 & \textbf{0.707 ($p<.0001$)}  & 0.701 ($p<.01$)
+	\end{tabular}
+\end{table}
+
 %results for svm, results for knn, discuss differences and compete-alg.
-Figure \ref{fig:svm_base_lvl1} shows the accuracies for datasets in techTC-100 using a SVM classifier, using $80\%$ of all available (chosen by highest information gain ratio). The x axis represents the baseline accuracy without feature generation, and the y axis represents the accuracy using our new feature set using FEAGURE. Therefore, any dataset that falls above the $y=x$ line is an improvement in accuracy. We use this visualization technique to illustrate our results on the techTC-100 dataset collection. We note that all displayed results are statistically significant at the $p<0.05$ level or higher.
+Before we look at varying parameters of our algorithm, let us analyze the results on TechTC-100 to better understand the impact of our approach on datasets of varying difficulty. Figure \ref{fig:svm_base_lvl1} shows the accuracies for datasets in techTC-100 using a SVM classifier, The x axis represents the baseline accuracy without feature generation, and the y axis represents the accuracy using our new feature set using FEAGURE. Therefore, any dataset that falls above the $y=x$ line is an improvement in accuracy. We use this visualization technique to illustrate our results on the techTC-100 dataset collection.
 
 \begin{figure}
 	\centering
@@ -393,111 +422,134 @@ Figure \ref{fig:svm_base_lvl1} shows the accuracies for datasets in techTC-100 u
 	\label{fig:svm_base_lvl1}
 \end{figure}
 
-The results for SVM show a general trend of improvement, with high ($> 5\%$) or very high ($>10\%$) improvement being common. We also see multiple datasets where no features are generated, with few datasets showing a degrade in accuracy.
+The results for show a general trend of improvement, with high ($> 5\%$) or very high ($>10\%$) improvement being common. We also see multiple datasets where no features are generated, with few datasets showing a degrade in accuracy.
 This can be attributed to two major causes:
 \begin{itemize}
 	\item Errors in the entity extraction process may lead to the creation of misleading entities and thus features. For instance, the word ``One" may be interpreted as the entity ``One (Metallica song)". 
 	\item Over-fitting within the feature generation algorithm may create features that appear to have high information gain while generalizing poorly to test data.
 \end{itemize}
 
-Figure \ref{fig:svm_lvl2} shows the accuracy of a SVM classifier on TechTC-100, comparing the baseline accuracy without feature generation, the accuracy when using FEAGURE, and the accuracy when using the FEAGURE algorithm a second time to generate features for the new learning problem produced by FEAGURE.
-We see a significant improvement of the two-level feature generation over the baseline approach. The relationship between the single and two-level approach (figure \ref{fig:lvl1_vs_lvl2}) is more complex, showing that for most datasets, the single level approach is better a two-level application of FEAGURE. As we will show later, this can be attributed to the interaction of SVM classifiers with our features. 
-
-\begin{figure}
-	\begin{subfigure}{.5\textwidth}
-		\centering
-		\includegraphics[width=.9\linewidth]{svm_08_base_vs_lvl2.pdf}
-		\caption{Baseline compared to two-level}
-		\label{fig:base_vs_lvl2}
-	\end{subfigure}%
-	\begin{subfigure}{.5\textwidth}
-		\centering
-		\includegraphics[width=.9\linewidth]{svm_08_lvl1_vs_lvl2.pdf}
-		\caption{One-level compared to two-level}
-		\label{fig:lvl1_vs_lvl2}
-	\end{subfigure}
-	\caption{plots comparing SVM accuracy of baseline features and single level activation of FEAGURE to two-level activation of FEAGURE}
-	\label{fig:svm_lvl2}
-\end{figure}
-
-Figure \ref{fig:svm_08_compete_vs_lvl1} shows the accuracy of FEAGURE compared to the non-recursive feature generation approach discussed in algorithm \ref{code-compete}. We see a significant improvement of FEAGURE over the non-recursive approach, which also uses relational data. We note that the approach discussed in algorithm \ref{code-compete} does not achieve a statistically significant improvement over the baseline approach.
+Figure \ref{fig:25best} shows the 25 hardest datasets in TechTC-100, in terms of lowest accuracy achieved using the full feature set in the original paper of \citeA{gabrilovich2004textresults}. We see that for most of these, we achieve improvement, with a $5\%$ or higher increase being common. We also see several datasets where no features are generated (and thus the accuracy is the same) and three datasets that show a minor degrade in accuracy. This results illustrates that we can, in general, rely on FEAGURE to yield positive recursive features on difficult classification problems.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.7\linewidth]{svm_08_compete_vs_lvl1}
+	\includegraphics[width=0.8\linewidth]{25best}
 	\caption{Accuracy of
-		FEAGURE compared to the non-recursive feature generation approach }
-	\label{fig:svm_08_compete_vs_lvl1}
+		baseline approach compared to single activation of FEAGURE (SVM). 25 Hardest datasets (lowest accuracy)}
+	\label{fig:25best}
 \end{figure}
 
-Having analysed the results for a SVM classifier, let us show the accuracies achieved when using the same feature sets with a K-NN classifier. Figure \ref{fig:knn_base_vs_lvl1} shows the accuracy of a K-NN classifier of the baseline approach compared to the accuracy when using FEAGURE. Figure \ref{fig:knn_base_vs_lvl2} shows the accuracies of the baseline approach compared to the accuracies for a two-level activation of FEAGURE. We see that in general, the base accuracy for K-NN classifiers is lower than that of a SVM classifier. However, we also see that the effects of our generated features are far more pronounced for K-NN, with two level application of FEAGURE yielding a $48\%$ improvement in accuracy for some datasets. We also see that negative effects are also more pronounced, with the datasets that showed a degrade in accuracy showing a similar or larger degrade for KNN.
+\subsection{Using Non-Tree classifiers with FEAGURE}
 
-\begin{figure}
-	\begin{subfigure}{.5\textwidth}
-		\centering
-		\includegraphics[width=.9\linewidth]{knn_08_base_vs_lvl1.pdf}
-		\caption{Baseline compared to one-level}
-		\label{fig:knn_base_vs_lvl1}
-	\end{subfigure}%
-	\begin{subfigure}{.5\textwidth}
-		\centering
-		\includegraphics[width=.9\linewidth]{knn_08_base_vs_lvl2.pdf}
-		\caption{Baseline compared to two-level}
-		\label{fig:knn_base_vs_lvl2}
-	\end{subfigure}
-	\caption{plots comparing KNN accuracy of baseline features to single and two level activation of FEAGURE}
-	\label{fig:knn_base}
-\end{figure}
+As we have discussed in section \ref{algorithm_section}, algorithm \ref{code-creating-prob} creates a generic learning problem. In section \ref{why_tree} we discuss several reasons to use a decision tree on this problem. In this section, we will show the effects of other classifiers on these recursive problems. We have chosen to try both K-NN and SVM, with the following parameters: For K-NN, we used $K=3$. For SVM we used $C=10$, with both Linear and a Radial Basis Function (RBF) kernels. We only construct classifiers for the full problem, and not for any child nodes, unlike algorithm \ref{code-tree-thing}.
 
-Figure \ref{fig:knn_08_lvl1_vs_lvl2} shows a comparison of FEAGURE and a two-level activation of FEAGURE for K-NN. We see that unlike SVM, there is a clear improvement in accuracy, showing statistically significant evidence supporting complex features for the constructed problems. Figure \ref{fig:knn_08_compete_vs_lvl2}, showing a comparison of algorithm \ref{code-compete} to the two-level application of FEAGURE, also supports this conclusion.
-
-\begin{figure}
-\centering
-\includegraphics[width=0.7\linewidth]{knn_08_lvl1_vs_lvl2}
-\caption{Accuracy of FEAGURE compared to two-level activation of FEAGURE}
-\label{fig:knn_08_lvl1_vs_lvl2}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=0.7\linewidth]{knn_08_compete_vs_lvl2}
-\caption{Accuracy of Non-recursive feature generation compared to two-level activation of FEAGURE}
-\label{fig:knn_08_compete_vs_lvl2}
-\end{figure}
-
-%results for OHSUMED
-
-Next, we shall analyse our results for the OHSUMED-based dataset.
-Table \ref{table:acc} shows average accuracies across all 10 folds for OHSUMED. We see that for K-NN, we do not achieve an improvement over the baseline approach (neither does the non recursive relation-based algorithm). For SVM, we see a significant improvement over the baseline approach, with a single level application achieving a $2.4\%$ increase in accuracy, and a two-level application giving a total of $2.8\%$ improvement. This is much better than the $1\%$ improvement offered by a non-recursive feature generation algorithm (algorithm \ref{code-compete}).
+Table \ref{table:features-nontree} shows the average number of generated features. We see that these approaches generate far fewer features on average. This should come as no surprise, as we cannot flatten constructed recursive trees in order to generate additional features, nor do we run the learning algorithms on smaller problems.
+Table \ref{table:acc-nontree} shows the accuracies achieved by these approaches. We see that while in general, the results are poorer than those achieved by our approach, we do see a clear improvement in accuracy, in many cases granting better accuracy than that achieved by the non-recursive feature generation approach (algorithm \ref{code-compete}).
 
 \begin{table}[]
 	\centering
-	\caption{Number of Generated Features}
-	\label{table:features}
-	\begin{tabular}{llll}
-		   & \# Features(FEAGURE)  & \# Features(FEAGURE 2-level)  & \# Features(Competing) \\
-		OHSUMED      & 506.2           & 732        & 27162.2                \\
-		TECHTC-100  & 63.3       & 65.06      & 5004.66               
+	\caption{Average Number of Generated Features}
+	\label{table:features-nontree}
+	\begin{tabular}{lllll}
+		& \# Features(Tree)  & \# Features(Linear SVM)  & \# Features(RBF SVM) & \# Features(3-NN) \\
+		OHSUMED      & 506.2  &  24.7 & 34.5  & 14.6     \\
+		TechTC-100  & 63.3   &   12.04    &  8.95   & 4.25        
 	\end{tabular}
 \end{table}
 
 \begin{table}[]
 	\centering
 	\caption{Average accuracy}
-	\label{table:acc}
-	\begin{tabular}{lllll}
-		& Baseline       & FEAGURE   & FEAGURE 2-level  & Competing  \\
-		OHSUMED KNN    & \textbf{0.777} & 0.769   & 0.75   & 0.756             \\
-		OHSUMED SVM    & 0.797    & 0.816    & \textbf{0.819}    & 0.804        \\
-		TechTC-100 KNN & 0.527  & 0.533  & \textbf{0.557}  & 0.523     \\
-		TECHTC-100 SVM & 0.688          & \textbf{0.707}    & 0.701   & 0.694  
+	\label{table:acc-nontree}
+	\begin{tabular}{llllll}
+		& Baseline 	& Tree  & Linear SVM & RBF SVM & 3-NN        \\
+		OHSUMED KNN    & 0.777  & 0.769  & 0.760 & \textbf{0.795} & 0.756     \\
+		OHSUMED SVM    & 0.797    & \textbf{0.816}   & 0.798 & 0.788 & 0.796  \\
+		TechTC-100 KNN & 0.527  & \textbf{0.533}  & 0.532  & 0.526 &  0.527 \\
+		TechTC-100 SVM & 0.688  & \textbf{0.707}  & 0.695 & 0.692 &  0.696
 	\end{tabular}
 \end{table}
 
-Overall, we see a general improvement in performance of varying degree, as well as a higher improvement in accuracy achieved with much fewer features overall compared to a non-recursive approach.
+\subsection{Effect of Constructed Feature Evaluation on Accuracy}
 
-%tables of average accuracy 
+In this section we look at the effect of using a different evaluation method for generated features. In algorithm \ref{code-tree-thing}, we use a comparison function which compares the constructed feature to the best non-relational feature. It may be the case, however, that we should compare our feature in some way to all existing features. One way to do so is to use the mean Information Gain Ratio of features in $F$. Should our new feature score lower than the average, we filter it out. 
 
+\begin{table}[]
+	\centering
+	\caption{Average Number of Generated Features}
+	\label{table:features-average}
+	\begin{tabular}{lllll}
+		& FEAGURE  & FEAGURE 2-level  & Average IG &  Average IG 2-level \\
+		OHSUMED      & 506.2           & 732        &    1270.6   &   1371.4       \\
+		TechTC-100  & 63.3       & 65.06      &  234.43 &  244.05             
+	\end{tabular}
+\end{table}
+
+\begin{table}[]
+	\centering
+	\caption{Average accuracy}
+	\label{table:acc-average}
+	\begin{tabular}{llllll}
+		& Baseline    & FEAGURE   & FEAGURE 2-level  & Average IG & Average IG 2-level  \\
+		OHSUMED KNN    & \textbf{0.777}  & 0.769   & 0.75  & 0.68  & 0.687            \\
+		OHSUMED SVM    & 0.797  & 0.816    & \textbf{0.819} & 0.817 & 0.815 \\
+		TechTC-100 KNN & 0.527 & 0.533 & 0.557 & 0.557 & \textbf{0.558} \\
+		TechTC-100 SVM & 0.688  & 0.707  & 0.701  & \textbf{0.723} & 0.678
+	\end{tabular}
+\end{table}
+
+Table \ref{table:features-average} shows the amount of features generated by FEAGURE. We see that the amount is significantly greater, indicating that this is a more lax requirement than the one we used (over half of the best information gain ratio). Table \ref{table:acc-average} shows the accuracies attained through this change. For the TechTC-100 dataset collection, we see a general increase in accuracy, especially for single level application. For the OHSUMED dataset, we cannot detect a meaningful improvement, and for K-NN see a degrade in accuracy. 
+These results indicate that for small problems, generating additional features is preferable, whereas for problems with many examples, a stronger filtering mechanism is more useful. 
+
+
+\subsection{Effect of Search Tree Depth on Accuracy}
+
+In this section, we look at the usefulness of searching local problems for additional features.
+To do so, we run FEAGURE while limiting the depth of the search tree in algorithm \ref{code-tree-thing}. 
+We compare our two datasets side-by-side, without feature selection.
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.55\textwidth}
+		\centering
+		\includegraphics[width=1.1\linewidth]{num_features_ohsumed.pdf}
+		\caption{OHSUMED}
+		\label{fig:features-depth-ohsumed}
+	\end{subfigure}%
+	\begin{subfigure}{.55\textwidth}
+		\centering
+		\includegraphics[width=1.1\linewidth]{num_features_techtc.pdf}
+		\caption{TechTC-100}
+		\label{fig:features-depth-techtc}
+	\end{subfigure}
+	\caption{Mean number of features generated}
+	\label{fig:features-depth}
+\end{figure}
+
+Figure \ref{fig:features-depth} shows the number of generated features per depth.  For both datasets, we see a linear increase, with a two-level application showing a faster increase. In TechTC-100, we see that after a certain depth, there is no additional gain. This is due to the small size of the learning problems.
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.55\textwidth}
+		\centering
+		\includegraphics[width=1.1\linewidth]{svm_ohsumed.pdf}
+		\caption{OHSUMED}
+		\label{fig:svm-ohsumed}
+	\end{subfigure}%
+	\begin{subfigure}{.55\textwidth}
+		\centering
+		\includegraphics[width=1.1\linewidth]{svm_techtc.pdf}
+		\caption{TechTC-100}
+		\label{fig:svm-techtc}
+	\end{subfigure}
+	\caption{Mean SVM Accuracy}
+	\label{fig:svm-acc}
+\end{figure}
+
+Figure \ref{fig:svm-acc} shows the mean accuracy of a SVM classifier for increasing depths. The results for K-NN classifiers are similar their general trend. In TechTC-100, we see a trend of increasing accuracy, up to a saturation point. This is to be expected, as adding largely orthogonal features would yield improvement until a maximal depth is achieved.
+
+For OHSUMED, however, we see a sharp fall in accuracy, followed by a recovery. 
+This is caused by the orthogonality of features down the tree combined with errors in entity extraction causing features immediately following the first few tree nodes to separate on mistakenly extracted entities.
 
 %\subsection{Qualitative Analysis}
 %In order to better understand the contribution of these features, let us look at several of them to try and better understand them. Figure \ref{fig:level1_good} shows one of the features generated for single level feature generation. We can see that the feature attempts to separate based on geographical location. Figure \ref{fig:level1_simple} shows a simple feature regarding people, and showcases the fact that when there is no need for overly complex features, our technique will not force such features. This feature yields a $10\%-15\%$ increase in accuracy (depending on feature selection level), and is generated by both the single and two level approaches.
