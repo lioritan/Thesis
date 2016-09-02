@@ -174,7 +174,9 @@ While this is a simple example, it shows a case where additional information and
 We begin our discussion with the standard definition of an induction problem. 
 Let $O$ be a set of objects. Let $Y=\{0,1\}$ be a set of labels \footnote{we assume binary labels for ease of discussion}. Let $C:O\rightarrow Y$ be the target concept. Let $S=\{(o_{1},y_{1}),\ldots,(o_{m},y_{m})\}$ be a set of labelled examples such that $o_{i}\in O, y_{i}\in Y, C(o_i)=y_i$. 
 Let $F=\{f_{1},\ldots,f_{n}\}$ be a \emph{feature map}, a set of \emph{feature functions} $f_{i}:O\rightarrow Dom_{i}$.  This definition implies a training set represented by feature vectors: $S_F=\{ (\langle f_1(o_i),\ldots,f_n(o_i)\rangle, y_i) | (o_i,y_i) \in S\}$.
-Given $S_F$, we wish to find $h:O\rightarrow Y$ such that the generalization error $Sum(o\in O,h(o)\neq C(o))$ is low.
+Given $S_F$, we wish to find $h_{S_F}:O\rightarrow Y$ such that the generalization error $Sum(o\in O,h_{S_F}(o)\neq C(o))$ is low.
+
+The general task of Feature Generation is as follows: Given $\langle S,F\rangle$, construct a new feature map $F'$ such that when we use an induction algorithm to find a hypothesis, it will generalize more effectively. More formally, $Sum(o\in O,h_{S_F}(o)\neq C(o)) \geq Sum(o\in O,h_{S_F'}(o)\neq C(o))$. Usually, the same induction algorithm is used on both $F$ and $F'$, allowing for a controlled comparison which lowers the impact of the induction algorithm. 
 
 In this work, we assume that in addition to $S_F$ we also have a set of binary \footnote{If our relations are not binary, we can use projection to create multiple binary relations instead} relations ${\cal R}=\{R_{1},\ldots,R_{t}\}, R_j:D_j\times D_{j'}$ representing our knowledge base. 
 Intuitively, unless the domains of the knowledge base are relevant for the domains of the feature functions, there is little we can do with this knowledge base. 
@@ -254,16 +256,22 @@ We use $v_i(S)$ as our objects. To define a learning problem, we must consider t
 
 In the simple case, every feature value appears only for a single example in $S$. In that case, we can simply take the same label, with the result being $label(v)=y$ where $f_i(x)=v,(x,y)\in S$.
 Most features in general, and in machine learning task in particular, however, do not have a unique value for each example. In such cases we would have multiple examples in $S$ such that $f_i(x)=v$. Let us call $S(v)$ the set of such examples. In order for us to give a label for $v$, we must aggregate the labels somehow. As in section \ref{shallow_section}, we can consider three major aggregation functions.
-%TODO FROM HERE
+Using the All aggregation function results in a strict labelling, as a value will be classified as belonging to the target concept only if all examples in which that value has appeared are labelled positive. The result is consistent label: $label(v)=\begin{cases} 1 &\mbox{if } \forall (x,y)\in S(v): y=1\\ 
+0 & \mbox{otherwise } \end{cases}$.
+ A more lenient label function is the majority label, taking the Majority aggregation function: $label(v)=majority(\{y|(x,y)\in S(v)\})$.
+ 
 We now formulate a new learning problem with the new training set
 $S'_i = \{ (v, label(v)) | v \in v_i(S) \}$.
-The labelling function can be, for example, defined as
-the majority label: $label(v)=majority(\{y_k| \left(o_k,y_k \right) \in S, f_{i}(o_k)=v\})$.
+To fully define our learning problem, we must specify a feature map over $v_i(S)\subseteq Dom_i$. Consider a relation $R_j$ such that $D_j\cap v_i(S)\neq \emptyset$. For such $R_j$, if it is a function, we can simply use it as a feature function, or restrict by a constant $\left(f_{j,c}(v)=\begin{cases} 1 &\mbox{if } \ R_j(v)=c\\ 
+0 & \mbox{otherwise } \end{cases}\right)$. If $R_j$ is a partial function, we simply have a feature with missing values. Finally, if $R_j$ is not a function, we can use aggregation as in section \ref{shallow_section} to create features.
 
-To define a feature map over the new training set $S'_{i}$, we look for all relations in ${\cal R}$ where the domain of the key argument contains $v_i$:
-$R(v_i,{\cal R}) = \left\{ r \in {\cal R} | v_i(S) \subseteq \{x_1 | (x_1,x_2) \in r\}\right\}$. In the intro example, one such $r$ can be a relation mapping last names to countries of origin. We then use $R(v_i,{\cal R})$ as our feature map.
-With this, we have defined a new learning problem over $S'_{i}, R(v_i,{\cal R})$, which yields our classifier $h_{i}:Dom_{i}\rightarrow Y$.
-Note that during the process of learning $h_{i}$, we can once again call the feature generation procedure to generate features for the \emph{new} learning problem over $S'_{i}$, hence the recursive aspect of the process. We can see this in the intro example, wherein we construct a second-level problem on countries of origin to correctly identify the appropriate conditions that signify high risk countries.
+Once we have considered all relations in ${\cal R}$, we can generate a feature map for $S'_i$. Given $R_j$, assuming it is relevant to the problem domain, meaning $v_i(S)\cap D_j\neq\emptyset$, we can utilize it as a feature. We then look at all constants $c\in \{R_j(v)|v\in v_i(S)\land R_j(v)\neq \perp\}$. For each such $c$, we add $f_{j,c}:Dom_i\rightarrow \{0,1,\perp\}$ to our feature map. The result of this process is a feature map for $S'_i$, $F_{\cal R}$ which includes all such $f_{j,c}$. We now have a complete induction problem for which we can train a classifier, giving us $h_i:Dom_i\rightarrow Y$. We can then use this $h_i$ on objects in $S$ as discussed above, giving us $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$. 
+
+We note that once we have an induction problem over $Dom_i$, we can apply our approach recursively on $S'_i$ in order to create additional features. We can see an example of this in section \ref{motivation}, wherein we construct a second-level problem on countries of origin to correctly identify the appropriate conditions that signify high risk countries.
+ For each relation $R_j$, rather than restricting it via constants, we take all values of it, and treat those as a feature $f_j(v)=\{v'|R_j(v)=v' \lor v'\in R_j(v) \}$. Assuming $R_j$ is a function or partial function, $f_j$ will also be a function or partial function respectively, and we can then construct a learning problem over values $f_j$, yielding $h_j:D_{j'}\rightarrow Y$. 
+ 
+ In cases where $R_j$ is a relation, $f_j(v)$ is a set of values, essentially a relation as well. In such cases, We must discuss both how to extract a new learning problem, and how a classifier is then used for a set of features.
+ To begin with, let us tackle the issue of constructing a learning problem where each feature value is a set. %TODO
 
 \begin{algorithm}[H]
 	\caption{FEAGURE-FEAture Generation Using REcursive  induction}
