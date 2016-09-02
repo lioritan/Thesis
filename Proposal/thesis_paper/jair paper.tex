@@ -271,7 +271,16 @@ We note that once we have an induction problem over $Dom_i$, we can apply our ap
  For each relation $R_j$, rather than restricting it via constants, we take all values of it, and treat those as a feature $f_j(v)=\{v'|R_j(v)=v' \lor v'\in R_j(v) \}$. Assuming $R_j$ is a function or partial function, $f_j$ will also be a function or partial function respectively, and we can then construct a learning problem over values $f_j$, yielding $h_j:D_{j'}\rightarrow Y$. 
  
  In cases where $R_j$ is a relation, $f_j(v)$ is a set of values, essentially a relation as well. In such cases, We must discuss both how to extract a new learning problem, and how a classifier is then used for a set of features.
- To begin with, let us tackle the issue of constructing a learning problem where each feature value is a set. %TODO
+ To begin with, let us tackle the issue of constructing a learning problem where each feature value is a set. In such cases, we still have the above problem where multiple examples contain the same value, but a single example has multiple values. A simple solution to this is to give each value the same label as that of the example, and proceeding to resolve multiple labels as we have discussed. 
+ Once we have done so, we can construct a new learning problem for $f_j$ and, using FEAGURE, receive a classifier $h_j:D_{j'}\rightarrow Y$.
+ Another question we must ask ourselves is how to apply such a classifier to the set of values in $f_j(v)$. For example, %TODO
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[scale=0.8]{fig6.pdf}
+	\caption{Using a constructed classifier on a set of values: $(1)$-Feature values are used to construct a learning problem. $(2)$-The classifier is then applied to each value. $(3)$-An aggregation function is applied on the results. In this case, the majority function is used to determine the output for the learning problem.}
+	\label{figure5}
+\end{figure}
 
 \begin{algorithm}[H]
 	\caption{FEAGURE-FEAture Generation Using REcursive  induction}
@@ -393,12 +402,7 @@ Firstly, the suggested scheme only considers relations that apply to all entitie
 
 The second major difference we must consider is the possibility of having multiple entities for which the resulting classifier applies, potentially yielding multiple classifications for $x$ \footnote{For example, a text mentioning multiple countries, each classified differently by $h$}. To best resolve this, in cases where a feature is applicable to multiple unique words within the text, we return a majority vote of the classification returned by the feature as applied to each such word, as seen in figure \ref{figure5}
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{fig5.pdf}
-	\caption{Using a constructed feature in text: $(1)$-Relevant entities are extracted. $(2)$-Each entity is sent to the constructed feature. $(3)$-A majority vote between responses is performed.}
-	\label{figure5}
-\end{figure}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\section{Discussion and Analysis of the FEAGURE algorithm}
