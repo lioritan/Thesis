@@ -9,7 +9,7 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{algorithm}
-\usepackage{algpseudocode}
+\usepackage[noend]{algpseudocode}
 \usepackage{float}
 \usepackage[titletoc,toc,title]{appendix}
 \usepackage{fixltx2e}
@@ -52,25 +52,42 @@
 \section{Introduction}
 \label{sec:Intro}
 In recent decades, we have seen an increasing prevalence of machine learning techniques used in a wide variety of fields such as medical diagnosis, vision, and biology.
-Most of these methods rely on the inductive approach: given a set of labelled examples, they attempt to locate a hypothesis which is heavily supported by the known data. These methods have proven themselves successful in cases where there is a sufficient number of examples, and a collection of good,
+Most of these methods rely on the inductive approach: given a set of labelled examples, they attempt to locate a hypothesis that is heavily supported by the known data. These methods have proven themselves successful in cases where there is a sufficient number of examples, and a collection of good,
 distinguishing features is available.
 In many real-world applications, however, the given set of features is not sufficient for inducing a high quality classifier.
 
 One approach for overcoming the difficulty resulting from an insufficiently expressive set of features, is to generate new features based on existing ones. 
 These feature generation approaches attempt to combine the given feature set in an effort to create better, more discriminatory features with regards to the induction problem at hand. As an example of this, the LFC algorithm \cite{ragavan1993complex} combines binary features through the use of logical operators such as $\land ,\lnot$.
 
-These feature generation methods all provide us with ways to enhance the performance of induction algorithms through intelligent combinations of existing features. While this often suffices, there are many cases where merely combining existing features is not sufficient. 
-Supposed, for example, that the induction problem at hand is to locate diseases of patients given their symptoms, as well as personal information. 
-Looking at a genetic disorder such as Tay-Sachs \footnote{A recessive genetic disorder prevalent mostly among Ashkenazi Jews}, existing induction approaches would require a prohibitively large sample of patients to identify it from symptoms alone, as many of them can be attributed to other disorders. Even considering the personal information of a patient is clearly not enough. Yet, despite all of the above issues, a human physician can easily identify risk and signs of Tay-Sachs based on these features, even if he is given only a single example, using his domain knowledge and deductive reasoning.
+These feature generation methods all provide us with ways to enhance the performance of induction algorithms through intelligent combinations of existing features. While this approach often suffices, there are many cases where merely combining existing features is not sufficient. 
+In such cases, we require knowledge external to the problem in order to solve it effectively.
+Supposed, for example, that the induction problem at hand is to identify people at risk of the genetic disorder Tay-Sachs \footnote{A recessive genetic disorder prevalent mostly among Ashkenazi Jews}. The training set contains examples of people that have developed Tay-Sachs, and examples of people that did not. Since the concept is related to location of origin, a human expert might look at surnames of former patients, and using his background knowledge regarding them would link them to geographical locations, allowing him to identify potential patients with high accuracy.
+A machine learning algorithm, on the other hand, would do poorly, as it lacks the knowledge required to make that link.
 
-In the past, before the overwhelming popularity of inductive learning techniques, another school of learning methods, exemplified by works such as Explanation-Based learning \cite{dejong1986explanation}, was explored as a way to allow automated learning of concepts. These methods relied on deduction of general concepts through the use of a knowledge base. Given an example and its target concept, these approaches attempt to find a small set of conditions within the knowledge base that prove the example is a member of that concept. These approaches utilize additional examples to refine the common conditions for membership, yielding a better overall concept.
-Unlike inductive approaches, deductive methods attempt to utilize a knowledge base in order to construct logical deductions. A major advantage of this approach is that, given a sufficiently expressive knowledge base, it can identify complex concepts and relationships with only a few examples.
+%existing induction approaches would require a prohibitively large sample of patients to identify it from symptoms alone, as many of them can be attributed to other disorders. Even considering the personal information of a patient is clearly not enough. Yet, despite all of the above issues, a human physician can easily identify risk and signs of Tay-Sachs based on these features, even if he is given only a single example, using his domain knowledge and deductive reasoning.
 
-While these deductive approaches offered an alternative to inductive learning, the lack of good, comprehensive knowledge bases can be considered a major factor in their decline.
-In recent years, however, the Semantic Web project (see survey, \citeR{bizer2009linkedfull}) has constructed a large resource in the form of Semantic Linked Data. Semantic Linked Data contains type-annotated entities covering a multitude of domains and connected using multiple semantically meaningful relations. In essence, this resource can be used as a massive, highly connected knowledge base encompassing a wide variety of domains.
+One known method of utilizing external knowledge is known as Deductive Learning \cite{mitchell1982generalization,dejong1986explanation}. This school of learning methods uses a knowledge base of logical assertions in order to locate a small set of conditions that capture the target concept based on a given collection of examples from that concept. This approach uses deduction, rather than induction, as its main tool, allowing us to leverage a logical knowledge base effectively.
+There are two main concerns to consider following this approach:
+\begin{enumerate}
+	\item Extensive knowledge bases comprised of logical assertions are difficult to find and create.
+	\item This approach forfeits the progress and power gained by the use of inductive methods.
+\end{enumerate}
 
-Naturally, this raises the question of how we can utilize such knowledge bases without rendering the decades of advances and research invested into inductive learning approaches. To do so, we must utilize this knowledge base by generating features based on it, thus injecting it into the existing inductive learning framework. There have been several efforts in utilizing Linked Data for unsupervised feature generation. \citeA{cheng2011automatedfull}, for example, devise a framework for constructing features from linked data. By using intelligent queries, it is possible to construct features which utilize the knowledge base in a meaningful way. Despite this, the unsupervised nature of existing approaches limits us greatly when attempting to deduce more complex relationships between entities.
-In order to identify more complex hypotheses within the data, a different approach is necessary. %Such a method should work more similarly to deductive methods, attempting to locate conditions
+In order to combat these issues, we can make use of the extensive relational knowledge bases that have been constructed as part of the Semantic Web project (see survey, \citeR{bizer2009linkedfull}). These knowledge bases contain type-annotated entities covering a multitude of domains that are connected via semantically meaningful relations. Thus, the question is how relational knowledge can be used to enhance existing induction methods.
+There have been several efforts in utilizing Linked Data for unsupervised feature generation. \citeA{cheng2011automatedfull} devise a framework for constructing features from linked data. By using intelligent queries, it is possible to construct features which utilize the knowledge base in a meaningful way. 
+\citeA{paulheim2012unsupervisedfull} developed FeGeLOD, an automated, fully unsupervised framework that constructs features by using entity recognition techniques to locate semantically meaningful features in the data set, and expand upon those entities using relations within the Semantic Web. They then use feature selection techniques to remove features with a large percentage of missing, identical, or unique\footnote{Values which only appear in a single example} values.
+
+%\cite{cheng2011automatedfull,paulheim2012unsupervisedfull}. \citeA{cheng2011automatedfull} devise a theoretical framework for constructing features from linked data. By specifying entity types relevant to the problem at hand, they restrict the space of possible features to a more manageable size, and allow for the creation of a reasonably small amount of features. They also note that this approach tends to lead to highly sparse feature vectors.
+
+
+%In the past, before the overwhelming popularity of inductive learning techniques, another school of learning methods, exemplified by works such as Explanation-Based learning , was explored as a way to allow automated learning of concepts. These methods relied on deduction of general concepts through the use of a knowledge base. Given an example and its target concept, these approaches attempt to find a small set of conditions within the knowledge base that prove the example is a member of that concept. These approaches utilize additional examples to refine the common conditions for membership, yielding a better overall concept.
+%Unlike inductive approaches, deductive methods attempt to utilize a knowledge base in order to construct logical deductions. A major advantage of this approach is that, given a sufficiently expressive knowledge base, it can identify complex concepts and relationships with only a few examples.
+
+%While these deductive approaches offered an alternative to inductive learning, the lack of good, comprehensive knowledge bases can be considered a major factor in their decline.
+%In recent years, however, the Semantic Web project (see survey, \citeR{bizer2009linkedfull}) has constructed a large resource in the form of Semantic Linked Data. Semantic Linked Data contains type-annotated entities covering a multitude of domains and connected using multiple semantically meaningful relations. In essence, this resource can be used as a massive, highly connected knowledge base encompassing a wide variety of domains.
+
+%Naturally, this raises the question of how we can utilize such knowledge bases without rendering the decades of advances and research invested into inductive learning approaches. To do so, we must utilize this knowledge base by generating features based on it, thus injecting it into the existing inductive learning framework. There have been several efforts in utilizing Linked Data for unsupervised feature generation. \citeA{cheng2011automatedfull}, for example, devise a framework for constructing features from linked data. By using intelligent queries, it is possible to construct features which utilize the knowledge base in a meaningful way. Despite this, the unsupervised nature of existing approaches limits us greatly when attempting to deduce more complex relationships between entities.
+%In order to identify more complex hypotheses within the data, a different approach is necessary. %Such a method should work more similarly to deductive methods, attempting to locate conditions
 
 In this work, we present a new supervised methodology for generating complex features based on a relational knowledge base. Our algorithm constructs new learning problems from existing feature values, using knowledge bases, such as the Semantic Web, as the features for this newly constructed problem.
 Using common induction algorithms, we can then construct a classifier that serves as a feature for the original problem. An important aspect of this approach is that it can be applied recursively within the new learning problem, allowing for an automated, concept-driven exploration of the large space of possible complex features, similarly to deductive approaches. This allows us to discover powerful connections that an unsupervised approach would have difficulty discovering.
@@ -160,52 +177,52 @@ While this is a simple example, it showcases the fact that additional informatio
 We begin our discussion with the standard definition of an induction problem. 
 Let $O$ be a set of objects. Let $Y=\{0,1\}$ be a set of labels \footnote{We assume binary labels for ease of discussion}. Let $C:O\rightarrow Y$ be the target concept. Let $S=\{(o_{1},y_{1}),\ldots,(o_{m},y_{m})\}$ be a set of labelled examples such that $o_{i}\in O, y_{i}\in Y, C(o_i)=y_i$. 
 Let $F=\{f_{1},\ldots,f_{n}\}$ be a \emph{feature map}, a set of \emph{feature functions} $f_{i}:O\rightarrow Dom_{i}$.  This definition implies a training set represented by feature vectors: $S_F=\{ (\langle f_1(o_i),\ldots,f_n(o_i)\rangle, y_i) | (o_i,y_i) \in S\}$.
-Given $S_F$, we wish to find $h_{S_F}:O\rightarrow Y$ such that the generalization error $Sum(o\in O,h_{S_F}(o)\neq C(o))$ is low.
+Given $S_F$, we wish to find a classifier $h_{S_F}:O\rightarrow Y$ such that the generalization error $Sum(o\in O,h_{S_F}(o)\neq C(o))$ is low.
 
-The general task of Feature Generation is as follows: Given $\langle S,F\rangle$, construct a new feature map $F'$ such that when we use an induction algorithm to find a hypothesis, it will generalize more effectively. More formally, $Sum(o\in O,h_{S_F}(o)\neq C(o)) \geq Sum(o\in O,h_{S_F'}(o)\neq C(o))$. Usually, the same induction algorithm is used on both $F$ and $F'$, allowing for a controlled comparison which lowers the impact of the induction algorithm. 
+The general task of Feature Generation is as follows: Given $\langle S,F\rangle$, construct a new feature map $F'$ such that when we use an induction algorithm to find a hypothesis, it will do so more effectively. More formally, we require that $Sum(o\in O,h_{S_F}(o)\neq C(o)) \geq Sum(o\in O,h_{S_F'}(o)\neq C(o))$. Usually, the same induction algorithm is used on both $F$ and $F'$, allowing for a controlled comparison which lowers the impact of the induction algorithm. 
 
 In this work, we assume that in addition to $S_F$ we also have a set of binary \footnote{If our relations are not binary, we can use projection to create multiple binary relations instead} relations ${\cal R}=\{R_{1},\ldots,R_{t}\}, R_j:D_j\times D_{j'}$ representing our knowledge base. 
-Intuitively, unless the domains of the knowledge base are relevant for the domains of the feature functions, there is little we can do with this knowledge base. 
+Intuitively, unless the domains of the knowledge base overlap with those of the feature functions, there is little we can do with this knowledge base. 
 Therefore, we add an additional requirement: $\bigcup_{f_i} Dom_i \cap \bigcup_{R_j} D_j \neq \emptyset$. Now that we have formalized the requirements, we can discuss the feature generation problem.
 
 \begin{defn}
 	A \emph{supervised feature generation algorithm} based on ${\cal R}$ is an algorithm that given $\langle S,F,{\cal R} \rangle$, creates a new feature map $F_{{\cal R}}=\{f'_{1},\ldots,f'_{l}\}, f'_{k}:O\rightarrow Dom_k$.
 \end{defn}
 
-A good supervised feature generation algorithm based on ${\cal R}$ is one that produces lower generalization error during induction. More formally, if given $S_F$, the induction algorithm returns $h_F:O\rightarrow Y$, and given $S_{F_{{\cal R}}}$ the induction algorithm returns $h_{F_{{\cal R}}}:O\rightarrow Y$, a good supervised feature generation algorithm based on ${\cal R}$ must satisfy $Sum(o\in O,h_F(o)\neq C(o)) \geq Sum(o\in O,h_{F_{{\cal R}}}(o)\neq C(o))$.
+A good supervised feature generation algorithm based on ${\cal R}$ is one that produces lower generalization error during induction (as in regular feature generation). More formally, if given $S_F$, the induction algorithm returns the classifier $h_F:O\rightarrow Y$, and given $S_{F_{{\cal R}}}$ the induction algorithm returns $h_{F_{{\cal R}}}:O\rightarrow Y$, a good supervised feature generation algorithm based on ${\cal R}$ must satisfy $Sum(o\in O,h_F(o)\neq C(o)) \geq Sum(o\in O,h_{F_{{\cal R}}}(o)\neq C(o))$.
 In order for this to happen, we would like $F_{{\cal R}}$ to be rich enough as to provide us with a better hypothesis, as well as simple and compact enough that such hypothesis can be found with existing induction algorithms.
 
 %We would like the new hypothesis space, defined over $F_{{\cal R}}$, to be one that is both rich enough to provide hypotheses with a lower loss than those in the original space, as well as simple enough that the learning algorithm used will be able to find such good hypotheses given training data.
 
 \subsection{An unsupervised approach to knowledge-based feature generation} \label{shallow_section}
 
-To begin with, we shall try to ignore the labels, and define an unsupervised feature generation algorithm based on ${\cal R}$. We call this algorithm \emph{Shallow}, as it uses the relations in a shallow manner to create features. Using \emph{Shallow}, we can highlight several important concepts.
+To begin with, we shall try to ignore the labels, and define an unsupervised feature generation algorithm based on ${\cal R}$. We call this algorithm \emph{Shallow}, as it uses the relations in a shallow manner to create features. Using \emph{Shallow}, we can highlight several important concepts of our approach.
 
 To begin with, let us first consider the case where all relations are functions, meaning any given relation $R_j$ is a function $R_j:D_j\rightarrow D_{j'}$. In this case, if $Dom_i \subseteq D_j$, we can compose $R_j$ onto $f_i$, giving us a function $f_{i,j}(x)=R_j\circ f_i=R_j(f_i(x)),f_{i,j}:O\rightarrow D_{j'}$. For example, if $f_i$ lists a person's country of origin, and $R_j$ maps countries to their continent, then $f_{i,j}$ lists a person's continent of origin.
 Given such $f_{i,j}$, we can either use it as-is, or we can transform it into a set of binary features by specifying the value: $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } R_j(f_i(x))=c\\ 
-0 & \mbox{otherwise } \end{cases}$ $,f_{i,j,c}:O\rightarrow Y$. In the example above, we might create a feature asking whether a person's continent of origin is Europe.
+0 & \mbox{otherwise } \end{cases}$ $,f_{i,j,c}:O\rightarrow \{0,1\}$. In the example above, we might create a feature asking whether a person's continent of origin is Europe.
 
-While this is sufficient in cases where all relations are full functions, in reality knowledge bases are rarely complete, resulting in relations which are partial functions. We shall use $\perp$ to notate \emph{undefined}. A given relation $R_j$ is a partial function $R_j:D_j\rightarrow D_{j'}\cup\{\perp\}$. For example, $R_j$ might map a disease to its preferred treatment method. Sadly, not all diseases are treatable, and thus we have only a partial function.
+While this is sufficient in cases where all relations are full functions, in reality knowledge bases are rarely complete, resulting in relations which are partial functions. We shall use $\perp$ to notate \emph{undefined}. Thus, a given relation $R_j$ is a partial function $R_j:D_j\rightarrow D_{j'}\cup\{\perp\}$. For example, $R_j$ might map a disease to its preferred treatment method. Sadly, not all diseases are treatable, and we are left with a partial function which gives values only to treatable diseases.
 In this case, $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ is also a partial function.
-During classification, we can then treat $\perp$ as an additional value, allowing us to make use of additional knowledge when it is available. If we wish to have binary features, we must decide whether to treat this value as the condition being unfulfilled, yielding a value of zero, or to exclude it, leading to partial features. We can also treat it as a third possible value, leading to a function $f_{i,j,c}:O\rightarrow Y\cup\{\perp\}$.
+During classification, we can then treat $\perp$ as an additional value, allowing us to make use of additional knowledge when it is available, without causing harm when it is not. If we wish to have binary features, we must decide whether to treat this value as the condition being unfulfilled, yielding a value of zero, or to exclude it, leading to partial features. We can also treat it as a third possible value, leading to a function $f_{i,j,c}:O\rightarrow \{0,1,\perp\}$.
 
-Although there are many relations which are also functions, such a requirement may serve as a limitation. For example, a relation mapping a surnames to their countries of origin, as in section \ref{motivation}, may have multiple countries of origin for a single surname. Similarly, a relation mapping a parent to their children may have many children with the same parent.
-In cases such as this, $f_{i,j}$ is a set of values, requiring an aggregation function to be used. There are many possible aggregation functions that we can apply on our value set, but we shall discuss three major ones:
+Although there are many relations which are also functions, such a requirement may serve as a limitation. For example, a relation mapping a surnames to their countries of origin, as in section \ref{motivation}, may have multiple countries of origin for a single surname. Similarly, a relation mapping a parent to their children may have many children for the same parent.
+In cases such as this, $f_{i,j}$ may be a set of values, requiring an aggregation function to be used should we wish to utilize it. There are many possible aggregation functions that we can apply on such a value set, but we shall discuss three major ones:
 \begin{itemize}
-	\item All- Given a set of values, whether they all fulfil a certain predicate.
-	\item Exists- Given a set of values, whether there exists a value that fulfils a certain predicate.
-	\item Majority- Given a set of values, whether a majority of them fulfil a certain predicate.
+	\item All- Given a set of values, whether they all fulfil a certain predicate $p:D_{j'}\rightarrow\{0,1\}$.
+	\item Exists- Given a set of values, whether there exists a value in that set which fulfils a certain predicate $p$.
+	\item Majority- Given a set of values, whether a majority of them fulfil a certain predicate $p$.
 \end{itemize}
-All of the above require a predicate function $p:D_{j'}\rightarrow \{0,1\}$. In the case of $f_{i,j,c}$, that predicate would be $p(x)=c$, and thus using the ``Exists" aggregation function would result in a similar feature, as we would have $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } c\in R_j(f_i(x))\\ 
+All of the above require a predicate function $p:D_{j'}\rightarrow \{0,1\}$. In the case of $f_{i,j,c}$ defined above, that predicate would be $p(x)=c$, and thus using the ``Exists" aggregation function would result in a similar feature, as we would get $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } c\in R_j(f_i(x))\\ 
 0 & \mbox{otherwise } \end{cases}$.
 
-Now that we have considered all possibilities for the behaviour of a given relation $R_j$ \footnote{Of course, it is possible for a non-function relation to have missing entries. In that case we can easily combine the solutions for both cases.}, we can proceed to define \emph{Shallow}. Given a feature $f_i$, \emph{Shallow} will go over the relations within the knowledge base and attempt to create binary features $f_{i,j,c}:O\rightarrow \{0,1\}$ through the above solutions. \emph{Shallow} then gathers all generated features and outputs them. The pseudo-code is given below.
+Now that we have considered all possible behaviours of a given relation $R_j$ \footnote{Of course, it is possible for a non-function relation to have missing entries. In that case we can combine the solutions for both cases}, we can proceed to define the \emph{Shallow} algorithm. Given a feature $f_i$, \emph{Shallow} will go over the relations within the knowledge base and attempt to create binary features $f_{i,j,c}:O\rightarrow \{0,1\}$ through the above solutions. \emph{Shallow} then gathers all generated features and outputs them. The pseudo-code is given below.
 
 % Given a feature $f_i$, we take all values of $f_i(x), x\in S$ and see if we can apply relations to them. We then take the resulting values in the relational domain and use them to construct simple binary features of the form $f_{r,c}(x)=\begin{cases} 1 &\mbox{if } \exists f_i\in F :r(f_i(x))=c\\ 
 %0 & \mbox{otherwise } \end{cases}$. For example, given a feature that lists a patient's symptoms, we can choose the relation $r=$``Severity" with the constant $c=$``Life-threatening", yielding a feature that will be 1 if and only if a patient is displaying a life-threatening medical issue.
 
 \begin{algorithm}[H]
-	\caption{Shallow: Non-recursive Feature Generation using relations}
+	\caption{\emph{Shallow}: Non-recursive Feature Generation using relations}
 	\label{code-compete}
 	\small
 	%insert param stuff
@@ -224,42 +241,45 @@ Now that we have considered all possibilities for the behaviour of a given relat
 	\end{algorithmic}
 \end{algorithm}
 
-We see that this approach allows us to generate features from our knowledge base, regardless of the ways in which it interacts with our existing features. One example of such features is that of semantic type, features making use of the ``IS-A" relation to note the entity type. We note that this approach create a potentially large number of binary (missing values are treated as zeros) features. While this approach does allow us a degree of generalization, it can only utilize our knowledge base shallowly, from base entities to their values. 
-Should we try to apply a chain of relations rather than a single one, even ignoring the many possible scenarios, we must consider the exponential nature of such a chain. Without any way to guide our search through the knowledge base, we are likely to generate and increasingly large number of relations, many of which will be irrelevant. Clearly, if we wish to locate more complex relationships and concepts, a different approach is necessary.
+We see that this approach allows us to generate features from our knowledge base, regardless of the ways in which it interacts with our existing features. One example of such features is that of semantic type, features making use of the ``IS-A" relation to note the entity type. We note that this approach creates a potentially large number of features. While this approach does allow us a degree of generalization, it can only utilize our knowledge base shallowly, from base entities to their values. 
+Should we try to apply a chain of relations rather than a single one, we can begin to explore more complex domains. However, we must consider the exponential nature of such a chain. Without any way to guide our search through the knowledge base, we are likely to generate and increasingly large number of relations, many of which will be irrelevant. Clearly, if we wish to locate more complex relationships and concepts, a different approach is necessary.
 
 \subsection{Creating Learning Problems using Relations} \label{algorithm_section} 
 
 Now that we have seen how an unsupervised algorithm would make use of a knowledge base for feature generation, we may begin to properly discuss our approach. To do so, we must understand how our approach creates new induction problems using the knowledge base.
 
-Given an original feature $f_{i}:O\rightarrow Dom_i$, our algorithm will formulate a new learning task trying to separate values in $Dom_i$ appearing in positive examples of the original learning task from those appearing in negative ones.  The result of the new learning task will be a classifier
-$h_{i}:Dom_{i}\rightarrow Y$ that can label feature values of $f_{i}$. We can then define a new feature $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$.
+Given an existing feature $f_{i}:O\rightarrow Dom_i$, our algorithm will formulate a new learning task trying to separate values in $Dom_i$ associated with positive examples of the original learning task from those appearing in negative ones. The result of the new learning task will be a classifier
+$h_{i}:Dom_{i}\rightarrow Y$ which we can then use to label elements in $Dom_i$, such as those appearing in $f_{i}$. We can then define a new feature $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$.
 We name this algorithm \emph{FEAGURE} (FEAture Generation Using REcursive induction). The full pseudo-code is described in algorithm \ref{code-creating-prob}.
 
 In order to explain how we create such $h_{i}$, let us first consider the creation of a new learning problem. Once we have done so, we can use any induction algorithm to create $h_i$. 
 Given a feature $f_{i}$, we first define $v_i(S) = \{v | (o,y) \in S, f_{i}(o)=v\}$ the set of feature values for $f_i$ in $S$. In the intro example, for instance, $v_i(S)$ will b
 e the set of all last names of patients that appeared in the training set.
-We use $v_i(S)$ as our objects. To define a learning problem, we must consider their labels. 
+We use $v_i(S)$ as our set of objects. To define a learning problem, we must consider their labels. 
 
-In the simple case, every feature value appears only for a single example in $S$. In that case, we can simply take the same label, with the result being $label(v)=y$ where $f_i(x)=v,(x,y)\in S$.%TODO: the example again
-Most features in general, and in machine learning task in particular, however, do not have a unique value for each example. In such cases we would have multiple examples in $S$ such that $f_i(x)=v$. Let us call $S(v)$ the set of such examples. In order for us to give a label for $v$, we must aggregate the labels somehow. As in section \ref{shallow_section}, we can consider three major aggregation functions.
-Using the All aggregation function results in a strict labelling, as a value will be classified as belonging to the target concept only if all examples in which that value has appeared are labelled positive. The result is consistent label: $label(v)=\begin{cases} 1 &\mbox{if } \forall (x,y)\in S(v): y=1\\ 
+In the simple case, every feature value appears only for a single example in $S$. In that case, we can simply take the same label, with the result being $label(v)=y$ where $f_i(x)=v,(x,y)\in S$. In the above example, if each patient has a unique surname, each surname would be labelled according to that patient's label.
+Most features in general, and in machine learning tasks in particular, however, do not have a unique value for each example. In such cases we would have multiple examples in $S$ such that $f_i(x)=v$. Let us call $S(v)$ the set of such examples. In order for us to give a label for $v$, we must aggregate the labels of objects in $S(v)$ somehow. As in section \ref{shallow_section}, we can consider three major aggregation functions.
+Using the All aggregation function results in a strict labelling, as a value will be classified as belonging to the target concept only if all examples in which that value has appeared are labelled positive. The result is the consistent label function: $label(v)=\begin{cases} 1 &\mbox{if } \forall (x,y)\in S(v): y=1\\ 
 0 & \mbox{otherwise } \end{cases}$.
- A more lenient label function is the majority label, taking the Majority aggregation function: $label(v)=majority(\{y|(x,y)\in S(v)\})$.%TODO: once agian, how this translates to an example
+ A more lenient label function is the majority label, taking the Majority aggregation function: $label(v)=majority(\{y|(x,y)\in S(v)\})$.
+ In the intro example, the consistent label would take the set of patients with the given surname, and label that surname as having high risk only if all such patients have the disease. The majority label, in comparison, would check whether most patients with that name have the disease.
  
-We now formulate a new learning problem with the new training set
+We now formulate a new learning problem with the constructed training set
 $S'_i = \{ (v, label(v)) | v \in v_i(S) \}$.
 To fully define our learning problem, we must specify a feature map over $v_i(S)\subseteq Dom_i$. Consider a relation $R_j$ such that $D_j\cap v_i(S)\neq \emptyset$. For such $R_j$, if it is a function, we can simply use it as a feature function, or restrict by a constant $\left(f_{j,c}(v)=\begin{cases} 1 &\mbox{if } \ R_j(v)=c\\ 
 0 & \mbox{otherwise } \end{cases}\right)$. If $R_j$ is a partial function, we simply have a feature with missing values. Finally, if $R_j$ is not a function, we can use aggregation as in section \ref{shallow_section} to create features.
 
-Once we have considered all relations in ${\cal R}$, we can generate a feature map for $S'_i$. Given $R_j$, assuming it is relevant to the problem domain, meaning $v_i(S)\cap D_j\neq\emptyset$, we can utilize it as a feature. We then look at all constants $c\in \{R_j(v)|v\in v_i(S)\land R_j(v)\neq \perp\}$. For each such $c$, we add $f_{j,c}:Dom_i\rightarrow \{0,1,\perp\}$ to our feature map. The result of this process is a feature map for $S'_i$, $F_{\cal R}$ which includes all such $f_{j,c}$. We now have a complete induction problem for which we can train a classifier, giving us $h_i:Dom_i\rightarrow Y$. We can then use this $h_i$ on objects in $S$ as discussed above, giving us $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$. 
-%TODO: an example for the constants thing
+Once we have considered all relations in ${\cal R}$, we can generate a feature map for $S'_i$. Given $R_j$, assuming it is relevant to the problem domain, meaning $v_i(S)\cap D_j\neq\emptyset$, we can utilize it as a feature. We then look at all constants $c\in \{R_j(v)|v\in v_i(S)\land R_j(v)\neq \perp\}$. For each such $c$, we add $f_{j,c}:Dom_i\rightarrow \{0,1,\perp\}$ to our feature map. 
+For example, in the intro example, each constant $c$ is a country of origin.
+The result of this process is a feature map for $S'_i$, $F_{\cal R}$ which includes all such $f_{j,c}$. We now have a complete induction problem for which we can train a classifier, giving us $h_i:Dom_i\rightarrow Y$. We can then use this $h_i$ on objects in $S$ as discussed above, giving us $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$. 
+
 We note that once we have an induction problem over $Dom_i$, we can apply our approach recursively on $S'_i$ in order to create additional features. We can see an example of this in section \ref{motivation}, wherein we construct a second-level problem on countries of origin to correctly identify the appropriate conditions that signify high risk countries.
- For each relation $R_j$, rather than restricting it via constants, we take all values of it, and treat those as a feature $f_j(v)=\{v'|R_j(v)=v' \lor v'\in R_j(v) \}$. Assuming $R_j$ is a function or partial function, $f_j$ will also be a function or partial function respectively, and we can then construct a learning problem over values $f_j$, yielding $h_j:D_{j'}\rightarrow Y$. 
+ For each relation $R_j$, rather than restricting it via constants, we take all values of it, and treat those as a feature $f_j(v)=\{v'|R_j(v)=v' \lor v'\in R_j(v) \}$. Assuming $R_j$ is a function or partial function, $f_j$ will also be a function or partial function respectively, and we can then construct a learning problem over values $f_j$ in the same manner as before, yielding a classifier $h_j:D_{j'}\rightarrow Y$, which can then be used to create a feature for $S'_i$. 
  
- In cases where $R_j$ is a relation, $f_j(v)$ is a set of values, essentially a relation as well. In such cases, We must discuss both how to extract a new learning problem, and how a classifier is then used for a set of features.
- To begin with, let us tackle the issue of constructing a learning problem where each feature value is a set. In such cases, we still have the above problem where multiple examples contain the same value, but a single example has multiple values. A simple solution to this is to give each value the same label as that of the example, and proceeding to resolve multiple labels as we have discussed. 
+ In cases where $R_j$ is a relation, $f_j(v)$ is a set of values- a relation. In such cases, We must discuss both how to extract a new learning problem, and how a classifier is then used for a set of features.
+ To begin with, let us tackle the issue of constructing a learning problem where each feature value is a set. In such cases, we still have the above problem where multiple examples may contain the same value, but a single example has multiple values. A simple solution to this issue is to give each value the same label as that of the example, and proceeding to resolve multiple labels via aggregation as we have discussed previously. 
  Once we have done so, we can construct a new learning problem for $f_j$ and, using FEAGURE, receive a classifier $h_j:D_{j'}\rightarrow Y$.
- Another question we must ask ourselves is how to apply such a classifier to the set of values in $f_j(v)$. For example, consider the classifier shown in figure \ref{figure5}. We see that the classifier can be applied to multiple values of the feature, giving us a set of labels. As we have already discussed how such a set of labels should be resolved when discussing the labelling of the constructed learning problem, we can apply the same solution here.
+ Another question we must ask ourselves is how such a classifier can be applied to the set of values in $f_j(v)$. To illustrate, consider the classifier shown in figure \ref{figure5}. We see that the classifier can be applied to multiple values of the feature, giving us a set of labels as the label of our example. As we have already discussed how such a set of labels should be resolved when discussing the labelling of the constructed learning problem, we can apply the same solution here, giving us a single feature value for our example in $S'_i$.
 
 \begin{figure}[t]
 	\centering
@@ -268,14 +288,14 @@ We note that once we have an induction problem over $Dom_i$, we can apply our ap
 	\label{figure5}
 \end{figure}
 
-In many feature generation approaches, feature selection methods are used to filter poor features. In FEAGURE, we can use feature selection both as a filtering mechanism, as well as a search parameter.
-As a filtering technique, the features generated by FEAGURE are compared to the already existing feature map $F$. There is a multitude of feature selection techniques, but we shall cover three filtering criteria.
+In many feature generation approaches, feature selection methods play a key part in filtering out poor features. In FEAGURE, we can use feature selection both as a filtering mechanism, as well as a search parameter.
+As a filtering technique, the features generated by FEAGURE are compared to the already existing feature map $F$. There is a multitude of feature selection techniques that can be applied for this task, but we shall cover three filtering criteria.
 \begin{enumerate}
-	\item Maximal Information Gain(IG)- The information gain metric \cite{quinlan1986} compares how well two features reduce the amount of information entropy within a given labelled set. In essence, it measures how well each feature separates the set based on its labels. Taking the maximal information gain as a metric, we measure whether the constructed feature gives a better separation compared to all existing features in $F$.
-	\item Average Information Gain- Just as we can compare our feature to the maximal IG of the feature map, we can compare it to the mean IG for features in $F$. 
+	\item Maximal Information Gain (IG)- The information gain metric \cite{quinlan1986} compares how well a single feature reduces the amount of information entropy within a given labelled set should we split by it. In essence, it measures how well each feature separates the set based on its labels. Taking the maximal information gain as a metric, we measure whether the constructed feature gives a better separation compared to all existing features in $F$.
+	\item Average Information Gain- Just as we can compare our feature to the maximal IG of the feature map, we can compare it to the mean IG for features in $F$.
 	\item Sufficient Diversity- IG based approaches measure the separation of the training set. In many feature generation tasks, however, the more correct approach is to generate features which differ from existing features. To do so, we could require that the correlation of the generated feature with features in $F$ be below a certain threshold.
 \end{enumerate}
-Furthermore, feature selection techniques can be used as a deciding factor in enriching constructed learning problems by applying FEAGURE recursively.
+Beyond their use for filtering, criteria that measure the performance of features such as the ones above can be used as a deciding factor in whether or not a constructed learning problem should apply FEAGURE recursively. The idea here is that should the generated feature be close to the threshold, we may wish to continue expanding it in hopes of giving it the necessary boost.
 
 \begin{algorithm}[H]
 	\caption{FEAGURE-FEAture Generation Using REcursive induction}
@@ -309,16 +329,15 @@ Furthermore, feature selection techniques can be used as a deciding factor in en
 		\end{algorithmic}
 	\end{algorithm}
 
-We note that this feature generation approach creates features which can be used alongside any induction algorithm. Additionally, any induction algorithm can be used to learn $h_i$. Due to this generality, the extensive knowledge and literature available for induction methods remains relevant. Furthermore, the recursive nature of FEAGURE allows for a structured search of the knowledge base, with each new recursive problem modelling a projection of the problem space to the new domain, allowing for a more deductive learning. For example, in the motivating example, we began by learning a problem regarding patients, which we projected to a new domain of surnames. We then re-contextualized that problem to the domain of countries, for which we located a good solution. We then used this solution to resolve the original learning task.
+We note that this feature generation approach creates features which can be used alongside any induction algorithm. Additionally, any induction algorithm can be used to learn $h_i$. Due to this generality, the extensive knowledge and literature available for induction methods applies in full. Furthermore, the recursive nature of FEAGURE allows for a structured search of the knowledge base, with each new recursive problem modelling a projection of the problem space to the new domain, allowing for a process similar to deductive learning. For example, in the motivating example, we began by learning a problem regarding patients, which we projected to a new domain of surnames. We then re-contextualized that problem to the domain of countries, for which we located a good solution. We then used this solution to resolve the original learning task.
 
 While this approach has many benefits, there are is a potential issue with this approach, namely, that the number of features generated by it is limited to the number of features in the original problem. There are several methods to resolve this issue:
 \begin{enumerate}
-	\item Using multiple induction algorithms on the generated learning problem may yield significantly different classifiers which can then be used as features
-	\item Use of feature selection methods within the generated problem allows for multiple classifiers to be learned from the same feature map.
-	\item By sub-sampling our training set, we can learn features that only apply to a part of the training set, thus potentially giving us different features.
+	\item Using multiple induction algorithms on the generated learning problem may yield significantly different classifiers which can then be used as unique features, in a manner resembling an ensemble approach.
+	\item Use of feature selection methods within the generated problem allows for multiple classifiers to be learned by reusing the same feature map. This approach has the potential downside that later features may be significantly worse.
+	\item Some induction algorithms, the chief of which being decision tree classifier induction methods, yield decomposable classifiers. In the case of decision trees, such a tree classifier can be flattened into a set of decision stumps, each holding a single split of the tree. This approach allows us to turn a single strong feature into multiple weaker ones.
+	\item By sub-sampling our training set, we can learn features that only apply to a part of the training set, thus potentially giving us different, local features.
 \end{enumerate}
-
-It is worth to mention decision tree classifier induction algorithms, a class of induction algorithms that yield decision tree classifiers, as a potential solution to this issue. Using such an algorithm as our induction method gives us a unique benefit: The resulting classifier (a decision tree) can be flattened into a set of decision stumps each holding a single split of the tree. Through this, we can decompose our features, allowing us to either create a single strong feature, or multiple weaker ones, depending on the problem at hand.
 
 %\subsection{Creating Multiple Features} \label{multi_feature}
 
@@ -336,26 +355,25 @@ It is worth to mention decision tree classifier induction algorithms, a class of
 
 \subsection{Finding Locally Improving Features} \label{tree_usage}
 
-As we have previously discussed, in some cases creating multiple features is superior to generating only a few. Beyond this, in many cases it is far easier to locate powerful features within a localized subset of data which shares common attributes rather than trying to locate the same features in a more global context. In the motivating example, for instance, male patients are irrelevant to the target concept, and thus could potentially cause noise when used for feature generation using FEAGURE.
+As we have previously discussed, in some cases creating multiple features is superior to generating only a few. Beyond this, in many cases it is far easier to locate powerful features within a localized subset of data which shares common attributes rather than trying to locate the same features in a more global context. In the motivating example, for instance, male patients are irrelevant to the target concept, and thus could potentially cause noise when used for feature generation.
 There is a multitude of approaches to creating such local features. We shall look at a few of these approaches:
 \begin{itemize}
-	\item Sub-Sampling- By sampling a subset of training examples, we can hope to create a good local context for feature generation. An issue with this approach is that there is a huge number of possible subsets, and thus going over all of them is not computationally feasible. 
-	\item Clustering- This approach attempts to make use of the feature set to create clusters of similar examples. In some cases, this would indeed yield a good local context, but this approach is potentially problematic for our algorithm, as it is very likely that similar examples will have the same label, thus creating highly unbalanced learning problems, which would be more difficult to utilize.
-	\item Divide \& Conquer- This approach seeks to iteratively create increasingly smaller subsets of the original problem by dividing the problem according to the values of a feature. Most often, the IG metric is used to determine the feature used to split the examples.
+	\item Sub-Sampling: By sampling a subset of training examples, we can hope to create a good local context for feature generation. An issue with this approach is that there is a huge number of possible subsets, and thus going over all of them is not computationally feasible. 
+	\item Clustering: This approach attempts to make use of the feature set to create clusters of similar examples. In some cases, this would indeed yield good local contexts, but this approach is potentially problematic for our algorithm, as it is very likely that similar examples will have the same label, thus creating highly unbalanced learning problems, which would be more difficult to utilize effectively.
+	\item Divide \& Conquer: This approach seeks to iteratively create increasingly smaller subsets of the original problem by dividing the problem according to the values of a feature. Most often, the IG metric is used to determine the feature used to split the examples.
 \end{itemize}
 
 Of the above approaches, the Divide \& Conquer approach yields numerous advantages we can make use of, namely:
 \begin{enumerate}
-	\item Orthogonality: Because all examples with the same value for a given feature are grouped together, any further splits must make use of different features. Due to this and the fact that the features selected in each step have high IG, it is usually the case that features chosen later in the process will be mostly orthogonal to previous features chosen. This results in a larger variety in features. In our approach in particular, the elimination of a feature prunes the search tree and forces later splits to rely on different features.
+	\item Orthogonality: Because all examples with the same value for a given feature are grouped together, any further splits must make use of different features. Due to this and the fact that the features selected in each step have high IG, it is usually the case that features chosen later in the process will be mostly orthogonal to previously chosen features. This results in a larger variety of features overall. In our approach in particular, the elimination of a feature prunes the search tree and forces later splits to rely on different features and thus different domains.
 	\item interpertability: Looking at the features used at each splitting point gives us an intuitive understanding of the resulting subsets. Because of this, we can more easily understand why certain features were picked over others, which domains are no longer relevant, and so on.
-	\item Iterative construction: The divide \& conquer approach allows for an iterative search process, which we can then easily interrupt if a sufficient number of features were generated, or when the remaining training set is no longer sufficient for meaningful conclusions.
+	\item Iterative construction: The divide \& conquer approach allows for an iterative search process, which we can then easily interrupt if a sufficient number of features were generated, or when the remaining training set is no longer sufficiently representative for drawing meaningful conclusions.
 	\item Guided by labelling: This approach explicitly uses the labels of the training set to create meaningfully different groups. As a result of this, we can expect that as we go further down, the need for good, distinguishing features will rise, and we can locate stronger features.
 \end{enumerate}
 
-To summarize, this algorithm, which we shall name \emph{Deep-FEAGURE}, begins by taking the entire training set and applying FEAGURE to it. Once features have been generated, any generated features which have performed well are kept, and the feature with the highest information gain (potentially the one generated by FEAGURE) is used to split the training set into groups according to its values.
-For each of these new, smaller training sets we then repeat this process until we either receive a consistent training set, meaning all examples have the same label, or the size of the training set becomes so small that any feature found is wholly unrepresentative of the complete problem.
+Due to the above advantages, we have a strong incentive to utilize the divide \& conquer approach when attempting to create additional features using FEAGURE. This new algorithm, which we shall name \emph{Deep-FEAGURE}, begins by taking the entire training set and applying FEAGURE to it. Once features have been generated, any generated features which have performed well are kept, and the feature with the highest information gain (potentially the one generated by FEAGURE) is used to split the training set into groups according to its values.
+For each of these new, smaller training sets we then repeat this process until we either receive a consistent training set, meaning all examples have the same label, or the size of the training set becomes so small that it is wholly unrepresentative of the complete problem.
 Once we have finished this process, only the generated features are kept, and returned as the output of Deep-FEAGURE.
-
 
 A major potential issue that must be considered in any induction approach, and is especially problematic for divide \& conquer approaches, is that of over-fitting, meaning that the result is too adjusted to seen data, and cannot generalize for previously unseen data. In the extreme case, an induction method may yield a classifier that simply memorizes the known data. This classifier will yield perfect results for seen data, but is worthless for unseen data.
 To combat this issue, we consider several steps:
@@ -404,17 +422,17 @@ To combat this issue, we consider several steps:
 \subsection{Application of FEAGURE for Text Categorization}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-A particually interesting problem domain is that of Text Categorization.
-The text Categorization problem is defined by a set of texts $O$ labelled by a set of categories $Y$ \footnote{We can assume $Y=\{0,1\}$ for ease of analysis}
- such that we create $S=\{(o_i,y_i)|o_i\in O, y_i\in Y\}$. Given $S$, The learning problem is to create a hypothesis $h:O\rightarrow Y$ which minimizes error over all possible texts of the given categories.
-The standard approach to solving this problem is based on the bag-of-words \cite{Wu:1981:CST:1013228.511759,salton1983introduction} approach, Using the frequencies of word appearances (without regards to order) within the text as features. 
+A particually interesting problem domain is that of \emph{Text Categorization}.
+The text categorization problem is defined by a set of texts $O$ labelled by a set of categories $Y$ \footnote{We can assume $Y=\{0,1\}$ for ease of analysis}
+ such that we create $S=\{(o_i,y_i)|o_i\in O, y_i\in Y\}$. Given $S$, The learning problem is to find a hypothesis $h:O\rightarrow Y$ which minimizes error over all possible texts of the given categories. To measure this error, a testing set is used as an approximation.
+The standard approach to solving this problem is based on the bag-of-words \cite{Wu:1981:CST:1013228.511759,salton1983introduction} approach, which uses the frequencies of word appearances (without regards to order) within the text as features. 
 
 Another way to describe this approach is that it creates a single feature, the titular bag-of-words, whose value is the set of all unique words in the text.
 As we are well aware, however, not all words have semantic meaning. This observation makes usage of knowledge-based approaches non-trivial, as most knowledge bases rely on semantically meaningful entities rather than raw words.
 To resolve this issue, we can make use of techniques such as Named Entity Recognition (NER), Wikification \cite{bunescu2006using} and Entity Linking \cite{rao2013entity}. These methods as well as similar techniques allow us to link words in the text with semantically meaningful entities. They do so by identifying keywords, linking related concepts, and other supervised and unsupervised techniques.
 Using these techniques, we can move to a \emph{bag-of-entities}, that is, a model of the semantically meaningful entities within the text, without regard to order.
 
-As discussed, we have seen the recent rise of Semantic Linked Data as a powerful knowledge base for text-based entities, with large databases such as Google Knowledge Graph \cite{pelikanova2014google}, Wikidata \cite{vrandevcic2014wikidata} and YAGO2 \cite{hoffart2013yago2}. 
+As discussed, we have seen the recent rise of Semantic Linked Data as a powerful knowledge base for text-based entities, with large databases such as Google Knowledge Graph \cite{pelikanova2014google}, Wikidata \cite{vrandevcic2014wikidata} and YAGO2 \cite{hoffart2013yago2} becoming common. 
 These knowledge bases represent semantic knowledge through the use of relations, mostly represented by triplets of various schema such as RDF, or in structures such as OWL and XML. These structures conform to relationships between entities such as "born in", as well as type information.
 Naturally, we would like to make use of such semantic data to improve upon the bag-of-words approach, with the implicit assumption that additional Semantic knowledge will allow us to better approximate the relationship between the text and its given category.
 
@@ -456,17 +474,17 @@ The use of multiple induction algorithms allows us to reduce the impact of the s
 
 \subsubsection{Datasets}
 
-For evaluation, we used two datasets: %TODO
+For evaluation, we used two datasets: 
 \begin{enumerate}
-	\item \textbf{TechTC-100} \cite{gabrilovich2004text} - A collection of 100 different binary text categorization problems of varying difficulty, extracted from the Open Dictionary project. On each dataset, we used the Stanford Named Entity Recognizer \cite{finkel2005incorporatingfull} to create the bag-of-entities. We then performed stopword elimination using NLTK \cite{bird2009natural} and stemming using the Porter Stemmer \cite{van1980new} on remaining words in hopes of finding additional entities.
-	We then proceeded to evaluate our approach by measuring accuracy based on the training and testing sets defined in the original paper for each dataset. Additionally, since \citeA{gabrilovich2004textresults} have demonstrated that aggressive feature selection leads to better accuracy for this dataset, we tested our feature set both without feature selection, as well as with a $5\%$ feature selection threshold, meaning only the $5\%$ of features with the highest IG will be selected.
+	\item \textbf{TechTC-100} \cite{gabrilovich2004text} - A collection of 100 different binary text categorization problems of varying difficulty, extracted from the Open Dictionary project. On each dataset, we used the Stanford Named Entity Recognizer \cite{finkel2005incorporatingfull} to create the bag-of-entities. We then performed stopword elimination using NLTK \cite{bird2009natural} and stemming using the Porter Stemmer \cite{van1980new} on remaining words in hopes of finding additional entities and removing noise.
+	We then proceeded to evaluate our approach by measuring accuracy based on the training and testing sets defined in the original paper for each dataset. Additionally, since \citeA{gabrilovich2004textresults} have demonstrated that aggressive feature selection leads to better accuracy for this dataset, we tested our feature set both without feature selection, as well as with a $5\%$ feature selection threshold, meaning only the $5\%$ of features with the highest IG will be selected. %mention that 5p is the original?
 	
 	As our knowledge base for this task, we used \textbf{YAGO2} \cite{hoffart2013yago2}.
 	YAGO2 (Yet Another Great Ontology) is a large knowledge base extracted automatically from Wikipedia, WordNet and GeoNames. Its accuracy was manually evaluated on a sample of facts, yielding above $95\%$ accuracy.
 	 YAGO2 contains over 10 million entities and 124 million facts, mostly dealing in individuals, countries and events.
 	In order to fully make use of this knowledge base, we performed some processing on it. Specifically, we omitted relations with literal data such as dates or geographic coordinates, and created inverse relations of all relations except ones that map very few values to very many \footnote{For example, the inverse of the ``has gender" relation  maps ``male" and ``female" to all to all existing people within the YAGO2 database.}.
 	
-	This dataset collection served as a powerful benchmark, as it contains several small multiple text classification problems of varying difficulties. This gives us a representative cross-section of text categorization tasks. We used YAGO2 as our knowledge base as it contains a great deal of general knowledge.
+	This dataset collection served as a powerful benchmark, as it contains several small multiple text classification problems of varying difficulties. This gives us a representative cross-section of text categorization tasks on which broader conclusions could be drawn. We used YAGO2 as our knowledge base as it contains a great deal of general knowledge.
 	
 	\item \textbf{OHSUMED} \cite{hersh1994ohsumed} - A dataset of medical abstracts from the MeSH categories of the year 1991. Similarly to  \citeA{joachims1998text}, we use only the first 20,000 documents. Furthermore, we limit ourselves to medical documents that contain only a title (that is, there is no available abstract). On each document, stopword elimination and a simple stemming scheme was used (due to the medical nature of the texts, there was no need for complex stemming). Once the documents have been cleaned of stopwords and stemmed, we used Wikipedia Miner \cite{milne2013open} for entity extraction. 
 	Due to the relatively sparse size of most categories (since not all documents fit these criteria), we only used the two categories with the most documents, ``Bacterial Infections and Mycoses" and ``Immunologic Diseases" \footnote{C1 and C20, respectively}, yielding a binary learning problem. We then applied ten-fold cross validation on the resulting document set to rigorously test our approach and allow us to measure statistical significance.
