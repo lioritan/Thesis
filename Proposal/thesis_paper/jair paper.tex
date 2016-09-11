@@ -170,47 +170,73 @@ While this is a simple example, it illustrates how an unsolvable learning proble
 
 We begin our discussion with the standard definition of an induction problem. 
 Let $O$ be a set of objects. Let $Y=\{0,1\}$ be a set of labels \footnote{We assume binary labels for ease of discussion}. Let $C:O\rightarrow Y$ be the target concept. Let $S=\{(o_{1},y_{1}),\ldots,(o_{m},y_{m})\}$ be a set of labelled examples such that $o_{i}\in O, y_{i}\in Y, C(o_i)=y_i$. 
-Let $F=\{f_{1},\ldots,f_{n}\}$ be a \emph{feature map}, a set of \emph{feature functions} $f_{i}:O\rightarrow Dom_{i}$.  This definition implies a training set represented by feature vectors: $S_F=\{ (\langle f_1(o_i),\ldots,f_n(o_i)\rangle, y_i) | (o_i,y_i) \in S\}$.
-Given $S_F$, we wish to find a classifier $h_{S_F}:O\rightarrow Y$ such that the generalization error $Sum(o\in O,h_{S_F}(o)\neq C(o))$ is low.
-
-The general task of Feature Generation is as follows: Given $\langle S,F\rangle$, construct a new feature map $F'$ such that when we use an induction algorithm to find a hypothesis, it will do so more effectively. More formally, we require that $Sum(o\in O,h_{S_F}(o)\neq C(o)) \geq Sum(o\in O,h_{S_F'}(o)\neq C(o))$. Usually, the same induction algorithm is used on both $F$ and $F'$, allowing for a controlled comparison which lowers the impact of the induction algorithm. 
-
-In this work, we assume that in addition to $S_F$ we also have a set of binary \footnote{If our relations are not binary, we can use projection to create multiple binary relations instead} relations ${\cal R}=\{R_{1},\ldots,R_{t}\}, R_j:D_j\times D_{j'}$ representing our knowledge base. 
-Intuitively, unless the domains of the knowledge base overlap with those of the feature functions, there is little we can do with this knowledge base. 
-Therefore, we add an additional requirement: $\bigcup_{f_i} Dom_i \cap \bigcup_{R_j} D_j \neq \emptyset$. Now that we have formalized the requirements, we can discuss the feature generation problem.
-
+Let $F=\{f_{1},\ldots,f_{n}\}$ be a \emph{feature map}, a set of \emph{feature functions} $f_{i}:O\rightarrow I_{i}$.  This definition implies a training set represented by feature vectors: $S_F=\{ (\langle f_1(o_i),\ldots,f_n(o_i)\rangle, y_i) | (o_i,y_i) \in S\}$. A learning algorithm $L$ takes $S_F$ as inputs, and outputs a classifier $h_{S_F}:O\rightarrow Y$.
 \begin{defn}
-	A \emph{supervised feature generation algorithm} based on ${\cal R}$ is an algorithm that given $\langle S,F,{\cal R} \rangle$, creates a new feature map $F_{{\cal R}}=\{f'_{1},\ldots,f'_{l}\}, f'_{k}:O\rightarrow Dom_k$.
+	Let $L(S,F)=h_{S_F}$ be the classifier outputted by $L$ given $\langle S,F\rangle$. Assuming $S\sim\ D$, the generalization error of a learning algorithm $L$ is the probability $Pr(h_{S_F}(x)\neq y)$, where $(x,y)\sim\ D$.
 \end{defn}
 
-A good supervised feature generation algorithm based on ${\cal R}$ is one that produces lower generalization error during induction (as in regular feature generation). More formally, if given $S_F$, the induction algorithm returns the classifier $h_F:O\rightarrow Y$, and given $S_{F_{{\cal R}}}$ the induction algorithm returns $h_{F_{{\cal R}}}:O\rightarrow Y$, a good supervised feature generation algorithm based on ${\cal R}$ must satisfy $Sum(o\in O,h_F(o)\neq C(o)) \geq Sum(o\in O,h_{F_{{\cal R}}}(o)\neq C(o))$.
-In order for this to happen, we would like $F_{{\cal R}}$ to be rich enough as to provide us with a better hypothesis, as well as simple and compact enough that such hypothesis can be found with existing induction algorithms.
+%The general task of Feature Generation is as follows: Given $\langle S,F\rangle$, construct a new feature map $F'$ such that when we use an induction algorithm to find a hypothesis, it will do so more effectively. More formally, we require that $Sum(o\in O,h_{S_F}(o)\neq C(o)) \geq Sum(o\in O,h_{S_F'}(o)\neq C(o))$. Usually, the same induction algorithm is used on both $F$ and $F'$, allowing for a controlled comparison which lowers the impact of the induction algorithm. 
 
-%We would like the new hypothesis space, defined over $F_{{\cal R}}$, to be one that is both rich enough to provide hypotheses with a lower loss than those in the original space, as well as simple enough that the learning algorithm used will be able to find such good hypotheses given training data.
+In this work, we assume that in addition to $S_F$ we also have a set of binary \footnote{If our relations are not binary, we can use projection to create multiple binary relations instead} relations ${\cal R}=\{R_{1},\ldots,R_{t}\}, R_j:D_j\times D_{j'}$ representing our knowledge base. 
+\begin{defn}
+	A \emph{supervised feature generation algorithm} $A$ based on ${\cal R}$ is an algorithm that given $\langle S,F,{\cal R} \rangle$, creates a new feature map $F_{{\cal R}}=\{f'_{1},\ldots,f'_{l}\}, f'_{k}:O\rightarrow I_k$.
+\end{defn}
+
+In order to evaluate the output of a feature generation algorithm $A$, we must define its utility. Given $\langle S,F \rangle$, $A$ generates a feature set $F'_A$.
+Given $S\sim\ D$, a feature set $F$, a generated feature set $F'_A$ and a learning algorithm $L$, the utility of $A$ is $U(A(S,F))=Pr(h_{S_F}(x)\neq y)-Pr(h_{S_{F'_A}}(x)\neq y)$, where $(x,y)\sim\ D$.
+
+The implications of this definition are twofold: First, if the classifier induced by $L$ given  $\langle S,F \rangle$ yields a low generalization error, there is little to be gained through feature generation. Second, in order for the utility of $A$ to be positive, the generated feature set $F'_A$ must yield lower generalization error than $F$.
+
+When using a feature generation algorithm using a set of relations ${\cal R}$, we would like to achieve a higher utility than that achieved without the use of ${\cal R}$. Clearly, in order to do so we must require some connection between ${\cal R}$ and our feature set $F$. To that effect, we add an additional requirement:  $\bigcup_{f_i} I_i \cap \bigcup_{R_j} D_j \neq \emptyset$. 
 
 \subsection{An unsupervised approach to knowledge-based feature generation} \label{shallow_section}
 
 To begin with, we shall try to ignore the labels, and define an unsupervised feature generation algorithm based on ${\cal R}$. We call this algorithm \emph{Shallow}, as it uses the relations in a shallow manner to create features. Using \emph{Shallow}, we can highlight several important concepts of our approach.
 
-To begin with, let us first consider the case where all relations are functions, meaning any given relation $R_j$ is a function $R_j:D_j\rightarrow D_{j'}$. In this case, if $Dom_i \subseteq D_j$, we can compose $R_j$ onto $f_i$, giving us a function $f_{i,j}(x)=R_j\circ f_i=R_j(f_i(x)),f_{i,j}:O\rightarrow D_{j'}$. For example, if $f_i$ lists a person's country of origin, and $R_j$ maps countries to their continent, then $f_{i,j}$ lists a person's continent of origin.
-Given such $f_{i,j}$, we can either use it as-is, or we can transform it into a set of binary features by specifying the value: $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } R_j(f_i(x))=c\\ 
-0 & \mbox{otherwise } \end{cases}$ $,f_{i,j,c}:O\rightarrow \{0,1\}$. In the example above, we might create a feature asking whether a person's continent of origin is Europe.
+Let us first consider the case where any given relation $R_j$ is a function $R_j:D_j\rightarrow D_{j'}$. In this case, for any given $f_i,R_j$ such that 
+$Image(f_i) \subseteq D_j$, we can compose $R_j$ onto $f_i$, giving us a function $f_{i,j}(x)=R_j\circ f_i=R_j(f_i(x)),f_{i,j}:O\rightarrow D_{j'}$. For example, if $f_i$ lists a person's country of origin, and $R_j$ maps countries to their continent, then $f_{i,j}$ lists a person's continent of origin.
+Under this condition, we can define the new feature set using a closed formula: $\{f_{i,j}|Image(f_i) \subseteq D_j\}$.
 
-While this is sufficient in cases where all relations are full functions, in reality knowledge bases are rarely complete, resulting in relations which are partial functions. We shall use $\perp$ to notate \emph{undefined}. Thus, a given relation $R_j$ is a partial function $R_j:D_j\rightarrow D_{j'}\cup\{\perp\}$. For example, $R_j$ might map a disease to its preferred treatment method. Sadly, not all diseases are treatable, and we are left with a partial function which gives values only to treatable diseases.
-In this case, $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ is also a partial function.
-During classification, we can then treat $\perp$ as an additional value, allowing us to make use of additional knowledge when it is available, without causing harm when it is not. If we wish to have binary features, we must decide whether to treat this value as the condition being unfulfilled, yielding a value of zero, or to exclude it, leading to partial features. We can also treat it as a third possible value, leading to a function $f_{i,j,c}:O\rightarrow \{0,1,\perp\}$.
+Now that we have considered the simple case, we can consider more complex cases.
+For one, we must consider the case where $Image(f_i) \not\subset D_j$ but $Image(f_i) \cap D_j \neq\emptyset$. In this case, there are values for which $R_j$ cannot be applied. We can therefore treat $R_j$ as a partial function from $Image(f_i)$ to $D_{j'}$. In order to complete this partial function, let us first mark \emph{undefined} as $\perp$. We can turn $R_j$ into a full function with regards to $Image(f_i)$ as follows: $\tilde{R}_j(x)=\begin{cases} R_j(x) &\mbox{if } x\in D_j\\ 
+\perp & \mbox{otherwise } \end{cases}$.
+The result is a full function $\tilde{R}_j:Image(f_i)\cup D_j\rightarrow D_{j'}\cup\{\perp\}$. We also note that the same process can be applied in cases where $R_j$  has missing values, meaning it is a partial function with regards to $D_j$
 
 Although there are many relations which are also functions, such a requirement may serve as a limitation. For example, a relation mapping a surnames to their countries of origin, as in section \ref{motivation}, may have multiple countries of origin for a single surname. Similarly, a relation mapping a parent to their children may have many children for the same parent.
-In cases such as this, $f_{i,j}$ may be a set of values, requiring an aggregation function to be used should we wish to utilize it. There are many possible aggregation functions that we can apply on such a value set, but we shall discuss three major ones:
+In cases such as this, composing $R_j$ onto $F_i$ may yield a set of values, requiring an aggregation function to be used should we wish to utilize it effectively. There are many possible aggregation functions that we can apply on such a value set, but we shall discuss three major ones:
 \begin{itemize}
 	\item All- Given a set of values, whether they all fulfil a certain predicate $p:D_{j'}\rightarrow\{0,1\}$.
 	\item Exists- Given a set of values, whether there exists a value in that set which fulfils a certain predicate $p$.
 	\item Majority- Given a set of values, whether a majority of them fulfil a certain predicate $p$.
 \end{itemize}
-All of the above require a predicate function $p:D_{j'}\rightarrow \{0,1\}$. In the case of $f_{i,j,c}$ defined above, that predicate would be $p(x)=c$, and thus using the ``Exists" aggregation function would result in a similar feature, as we would get $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } c\in R_j(f_i(x))\\ 
-0 & \mbox{otherwise } \end{cases}$.
+All of the above require a predicate function $p:D_{j'}\rightarrow \{0,1\}$.
+As an example, we can check whether a constant $c\in D_{j'}$ is within the values of the set by using $p(x)=\begin{cases}
+1 & \mbox{if } x=c\\ 0 & \mbox{otherwise}
+\end{cases}$ alongside the ``exists" aggregation method.
 
-Now that we have considered all possible behaviours of a given relation $R_j$ \footnote{Of course, it is possible for a non-function relation to have missing entries. In that case we can combine the solutions for both cases}, we can proceed to define the \emph{Shallow} algorithm. Given a feature $f_i$, \emph{Shallow} will go over the relations within the knowledge base and attempt to create binary features $f_{i,j,c}:O\rightarrow \{0,1\}$ through the above solutions. \emph{Shallow} then gathers all generated features and outputs them. The pseudo-code is given below.
+%Given such $f_{i,j}$, we can either use it as-is, or we can transform it into a set of binary features by specifying the value: $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } R_j(f_i(x))=c\\ 
+%0 & \mbox{otherwise } \end{cases}$ $,f_{i,j,c}:O\rightarrow \{0,1\}$. In the example above, we might create a feature asking whether a person's continent of origin is Europe.
+
+%While this is sufficient in cases where all relations are full functions, in reality knowledge bases are rarely complete, resulting in relations which are partial functions. We shall use $\perp$ to notate \emph{undefined}. Thus, a given relation $R_j$ is a partial function $R_j:D_j\rightarrow D_{j'}\cup\{\perp\}$. For example, $R_j$ might map a disease to its preferred treatment method. Sadly, not all diseases are treatable, and we are left with a partial function which gives values only to treatable diseases.
+%In this case, $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ is also a partial function.
+%During classification, we can then treat $\perp$ as an additional value, allowing us to make use of additional knowledge when it is available, without causing harm when it is not. If we wish to have binary features, we must decide whether to treat this value as the condition being unfulfilled, yielding a value of zero, or to exclude it, leading to partial features. We can also treat it as a third possible value, leading to a function $f_{i,j,c}:O\rightarrow \{0,1,\perp\}$.
+
+%Although there are many relations which are also functions, such a requirement may serve as a limitation. For example, a relation mapping a surnames to their countries of origin, as in section \ref{motivation}, may have multiple countries of origin for a single surname. Similarly, a relation mapping a parent to their children may have many children for the same parent.
+%In cases such as this, $f_{i,j}$ may be a set of values, requiring an aggregation function to be used should we wish to utilize it. There are many possible aggregation functions that we can apply on such a value set, but we shall discuss three major ones:
+%\begin{itemize}
+%	\item All- Given a set of values, whether they all fulfil a certain predicate $p:D_{j'}\rightarrow\{0,1\}$.
+%	\item Exists- Given a set of values, whether there exists a value in that set which fulfils a certain predicate $p$.
+%	\item Majority- Given a set of values, whether a majority of them fulfil a certain predicate $p$.
+%\end{itemize}
+%All of the above require a predicate function $p:D_{j'}\rightarrow \{0,1\}$. In the case of $f_{i,j,c}$ defined above, that predicate would be $p(x)=c$, and thus using the ``Exists" aggregation function would result in a similar feature, as we would get $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } c\in R_j(f_i(x))\\ 
+%0 & \mbox{otherwise } \end{cases}$.
+
+In some situations, we would like to work with binary features rather than multi-valued ones. In such cases, we can restrict the constructed $f_{i,j}$ by a constant, yielding $f_{i,j,c}(x)=\begin{cases}
+1 & \mbox{if } f_{i,j}(x)=c\\
+0 & \mbox{otherwise}
+\end{cases}$. In the more complex cases, we must consider how to handle missing values and multiple values. To simplify, we can handle $\perp$ as false and use the ``exists" aggregation condition to handle these cases.
+
+Now that we have considered all possible behaviours of a given relation $R_j$, we can proceed to define the \emph{Shallow} algorithm. Given a feature $f_i$, \emph{Shallow} will go over the relations within the knowledge base and attempt to create features $f_{i,j,c}:O\rightarrow D_{j'}\cup\{\perp\}$ through the discussed techniques. \emph{Shallow} then gathers all generated features and outputs them. The pseudo-code is given below.
 
 % Given a feature $f_i$, we take all values of $f_i(x), x\in S$ and see if we can apply relations to them. We then take the resulting values in the relational domain and use them to construct simple binary features of the form $f_{r,c}(x)=\begin{cases} 1 &\mbox{if } \exists f_i\in F :r(f_i(x))=c\\ 
 %0 & \mbox{otherwise } \end{cases}$. For example, given a feature that lists a patient's symptoms, we can choose the relation $r=$``Severity" with the constant $c=$``Life-threatening", yielding a feature that will be 1 if and only if a patient is displaying a life-threatening medical issue.
@@ -224,9 +250,17 @@ Now that we have considered all possible behaviours of a given relation $R_j$ \f
 		\Function{CreateFeatures}{$S$,$F$, ${\cal R}$}
 		\State $F_{result}=\emptyset$
 		\For {$f_i \in F$}
-		\For {$R_j \in {\cal R}$ \textbf{where} $Dom_i\cap D_j\neq \emptyset$}
-		\State $C=\bigcup_{x\in S} R_j(f_i(x))$ \Comment Constants for $R_j$ with regards to $S, f_i$
-		\State  $F_{result}=F_{result}\cup \{f_{i,j,c}(x)|c\in C\}$ \Comment See definition of $f_{i,j,c}:O\rightarrow \{0,1,\perp\}$ above.
+		\For {$R_j \in {\cal R}$}
+		\If {$Image(f_i)\cap D_{j}=\emptyset$}
+			\State Continue
+		\ElsIf {$R_j:D_j\rightarrow D_{j'}$ and $Image(f_i)\subseteq D_{j}$}
+			\State $F_{result}=F_{result}\cup \{f_{i,j}=R_j\circ f_i\}$
+		\ElsIf {$R_j:D_j\rightarrow D_{j'}$ and $Image(f_i)\cap D_{j}\neq\emptyset$}
+			\State $F_{result}=F_{result}\cup \{f_{i,j}(x)=\begin{cases} R_j( f_i(x)) &\mbox{if } f_i(x)\in D_j\\ 
+			\perp & \mbox{otherwise } \end{cases}\}$
+		\Else \Comment $R_j$ is a relation $R_j:D_j\times D_{j'}$
+		\State $F_{result}=F_{result}\cup \{Aggregate(p,f_{i,j})\}$
+		\EndIf
 		\EndFor
 		\EndFor
 		\State \Return $F_{result}$ 
@@ -235,10 +269,12 @@ Now that we have considered all possible behaviours of a given relation $R_j$ \f
 	\end{algorithmic}
 \end{algorithm}
 
-We see that this approach allows us to generate features from our knowledge base, regardless of the ways in which it interacts with our existing features. One example of such features is that of semantic type, features making use of the ``IS-A" relation to note the entity type. We note that this approach creates a potentially large number of features. While this approach does allow us a degree of generalization, it can only utilize our knowledge base shallowly, from base entities to their values. 
-Should we try to apply a chain of relations rather than a single one, we can begin to explore more complex domains. However, we must consider the exponential nature of such a chain. Without any way to guide our search through the knowledge base, we are likely to generate and increasingly large number of relations, many of which will be irrelevant. Clearly, if we wish to locate more complex relationships and concepts, a different approach is necessary.
+We see that this approach allows us to generate features from our knowledge base, regardless of the ways in which it interacts with our existing features. One example of such features is that of semantic type, features making use of the ``IS-A" relation to note the entity type. We note that this approach creates a potentially large number of features, and that a given feature may have a large number of values. While this approach does allow us a degree of generalization, it can only utilize our knowledge base shallowly, from base entities to their values. 
+Should we try to apply a chain of relations rather than a single one, we can begin to explore more complex domains. However, we must consider the exponential nature of such a chain. Without any way to guide our search through the knowledge base, we are likely to generate and increasingly large number of relations, many of which will be irrelevant. 
 
 \subsection{Creating Learning Problems using Relations} \label{algorithm_section} 
+
+%todo: switch to main flow->branches. make sure the alg shows all the cases!
 
 Now that we have seen how an unsupervised algorithm would make use of a knowledge base for feature generation, we may begin to properly discuss our approach. To do so, we must understand how our approach creates new induction problems using the knowledge base.
 
