@@ -768,20 +768,26 @@ In both cases, we see that the two level application of Deep-FEAGURE yields slig
 
 
 \section{Related Work}
-approaches to traditional FG
-	combinations-lfc, ficus, LDMT, deep learning
-	additonal knowledge - our family
+
+Feature generation approaches were found useful for a wide variety of learning problems \cite{markovitch2002feature,ragavan1993complex,utgo1991linear}.
+These feature generation approaches search for new features that better represent the target concept than existing features. To that end, there are two major approaches for feature generation: combinational and using additional knowledge.
+Combinational feature generation techniques aim to locate more descriptive features by combining existing features in various ways. The LDMT algorithm \cite{utgo1991linear}, for example, uses linear combinations of the original features to construct more informative ones. Another major class of combinational feature generation approaches is that of \emph{Deep Learning} \cite{lecun1998gradient,bengio2009learning,plotz2011featurefull,kim2013deepfull}. Deep learning techniques seek to create features through complex, non-linear combinations of existing features, allowing for a wide variety of possible features.
+
+In contrast to combinational approaches, some feature generation algorithms, including FEAGURE, seek to inject additional knowledge into the existing learning problem. These approaches seek to do so almost exclusively through the use of relational data. 
+Within this wide family of knowledge-based approaches, we can see a distinction between unsupervised, supervised and mixed approaches.
+
 
 approaches to using additional info
 	supervised - our family
-	unsupervised: propositionalization. unsupervised stuff like ICL and SGLR and FEGELOD
+	unsupervised: propositionalization. unsupervised stuff like ICL and SGLR and FEGELOD (discuss pros and cons...)
 	mixed approaches table generation(and link prediction)
 
 in supervised we have us, ilp, upgrade techniques
 
-works on linked data ? so can talk about uses in search / graph based algorithms / trying to do entity linking and then use it->us
+%works on linked data ? so can talk about uses in search / graph based algorithms / trying to do entity linking and then use it->us
 
-?????
+talk about entity linking?
+
 
 %Suppose that we also have access to a knowledge base containing facts regarding countries, such as average temperature, precipitation, and more (one such knowledge base is DBpedia). Using such a knowledge base, an unsupervised approach might generate features looking at the properties of the countries that a given surname is common in, giving us features along the lines of ``is this surname common in a country whose population is over 80 million?". This approach would result in a potential explosion of features, most of which are irrelevant to the learning problem at hand. This problem is greatly exacerbated when the knowledge base contains many relevant relationships, potentially causing an exponential explosion of new features.
 
