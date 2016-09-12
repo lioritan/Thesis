@@ -214,32 +214,12 @@ As an example, we can check whether a constant $c\in D_{j'}$ is within the value
 1 & \mbox{if } x=c\\ 0 & \mbox{otherwise}
 \end{cases}$ alongside the ``exists" aggregation method.
 
-%Given such $f_{i,j}$, we can either use it as-is, or we can transform it into a set of binary features by specifying the value: $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } R_j(f_i(x))=c\\ 
-%0 & \mbox{otherwise } \end{cases}$ $,f_{i,j,c}:O\rightarrow \{0,1\}$. In the example above, we might create a feature asking whether a person's continent of origin is Europe.
-
-%While this is sufficient in cases where all relations are full functions, in reality knowledge bases are rarely complete, resulting in relations which are partial functions. We shall use $\perp$ to notate \emph{undefined}. Thus, a given relation $R_j$ is a partial function $R_j:D_j\rightarrow D_{j'}\cup\{\perp\}$. For example, $R_j$ might map a disease to its preferred treatment method. Sadly, not all diseases are treatable, and we are left with a partial function which gives values only to treatable diseases.
-%In this case, $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ is also a partial function.
-%During classification, we can then treat $\perp$ as an additional value, allowing us to make use of additional knowledge when it is available, without causing harm when it is not. If we wish to have binary features, we must decide whether to treat this value as the condition being unfulfilled, yielding a value of zero, or to exclude it, leading to partial features. We can also treat it as a third possible value, leading to a function $f_{i,j,c}:O\rightarrow \{0,1,\perp\}$.
-
-%Although there are many relations which are also functions, such a requirement may serve as a limitation. For example, a relation mapping a surnames to their countries of origin, as in section \ref{motivation}, may have multiple countries of origin for a single surname. Similarly, a relation mapping a parent to their children may have many children for the same parent.
-%In cases such as this, $f_{i,j}$ may be a set of values, requiring an aggregation function to be used should we wish to utilize it. There are many possible aggregation functions that we can apply on such a value set, but we shall discuss three major ones:
-%\begin{itemize}
-%	\item All- Given a set of values, whether they all fulfil a certain predicate $p:D_{j'}\rightarrow\{0,1\}$.
-%	\item Exists- Given a set of values, whether there exists a value in that set which fulfils a certain predicate $p$.
-%	\item Majority- Given a set of values, whether a majority of them fulfil a certain predicate $p$.
-%\end{itemize}
-%All of the above require a predicate function $p:D_{j'}\rightarrow \{0,1\}$. In the case of $f_{i,j,c}$ defined above, that predicate would be $p(x)=c$, and thus using the ``Exists" aggregation function would result in a similar feature, as we would get $f_{i,j,c}(x)=\begin{cases} 1 &\mbox{if } c\in R_j(f_i(x))\\ 
-%0 & \mbox{otherwise } \end{cases}$.
-
 In some situations, we would like to work with binary features rather than multi-valued ones. In such cases, we can restrict the constructed $f_{i,j}$ by a constant, yielding $f_{i,j,c}(x)=\begin{cases}
 1 & \mbox{if } f_{i,j}(x)=c\\
 0 & \mbox{otherwise}
 \end{cases}$. In the more complex cases, we must consider how to handle missing values and multiple values. To simplify, we can handle $\perp$ as false and use the ``exists" aggregation condition to handle these cases.
 
 Now that we have considered all possible behaviours of a given relation $R_j$, we can proceed to define the \emph{Shallow} algorithm. Given a feature $f_i$, \emph{Shallow} will go over the relations within the knowledge base and attempt to create features $f_{i,j,c}:O\rightarrow D_{j'}\cup\{\perp\}$ through the discussed techniques. \emph{Shallow} then gathers all generated features and outputs them. The pseudo-code is given below.
-
-% Given a feature $f_i$, we take all values of $f_i(x), x\in S$ and see if we can apply relations to them. We then take the resulting values in the relational domain and use them to construct simple binary features of the form $f_{r,c}(x)=\begin{cases} 1 &\mbox{if } \exists f_i\in F :r(f_i(x))=c\\ 
-%0 & \mbox{otherwise } \end{cases}$. For example, given a feature that lists a patient's symptoms, we can choose the relation $r=$``Severity" with the constant $c=$``Life-threatening", yielding a feature that will be 1 if and only if a patient is displaying a life-threatening medical issue.
 
 \begin{algorithm}[H]
 	\caption{\emph{Shallow}: Non-recursive Feature Generation using relations}
@@ -516,14 +496,14 @@ For evaluation, we used two datasets:
 	
 	This dataset collection served as a powerful benchmark, as it contains several small multiple text classification problems of varying difficulties. This gives us a representative cross-section of text categorization tasks on which broader conclusions could be drawn. We used YAGO2 as our knowledge base as it contains a great deal of general knowledge.
 	
-	\item \textbf{OHSUMED} \cite{hersh1994ohsumed} - A dataset of medical abstracts from the MeSH categories of the year 1991. Similarly to  \citeA{joachims1998text}, we use only the first 20,000 documents. Furthermore, we limit ourselves to medical documents that contain only a title (that is, there is no available abstract). On each document, stopword elimination and a simple stemming scheme was used (due to the medical nature of the texts, there was no need for complex stemming). Once the documents have been cleaned of stopwords and stemmed, we used Wikipedia Miner \cite{milne2013open} for entity extraction. 
-	Due to the relatively sparse size of most categories (since not all documents fit these criteria), we only used the two categories with the most documents, ``Bacterial Infections and Mycoses" and ``Immunologic Diseases" \footnote{C1 and C20, respectively}, yielding a binary learning problem. We then applied ten-fold cross validation on the resulting document set to rigorously test our approach and allow us to measure statistical significance.
+	\item \textbf{OHSUMED} \cite{hersh1994ohsumed} - A dataset of medical abstracts from the MeSH categories of the year 1991. Similarly to  \citeA{joachims1998text}, we use only the first 20,000 documents. Furthermore, we limit ourselves to medical documents that contain only a title (that is, there is no available abstract). On each document we used stopword elimination and a simple stemming scheme (due to the medical nature of the texts, there was no need for complex stemming) in order to remove unnecessary noise. Once the documents have been cleaned of stopwords and stemmed, we used Wikipedia Miner \cite{milne2013open} for entity extraction. 
+	Due to the relatively sparse size of most MeSH categories (since not all documents contain only a title), we only used the two categories with the most documents, ``Bacterial Infections and Mycoses" and ``Immunologic Diseases" \footnote{C1 and C20, respectively}, yielding a binary learning problem. We then applied ten-fold cross validation on the resulting document set to rigorously test our approach and allow us to measure statistical significance.
 	
 	As our knowledge base, we used \textbf{Freebase}.
-	Freebase is described as "a massive, collaboratively edited database of cross-linked data". This combination of data harvested from databases such as Wikipedia and data contributed by users. The result is a massive, extensive knowledge base containing 1.9 billion facts. 
+	Freebase has been described as "a massive, collaboratively edited database of cross-linked data". Freebase is constructed as a combination of data harvested from databases such as Wikipedia and data contributed by users. The result is a massive, extensive knowledge base containing 1.9 billion facts. 
 	 We used the same freebase data dump used by \citeA{bast2014easy}, taking only entities relevant to our domain. This smaller dump of the Freebase knowledge base contains approximately 49 million entities and 242 million facts regarding multiple domains. Data regarding the medical domain is far more sparse, containing roughly a hundred thousand facts in total.
 	
-	This dataset served as a test case representing a larger, more specialized learning problem, where domain-specific knowledge is required due to the much shorter texts. Thus, Freebase, which contains a large body of medical knowledge, was more suitable. Knowledge bases specializing in medical knowledge were considered, but ultimately contained less facts.
+	This dataset served as a test case for a larger, more specialized learning problem, where domain-specific knowledge is required due to the significantly shorter text length. Thus, Freebase, which contains a large body of medical knowledge, was more suitable than a knowledge base containing general knowledge. Knowledge bases specializing in medical knowledge were considered, but ultimately contained less facts.
 \end{enumerate}
 
 \subsubsection{Experiment Parameters}
@@ -534,7 +514,6 @@ We tested the following parameters:
 	\item Tree depth: As discussed in section \ref{tree_usage}, we use Deep-FEAGURE within a decision tree. In order to avoid over-fitting, we limit both tree depth and node size, proportionately to the size of the training set. We experimented with the parameter of maximal tree depth to test its effect on the accuracy of the resulting features.
 	\item Induction algorithm: In section \ref{algorithm_section}, we define FEAGURE without specifying the induction algorithm used to generate features within the new learning problem. We ran most of our experiments using a decision tree induction algorithm for that purpose, flattening the result to yield additional features. We also experimented with the use of other induction algorithms, namely SVM and K-NN.
 	\item Feature filtering technique: In section \ref{algorithm_section}, we use a comparison function to decide whether a generated feature should be added to the feature map. We experimented with both a comparison based on maximal Information Gain (IG) and one based on average IG, both taking into account all existing features in $F$.
-	\item Labelling function: We have discussed the topic of which label functions can be used to create the new learning problem. For our experiments, we made use of the majority function for labelling objects in the generated induction problem.
 \end{enumerate}
 
  %We also limit these parameters accordingly within the generated recursive problems, as they also utilize a decision tree as their classifier. To decide whether a tree classifier was sufficiently beneficial, we compared its information gain ratio (including the value of inapplicable) to the information gain ratio of the feature with highest information gain ratio. We then allowed a $50\%$ negative penalty parameter to encourage picking generated features assuming they were better than $50\%$ times the best information gain for that decision tree node. 
@@ -547,9 +526,14 @@ We tested the following parameters:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Table \ref{table:acc} shows average accuracies across all 10 folds for OHSUMED, as well as the average accuracies for all 100 datasets in techTC-100. Statistical significance over the baseline accuracy (without feature generation) is shown in parenthesis. Best results are marked in bold.
-For the TechTC-100 dataset, we see a significant improvement over the baseline and shallow approaches, even though the number of generated features is much lower than the one achieved by the shallow algorithm. We also see that for SVM, the two-level application gives poorer results than the single level FEAGURE algorithm. This can be attributed to over-fitting effects resulting from a combination of mistakes in entity extraction as well as the small average dataset size. Due to the nature of linear SVM, such an over-fitted feature may have a significant impact on performance.
+For the TechTC-100 dataset, we see a significant improvement over the baseline and shallow approaches, even though the number of generated features is much lower than the one achieved by the shallow algorithm. We also see that for SVM, the two-level application gives poorer results than the single level FEAGURE algorithm. This can be attributed to three major factors:
+\begin{itemize}
+	\item Errors in the entity extraction process may lead to the creation of misleading entities and thus features. For instance, the word ``One" may be interpreted as the entity ``One (Metallica song)". 
+	\item Over-fitting within the feature generation algorithm may create features that appear to have high information gain while generalizing poorly to test data.
+	\item Small dataset size may lead to small, unrepresentative learning problems.
+\end{itemize}
 
-Analysis of the results for the OHSUMED datasets show that for K-NN, the shallow algorithm performs similarly to the baseline approach, meaning no features are found. For FEAGURE, we see a degrade in accuracy, possibly due to the masking effect inherent to K-NN classifiers, meaning that impact of a single distinguishing feature may be masked by other features. For SVM, we see a significant improvement over the baseline approach, with a single level application achieving an average of $3.2\%$ increase in accuracy, and a two-level application giving a total average of $2.4\%$ improvement. This is somewhat surprising, as we see the deeper feature generation approach yield a lesser improvement. This may be due to similar effects of over-fitted classifiers for the two-level usage of FEAGURE.
+Analysis of the results for the OHSUMED datasets show that for K-NN, the shallow algorithm performs similarly to the baseline approach, meaning the features generated by shallow were not used by the induction algorithm. For FEAGURE, we see a degrade in accuracy, possibly due to the masking effect inherent to K-NN classifiers, meaning that impact of a single distinguishing feature may be masked by other features. For SVM, we see a significant improvement over the baseline approach, with a single level application achieving an average of $3.2\%$ increase in accuracy, and a two-level application giving a total average of $2.4\%$ improvement. This is somewhat surprising, as we see that the deeper feature generation approach yields a lesser improvement. This may be due to similar effects of over-fitted classifiers for the two-level usage of FEAGURE.
 
 \begin{table}[]
 	\centering
@@ -596,13 +580,8 @@ Before we look at varying parameters of our algorithm, let us analyze the result
 \end{figure}
 
 The results show a general trend of improvement, with high ($> 5\%$) or very high ($>10\%$) improvement being common. We also see that for 24 datasets, no improvement is seen. Of these, 4 have no generated features, and 20 have few of them, and those have not contributed to the performance of the classifier. In a small subset of the datasets, we see a degrade in accuracy, with 4 of the 100 datasets showing a degrade of over $> 5\%$. 
-This can be attributed to two major causes:
-\begin{itemize}
-	\item Errors in the entity extraction process may lead to the creation of misleading entities and thus features. For instance, the word ``One" may be interpreted as the entity ``One (Metallica song)". 
-	\item Over-fitting within the feature generation algorithm may create features that appear to have high information gain while generalizing poorly to test data.
-\end{itemize}
 
-In their paper on TechTC-100, \citeA{gabrilovich2004text} define a metric known as Maximal Achievable Accuracy (MAA). This criterion attempts to define the difficulty of the induction problem by finding the maximal accuracy among three induction algorithms (SVM, K-NN and CART \footnote{\cite{breiman1984classification}}).
+In their paper on TechTC-100, \citeA{gabrilovich2004text} define a metric known as Maximal Achievable Accuracy (MAA). This criterion attempts to define the difficulty of the induction problem by finding the maximal accuracy among three induction algorithms (SVM, K-NN and CART \footnote{\citeA{breiman1984classification}}).
 Intuitively, a dataset with low MAA can be considered harder than one with a high MAA, since a known induction algorithm can achieve a higher accuracy for it.
 Figure \ref{fig:25best} shows the 25 hardest datasets in TechTC-100, in terms of the MAA criterion. 
 We see that for 7 of these, there is no change in accuracy, either due to the lack of features or due to lack of contribution in the final classifier.
@@ -618,12 +597,12 @@ Of the 25 datasets, only a single dataset shows a degrade in accuracy. This resu
 \end{figure}
 
 \subsection{Using Non-Tree classifiers with FEAGURE}
-%TODO
+
 As we have discussed in section \ref{algorithm_section}, algorithm \ref{code-creating-prob} creates a generic learning problem as part of its execution. In this section, we will test the effects of using various induction algorithms on these recursive problems. We have chosen to try both K-NN and SVM, with the following parameters: For K-NN, we used $K=3$. For SVM we used $C=10$, with both Linear and a Radial Basis Function (RBF) kernels.
 
 %Table \ref{table:features-nontree} shows the average number of generated features. We see that these approaches generate far fewer features on average. This should come as no surprise, as we cannot flatten constructed recursive trees in order to generate additional features, nor do we run the learning algorithms on smaller problems.
-Table \ref{table:acc-nontree} shows the accuracies achieved by these approaches. We see that while in general, the results are slightly poorer than those achieved by our approach, they are roughly comparable, and in some cases perform noticeably better. One particular such case is that of K-NN for the OHSUMED, which was previously the only case where no improvement in accuracy was achieved. Using an SVM classifier, we see an improvement in accuracy for this case. This may be due to the nature of RBF-based classifiers, which look at distance between examples, similarly to K-NN.
-Looking at the number of features generated, we see that on average, these approaches generate far fewer features. This should come as no surprise, as the tree-based classifier uses flattening to create additional features, and as we have mentioned, at most a single feature would be generated per feature.
+Table \ref{table:acc-nontree} shows the accuracies achieved by using these induction algorithms. We see that while in general, the results are slightly poorer than those achieved by our approach, they are roughly comparable, and in some cases perform noticeably better. One particular such case is that of K-NN for the OHSUMED dataset, which was previously the only case where no improvement in accuracy was achieved. Using an SVM classifier to generate features rather than tree-based features, we see an improvement in accuracy for this case. This may be due to the nature of RBF-based classifiers, which look at distance between examples, similarly to K-NN.
+Looking at the number of features generated, we see that on average, these approaches generate far fewer features. This should come as no surprise, as the tree-based classifier uses flattening to create additional features.
 
 %\begin{table}[]
 %	\centering
@@ -658,8 +637,11 @@ Looking at the number of features generated, we see that on average, these appro
 \end{table}
 
 \subsection{The Effects of Feature Filtering on Accuracy}
+\label{result-maximal-average}
 
-In this section we look at the effect of using a different evaluation method for generated features. In algorithm \ref{code-tree-thing}, we use a comparison function which compares the constructed feature to the existing feature map. One way to do so is to use the mean IG Ratio of features in $F$. Should our new feature score lower than the average, we filter it out. 
+In this section we look at the effect of using a different evaluation method for generated features. In algorithm \ref{code-tree-thing}, we use a comparison function which compares the constructed feature to the existing feature map. 
+For the most part, we compared the IG Ratio of the constructed feature to the maximal IG Ratio of features in $F$ to do so.
+An alternative method to this is to use the mean IG Ratio of features in $F$. Should our new feature score lower than the average, we filter it out. 
 
 %\begin{table}[]
 %	\centering
@@ -694,14 +676,14 @@ In this section we look at the effect of using a different evaluation method for
 
 %Table \ref{table:features-average} shows the amount of features generated by FEAGURE. We see that the amount is significantly greater, indicating that this is a more lax requirement than the one we used (over half of the best information gain ratio). 
 Table \ref{table:acc-average} shows the accuracies attained through this change. For the TechTC-100 dataset collection, we see a noticeable increase in accuracy, especially for single level application. For the OHSUMED dataset, however, we cannot detect a meaningful improvement, and for K-NN see a significant degrade in accuracy. 
-Looking at he number of features generated reveals that using the average IG for filtering yields roughly three times as many features for tech-TC. For the OHSUMED dataset, the number of features generated is roughly twice as much as that seen when using maximal IG, and that number is already quite high. 
-These results indicate that for small problems, generating additional features may be preferable, whereas for ones with many examples, a stronger filtering mechanism is more advantageous. 
+Looking at he number of features generated reveals that using the average IG method for filtering yields roughly three times as many features for TechTC-100 (compared to using maximal IG ratio). For the OHSUMED dataset, the number of features generated is roughly twice as much as that seen when using maximal IG, and that number is already quite high. 
+These results suggest that for small problems, generating additional features may be preferable, whereas for ones with many examples, a stronger filtering mechanism is more advantageous. 
 
 
 \subsection{The Effect of Search Tree Depth on Accuracy}
 
 In this section, we test at the usefulness of searching local problems for additional features.
-To do so, we run FEAGURE while limiting the depth of the search tree in algorithm \ref{code-tree-thing}. 
+To do so, we ran FEAGURE while limiting the depth of the search tree in algorithm \ref{code-tree-thing}. 
 We compare our two datasets side-by-side.
 
 \begin{figure}
@@ -722,7 +704,7 @@ We compare our two datasets side-by-side.
 	\label{fig:features-depth}
 \end{figure}
 
-Figure \ref{fig:features-depth} shows the number of generated features per depth.  For both datasets, we see a linear increase, with a two-level application showing a faster increase. In TechTC-100, we see that after a certain depth, there is no additional gain. Due to the small size of the learning problems, beyond that depth the remaining training sets are too small to continue feature generation without significant risk of over-fitting.
+Figure \ref{fig:features-depth} shows the number of generated features per maximal depth.  For both datasets, we see a linear increase, with a two-level application showing a faster increase. In TechTC-100, we see that after a certain depth, there is no additional gain. Due to the small size of the learning problems, beyond that depth the remaining training sets are too small to continue feature generation without significant risk of over-fitting, and thus FEAGURE stops its execution.
 
 \begin{figure}
 	\centering
@@ -742,10 +724,10 @@ Figure \ref{fig:features-depth} shows the number of generated features per depth
 	\label{fig:svm-acc}
 \end{figure}
 
-Figure \ref{fig:svm-acc} shows the mean accuracy of a SVM classifier for increasing depths. The results for K-NN classifiers are similar in their general trend. In TechTC-100, we see a trend of increasing accuracy, up to a saturation point. This is to be expected, as adding largely orthogonal features would yield improvement until a maximal depth is achieved.
+Figure \ref{fig:svm-acc} shows the mean accuracy of a SVM classifier for increasing depths. The results for K-NN classifiers are similar in their general trend. For TechTC-100, we see a trend of increasing accuracy, up to a saturation point. This is to be expected, as adding largely orthogonal features would yield improvement until a maximal depth is achieved and no additional features are generated.
 
 For OHSUMED, however, we see a sharp fall in accuracy, followed by a slow recovery. 
-This effect can be attributed to the amount of features generated. As we have seen when looking at the average IG compared to the maximal, more features may not yield better accuracy. As we increase the search depth, however, the local nature of the problems alongside the orthogonality of new features allows us to locate a sufficient number of good features to improve accuracy once more.
+This effect can be attributed to the amount of features generated. As we have seen when looking at the average IG compared to the maximal in section \ref{result-maximal-average}, more features do not equate better accuracy. As we increase the search depth, however, the local nature of the problems alongside the orthogonality of new features allows us to locate a sufficient number of good features to improve accuracy once more.
 
 In both cases, we see that the two level application of Deep-FEAGURE yields slightly better accuracy on average.
 
@@ -785,7 +767,6 @@ In both cases, we see that the two level application of Deep-FEAGURE yields slig
 %\end{figure}
 
 
-%TODO: all this shit
 \section{Related Work}
 approaches to traditional FG
 	combinations-lfc, ficus, LDMT, deep learning
