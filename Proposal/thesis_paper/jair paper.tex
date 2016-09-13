@@ -775,51 +775,40 @@ Combinational feature generation techniques aim to locate more descriptive featu
 
 In contrast to combinational approaches, some feature generation algorithms, including FEAGURE, seek to inject additional knowledge into the existing learning problem. These approaches seek to do so almost exclusively through the use of relational data. 
 Within this wide family of knowledge-based approaches, we can see a distinction between unsupervised, supervised and mixed approaches.
+Unsupervised knowledge-based feature generation techniques aim to incorporate additional knowledge from external sources without consideration to the labels supplied by a given training set. They do so in several differing ways:
+\begin{itemize}
+	\item Concept based approaches such as ESA \cite{gabrilovich2009wikipediafull} ,for example, present a method for generating features that are based on semantic concepts. These approaches rely on complex techniques to create a mapping between existing data and the semantic concepts which serve as external knowledge.
+	\item Propositionalization \cite{kramer2000bottom} approaches are a class of feature generation algorithms that rely on relational data to serve as external knowledge. They operate by using a combination of operators in order to create first-order logic predicates connecting existing data and relational knowledge.
+	\citeA{cheng2011automatedfull} devise a generic framework to do so using linked data, and offer some insights into taxonomy-based features.
+	The \emph{Shallow} algorithm described in section \ref{shallow_section} is a propositionalization algorithm.
+	\item Data mining approaches such as FeGeLOD \cite{paulheim2012unsupervisedfull} aim to directly utilize linked data in order to automatically enrich existing data and make it more expressive.
+\end{itemize}
+These knowledge-based techniques serve as a powerful tool for feature generation based on knowledge. Despite this fact, the unsupervised nature of these approaches tends to lead to a shallow exploration of the knowledge base, as deep unguided search is computationally expensive, and leads to a potentially large number of features.
 
+Unlike unsupervised approaches, some methods, FEAGURE included, seek to utilize a labelled training set in order to perform a more guided search. 
+These techniques can trace their source to \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning,muggleton1991inductive}, a supervised approach that induces a set of first-order formulae that define a good separation of the given training set.
+ \emph{Upgrade} methods such as ICL \cite{van2001upgrade} and SGLR \cite{popescul200716} can be seen as the supervised equivalent of propositionalization methods. Instead of creating predicates a-priori, feature generation is performed during the training phase, in a more structured manner, allowing for complex features to be considered.
+ While upgrade approaches bear some similarities to our approach, there are several critical differences, the key of which being the ability to more easily locate complex features through the use of existing induction algorithms. 
 
-approaches to using additional info
-	supervised - our family
-	unsupervised: propositionalization. unsupervised stuff like ICL and SGLR and FEGELOD (discuss pros and cons...)
-	mixed approaches table generation(and link prediction)
+Another type of supervised, knowledge-based, feature generation approach is \emph{Relational Learning} techniques. These techniques are designed to utilize relational databases and expand their knowledge. One such technique is that of View Learning \cite{davis2005view}. View learning generates new relational tables from the existing relational knowledge, based on labelled data.
+This approach bears similarity to our approach in that it can effectively utilize background knowledge to draw conclusions using the combination of labelled data and background knowledge. Unlike our approach, these views can be seen as binary rules, and require specific induction methods to be used.
 
-in supervised we have us, ilp, upgrade techniques
+FEAGURE itself is a supervised knowledge-based feature generation approach. It focuses on creation of recursive induction problems, in a manner reminiscent of view learning. Unlike view learning, the recursive construction of induction problems allows for complex exploration of features, which can then be combined in a more general way through the use of existing induction algorithms.
+%can maybe elaborate more? talk about graph learning?
 
 %works on linked data ? so can talk about uses in search / graph based algorithms / trying to do entity linking and then use it->us
 
-talk about entity linking?
+%TODO:talk about entity linking? talk about linked data?
 
-
-%Suppose that we also have access to a knowledge base containing facts regarding countries, such as average temperature, precipitation, and more (one such knowledge base is DBpedia). Using such a knowledge base, an unsupervised approach might generate features looking at the properties of the countries that a given surname is common in, giving us features along the lines of ``is this surname common in a country whose population is over 80 million?". This approach would result in a potential explosion of features, most of which are irrelevant to the learning problem at hand. This problem is greatly exacerbated when the knowledge base contains many relevant relationships, potentially causing an exponential explosion of new features.
-
-
-%There are many existing feature generation algorithms, most of which operating by combining existing features in order to produce new ones. The LFC algorithm \cite{ragavan1993complex} combines the original features using logical operators such as $\land ,\lnot$. LFC generates features using the current set of binary features (including generated ones), and requires that any new feature will yield an increase over the original features combined to create it, in terms of information gain.
-%The LDMT algorithm \cite{utgo1991linear} uses linear combinations of the original features to construct more informative ones. This allows for the use of non-binary features in feature generation approaches.
-%The FICUS algorithm \cite{markovitch2002feature} presents a general framework for using any set of constructors to combine features. This essentially generalizes the above approach, allowing for a customizable feature generation framework.
-
-%One of the earliest methods of utilizing relational information is \emph{Inductive Logic Programming(ILP)} \cite{quinlan1990learning,muggleton1991inductive}, which induces a set of first-order formulae that define a good separation of the given training set.
 %Following this work, Relational Learning - techniques designed to utilize relational databases, have become increasingly prevalent. One such technique is that of View Learning \cite{davis2005view}, which generated new tables from existing ones, effectively performing feature generation for relational methods.
 %Unlike View Learning and other Relational Learning methods, our approach constructs a new learning problem in a different domain using the existing problem as a guide. Essentially,  we try to re-think our problem from a new direction, rather than trying to fit increasingly less connected entities to the original problem. Furthermore, the ability of our approach to locate locally beneficial features which may be difficult to otherwise detect is invaluable. Finally, we note that the use of decision trees during the feature generation process allows for a natural method by which to filter out features even before applying traditional feature selection mechanisms.
-
-%One major attempt at adding relational knowledge to traditional induction algorithms was \emph{propositionalization} \cite{kramer2000bottom}, which allows an unsupervised creations of first-order predicates which can then be used as features for propositional methods. A major setback of this process is that it generates an impractically large number of features, most of which irrelevant.  To this end, \emph{upgrade} methods such as ICL \cite{van2001upgrade} and SGLR \cite{popescul200716} were suggested, where instead of creating predicates a-priori, feature generation is performed during the training phase, in a more structured manner. While upgrade approaches bear some similarities to our approach, there are several critical differences, the key of which is the ability to more easily locate complex features through the use of existing induction algorithms.
-%We can see the Shallow feature generation algorithm (section \ref{shallow_section}) as a propositionalization algorithm using external knowledge as relational data.
-
-%Recently, there has been a strong trend of utilizing \emph{Deep Learning} \cite{lecun1998gradient,bengio2009learning} as a feature generation technique. Good examples of this can be seen in FEX \cite{plotz2011featurefull} and DBN2 \cite{kim2013deepfull}. These methods essentially form combinations and transformations on pre-defined features in a semi-supervised manner, thus yielding new, more predictive features. Our approach can be seen as a variation on the same concept, with the transformations being the construction of recursive learning problems, and the combinations being the classifiers constructed in the new problem domain. Our approach differs from those rooted in Deep Learning in both the use of external knowledge to enrich the feature space, and in that we allow more complex combinations in general, as deep learning approaches utilize weighted threshold functions, whereas our approach allows for generic induction algorithms.
-
-%This resource has led to the creation of several new approaches designed to utilize the new, ontology-based representation of knowledge \cite{losch2012graph,rios2014statistical}.
-%It should come as no surprise then, that there have been several efforts in utilizing Linked Data for unsupervised feature generation \cite{cheng2011automatedfull,paulheim2012unsupervisedfull}. \citeA{cheng2011automatedfull} devise a theoretical framework for constructing features from linked data. By specifying entity types relevant to the problem at hand, they restrict the space of possible features to a more manageable size, and allow for the creation of a reasonably small amount of features. They also note that this approach tends to lead to highly sparse feature vectors.
-%\citeA{paulheim2012unsupervisedfull} developed FeGeLOD, an automated, fully unsupervised framework that constructs features by using entity recognition techniques to locate semantically meaningful features in the data set, and expand upon those entities using relations within the Semantic Web. They then use feature selection techniques to remove features with a large percentage of missing, identical, or unique\footnote{Values which only appear in a single example} values. 
-
-%Existing feature generation approaches based on Linked Data can offer great benefits, as they can add useful type information, and often add semantic information such as actors playing in a given movie, or the population of a given city.
-%However, the unsupervised nature of existing approaches limits us greatly when attempting to identify more complex relationships between entities.
-
-%For this reason, newer approaches aim to incorporate additional knowledge from external sources in order to construct new and informative features.
-%\citeA{gabrilovich2009wikipediafull} ,for example, present a method for generating features that are based on Wikipedia concepts. They create a mapping of words to Wikipedia articles, that serve as semantic concepts, then utilize the distance of words in the given text to those concepts as features. This approach produced positive results, especially in domains where data is sparse, such as text categorization on short texts.
-%\citeA{jarmasz2012roget} presents a method for utilizing lexical links between words to generate features. They made use of Roget's Thesaurus as a resource, allowing them to better map words and phrases to their lexical meanings.
 
 \section{Conclusions}
 %finishing up and summary
 
-In this paper, we proposed FEAGURE- a feature generation algorithm for using knowledge bases. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge through the use of features constructed in a supervised manner based on the target concept. 
+In this paper, we proposed FEAGURE, a supervised feature generation algorithm for using knowledge bases. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge through the use of features constructed in a supervised manner based on the target concept. 
+
+In section \ref{formal}, we 
 %talk about induction vs deduction?
 
 %talk about the algorithm's main ideas through the use of the example?
