@@ -20,14 +20,14 @@
 
 
 %mby
+
 %\usepackage[authoryear]{natbib}
-\usepackage[titletoc,toc,title]{appendix}
 \usepackage{graphicx}
 
 \theoremstyle{definition}
 \newtheorem{defn}{Definition}[section]
 
-\jairheading{1}{2015}{3-17}{6/91}{9/91}
+%\jairheading{1}{2015}{3-17}{6/91}{9/91}
 \ShortHeadings{Recursive Feature Generation for Knowledge-based Induction}
 {Friedman \& Markovitch}
 %\firstpageno{25}
@@ -85,7 +85,7 @@ The contributions of this approach are threefold. First, usage of training data 
 
 Before we delve into the exact description of our algorithm, we would like to illustrate its main ideas using an example.
 Suppose we are attempting to identify people with a high risk to be suffering from a certain genetic disease. Assume that the target concept to be discovered is that those at risk are women with ancestors originating from desert areas. To do so, we are given a training sample of sick and healthy people, containing various features, including gender and their full name. We call this learning problem $T_1$.
-Assuming we have no additional information, an induction algorithm would likely produce a result similar to that shown in figure \ref{fig:tree_base}. While such a classifier will achieve a low training error, the hundreds of seemingly unrelated surnames will cause it to generalize poorly. This phenomenon is known as over-fitting, that is, the model is too adjusted to known data and cannot generalize. We can intuitively see this in figure \ref{fig:tree_base}, as each leaf hypothesis is supported by only a single example.
+Assuming we have no additional information, an induction algorithm would likely produce a result similar to that shown in Figure \ref{fig:tree_base}. While such a classifier will achieve a low training error, the hundreds of seemingly unrelated surnames will cause it to generalize poorly. This phenomenon is known as over-fitting, that is, the model is too adjusted to known data and cannot generalize. We can intuitively see this in Figure \ref{fig:tree_base}, as each leaf hypothesis is supported by only a single example.
 
 \begin{figure}
 	\centering
@@ -99,7 +99,7 @@ However, if we assume that we have access to a relational knowledge base connect
 
  Our goal is to separate this set of people to those at high risk and those at low risk using induction algorithms. We see that the existing feature set is insufficient to perform this task successfully. Therefore, our approach aims to construct new features for the learning task $T_1$ by recursively creating a new learning problem $T_2$. Once we have done so, we can use induction methods on $T_2$ in order to create a classifier that can be used in $T_1$. We construct $T_2$ as follows: 
   The training objects are surnames; surnames of people with the disease are labelled as positive. The features for these new objects are extracted from the knowledge base, they are their countries of origin.
-Solving the above learning problem through an induction algorithm yields a classifier on surnames that distinguishes between surnames of patients with the disease and surnames of healthy individuals. This classifier for $T_2$ can then be used as a binary feature in the original problem $T_1$ by applying it to the feature value of surname. For example, it can be used as a feature in the node of value female in figure \ref{fig:tree_base}, yielding the tree seen in figure \ref{fig:lvl1_tree}. 
+Solving the above learning problem through an induction algorithm yields a classifier on surnames that distinguishes between surnames of patients with the disease and surnames of healthy individuals. This classifier for $T_2$ can then be used as a binary feature in the original problem $T_1$ by applying it to the feature value of surname. For example, it can be used as a feature in the node of value female in Figure \ref{fig:tree_base}, yielding the tree seen in Figure \ref{fig:lvl1_tree}. 
 
 This new feature gives us a better generalization over the baseline solution, as we now abstract the long list of surnames to a short list of countries. We can see this as nodes in the classifier for $T_2$ are derived from multiple surnames. This result also allows us to capture previously unseen surnames from those countries. However, this is not a sufficient solution, as we have no way of generalizing on previously unseen countries of origin, and some countries may not have sufficient representation to induce an accurate classifier. %talk about not concept?
 
@@ -118,7 +118,7 @@ We create a new training set, the objects of which are countries of origin, with
 We can then use $T_3$ as an input to an induction algorithm. As a result of this process, we end up with a classifier for $T_3$, which tries to separate between countries of origin of people at risk and those not at risk. This classifier will do so by looking at the properties of countries, and reach the conclusion that countries with high average temperature and low precipitation: both being characteristic of desert areas.
 This classifier is then used on the country of origin feature in $T_2$, yielding a new feature for $T_2$.  This new feature can then be used when inducting a classifier for $T_2$, which, as we have mentioned earlier, is used as a feature for the original problem $T_1$.
 
-The complete process is depicted in figure \ref{fig:moving_to_lvl2}. The resulting two-level recursive classifier is depicted in figure \ref{fig:lvl2_tree}. This constructed feature allows us to concisely and accurately capture the target concept, as the construction process is guided by the target concept, in a manner similar to that of deductive approaches.
+The complete process is depicted in Figure \ref{fig:moving_to_lvl2}. The resulting two-level recursive classifier is depicted in Figure \ref{fig:lvl2_tree}. This constructed feature allows us to concisely and accurately capture the target concept, as the construction process is guided by the target concept, in a manner similar to that of deductive approaches.
 While this is a simple example, it illustrates how an unsolvable learning problem given the original features can be solved via the use of complex additional knowledge and existing induction methods.
 
 %We also note that while an unsupervised approach can also create a combination of features that when used together allow us to identify the target concept, the unsupervised nature of the search makes such an attempt computationally expensive, especially when the knowledge base is extensive and multiple logical leaps are necessary.
@@ -289,7 +289,7 @@ We note that once we have an induction problem over $Dom_i$, we can apply our ap
  In cases where $R_j$ is a relation, $f_j(v)$ is a set of values- a relation. In such cases, We must discuss both how to extract a new learning problem, and how a classifier is then used for a set of features.
  To begin with, let us tackle the issue of constructing a learning problem where each feature value is a set. In such cases, we still have the above problem where multiple examples may contain the same value, but a single example has multiple values. A simple solution to this issue is to give each value the same label as that of the example, and proceeding to resolve multiple labels via aggregation as we have discussed previously. 
  Once we have done so, we can construct a new learning problem for $f_j$ and, using FEAGURE, receive a classifier $h_j:D_{j'}\rightarrow Y$.
- Another question we must ask ourselves is how such a classifier can be applied to the set of values in $f_j(v)$. To illustrate, consider the classifier shown in figure \ref{figure5}. We see that the classifier can be applied to multiple values of the feature, giving us a set of labels as the label of our example. As we have already discussed how such a set of labels should be resolved when discussing the labelling of the constructed learning problem, we can apply the same solution here, giving us a single feature value for our example in $S'_i$.
+ Another question we must ask ourselves is how such a classifier can be applied to the set of values in $f_j(v)$. To illustrate, consider the classifier shown in Figure \ref{figure5}. We see that the classifier can be applied to multiple values of the feature, giving us a set of labels as the label of our example. As we have already discussed how such a set of labels should be resolved when discussing the labelling of the constructed learning problem, we can apply the same solution here, giving us a single feature value for our example in $S'_i$.
 
 \begin{figure}[t]
 	\centering
@@ -808,32 +808,19 @@ FEAGURE itself is a supervised knowledge-based feature generation approach. It f
 
 In this paper, we proposed FEAGURE, a supervised feature generation algorithm for using knowledge bases. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge through the use of features constructed in a supervised manner based on the target concept. 
 
-In section \ref{formal}, we 
-%talk about induction vs deduction?
+In section \ref{formal}, we discussed the feature generation setting, how an unsupervised approach can be used for feature generation in a complex relational knowledge base, and explained our approach.
+Additionally, we looked at the domain of text categorization, and considered how our problem can be applied to it through the use of the bag-of-entities approach.
 
-%talk about the algorithm's main ideas through the use of the example?
+We evaluated our approach on the text categorization learning problem, focusing on short texts. Empirical evaluation confirmed that complex knowledge-based feature generation improves classifier accuracy. 
 
-%talk about evaluating our algorithm on text categorization, and finding it good
+The main strength of approach is its ability to use existing induction approaches in a meaningful way on the knowledge base, allowing for the creation of complex features. These features can then be used by any induction algorithm, giving us a powerful, generic approach.
+Even more so than unsupervised feature generation algorithms,  our approach is heavily dependant on linking feature values and entities within the knowledge base in a correct manner. Mistaken links can lead to incorrect features within the constructed learning problems that may cause the classifier learned to create a mistaken hypothesis. 
 
-%talk about potential strengths and weaknesses (can do complex+efficient search/tradeoff by limiting search and generation. use of local problems may cause overfitting)
-%like any algorithm based on this data, dependent on good, strong entity linking of the values to the knowledge base(vs combination approaches which don't)
-
-%anything else?
-
-%We presented a novel new approach to feature generation using relational data, based on constructing and solving new learning problems in the relational domain. 
-%Our feature generation algorithm constructs powerful and complex features, and can identify locally useful features as well as general trends. These features can be used along any traditional machine learning algorithm.
-%While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. Although there is no simple way to generalize this approach to numeric features, we believe there are numerous domains where feature values do have semantic meaning, even excluding text-based domains.
-%While our approach only generates binary features, aggregation based techniques such as those used in SGLR apply here as well. We furthermore note that when solving non-binary classification problems, we can construct categorical features with, at most, the same amount of values as there are labels in the dataset.
-
-%A major source for potential improvement is the subject of matching values to semantic objects. Given the major advances in the field of Wikification \cite{bunescu2006using} in general and Entity Linking \cite{rao2013entity} in particular, these approaches can be used to link the initial text to entities within the semantic data without losing information, which may lead to better results, especially for text classification problems. We have seen in our experiments that primitive entity matching techniques may lead to mistakes which can cascade into poor features.
-
-%Another major potential avenue for improvement is to use the labelling techniques discussed section \ref{algorithm_section} as a way to directly label entities within the semantic graph, which yields a Collective Classification \cite{kajdanowicz2013collective} problem in the semantic domain. Solving this learning problem in turn allows us to label any entity within the semantic net, essentially yielding a labelled semantic net trained on our problem. We can then use this net to label new objects within the original problem context through a combination of entity extraction, usage of the semantic labels and label consolidation techniques.
+While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where feature values are categorical and have semantic meanings, such as drug names, cities and so on. 
 
 \clearpage
 \vskip 0.2in
 \bibliographystyle{theapa}
 \bibliography{document}
-%\bibliographystyle{plainnat}
-%\bibliography{document}
 
 \end{document} 
