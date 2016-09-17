@@ -45,7 +45,7 @@
 \maketitle
 
 \begin{abstract}
-  Induction algorithms have steadily improved over the years, resulting in powerful methods for learning. However, these algorithms are constrained to use knowledge within the supplied feature vectors. In recent years, a large collection of both general and domain-specific knowledge bases have become increasingly available on the web. The natural question is how these knowledge bases can be exploited by existing induction algorithms.
+  Induction algorithms have steadily improved over the years, resulting in powerful methods for learning. However, these algorithms are constrained to using knowledge within the supplied feature vectors. In recent years, a large collection of both general and domain-specific knowledge bases have become increasingly available on the web. The natural question is how these knowledge bases can be exploited by existing induction algorithms.
   In this work we propose a novel supervised algorithm for injecting external knowledge into induction algorithms using feature generation. Given a feature, the algorithm defines a new learning task over its set of values, and uses the knowledge base to then solve the constructed learning task. The resulting classifier is then used to create new features for the original problem.
   We have applied our algorithm to the domain of text categorization, using large semantic knowledge bases such as Freebase. We have shown that generated features significantly improve the performance of existing induction algorithms.
 \end{abstract}
@@ -707,7 +707,19 @@ In both cases, we see that the two level application of Deep-FEAGURE yields slig
 
 Feature generation approaches were found useful for a wide variety of learning problems \cite{markovitch2002feature,ragavan1993complex,utgo1991linear}.
 These feature generation approaches search for new features that better represent the target concept than existing features. To that end, there are two major approaches for feature generation: combinational and using additional knowledge.
-Combinational feature generation techniques aim to locate more descriptive features by combining existing features in various ways. The LDMT algorithm \cite{utgo1991linear}, for example, uses linear combinations of the original features to construct more informative ones. Another major class of combinational feature generation approaches is that of \emph{Deep Learning} \cite{lecun1998gradient,bengio2009learning,plotz2011featurefull,kim2013deepfull}. Deep learning techniques seek to create features through complex, non-linear combinations of existing features, allowing for a wide variety of possible features.
+Combinational feature generation techniques aim to locate more descriptive features by combining existing features in various ways. The LDMT algorithm \cite{utgo1991linear}, for example, uses linear combinations of the original features to construct more informative ones. 
+%As in the previously described algorithms, lmdt (Utgoff & Brodley, 1991) performs feature construction
+%in the course of building a decision-tree classifier. At each created tree node, the algorithm constructs a
+%hyperplane feature by training a thermal linear machine. The construction procedure is aimed at generating
+%concise hyperplanes that are based on relevant data attributes. When lmdt detects that a linear machine is
+%near its final set of boundaries, it eliminates the variable which least contributes to discriminating between
+%elements of the two classes in the current set of instances. Afterwards, it continues training the linear
+%machine. Finally, the most accurate linear machine with the minimum number of variables is chosen.
+%The lfc algorithm performs feature construction throughout the course of building a decision tree classifier. New features are constructed at each created tree node by performing a branch and bound search in
+%feature space. The search is performed by iteratively combining the feature having the highest InfoGain
+%value with an original basic feature that meets a certain filter criterion. The constructed features may be
+%used in the generated tree classifier, which is returned as the final output of the algorithm.
+Another major class of combinational feature generation approaches is that of \emph{Deep Learning} \cite{lecun1998gradient,bengio2009learning,plotz2011featurefull,kim2013deepfull}. Deep learning techniques seek to create features through complex, non-linear combinations of existing features, allowing for a wide variety of possible features.
 
 In contrast to combinational approaches, some feature generation algorithms, including FEAGURE, seek to inject additional knowledge into the existing learning problem. These approaches seek to do so almost exclusively through the use of relational data. 
 Within this wide family of knowledge-based approaches, we can see a distinction between unsupervised, supervised and mixed approaches.
@@ -746,19 +758,29 @@ FEAGURE itself is a supervised knowledge-based feature generation approach. It f
 
 %TODO:talk about entity linking? talk about linked data?
 
+%Several special-purpose algorithms were designed for specific problem domains (Hirsh & Japkowicz, 1994;
+%Sutton & Matheus, 1991). These algorithms construct special-purpose features using domain-specific background knowledge. Such an example is the bootstrapping algorithm (Hirsh & Japkowicz, 1994), designed
+%especially for the domain of molecular biology. The algorithm represents features as nucleotides sequences
+%whose legal syntax structure is determined by existing background knowledge. The algorithm starts with an
+%initial set of feature sequences, produced by human experts, and uses a special set of operators to alter them
+%into new sequence features. Such special-purpose algorithms may be effectively tailored for a given domain,
+%but may be hard to generalize to other domains and problems.
+
 
 \section{Conclusions}
 %finishing up and summary
 
-In this paper, we proposed FEAGURE, a supervised feature generation algorithm for using knowledge bases. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge through the use of features constructed in a supervised manner based on the target concept. 
+In this paper, we presented FEAGURE, a supervised feature generation algorithm using knowledge bases. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge through the use of features constructed in a supervised manner based on the target concept. 
+The algorithm does so through the creation of recursive learning problems based on existing features and the knowledge base, which is then given as input to an induction algorithm. The output of this process is a classifier that is then turned into a feature for the original problem.
 
-In section \ref{formal}, we discussed the feature generation setting, how an unsupervised approach can be used for feature generation in a complex relational knowledge base, and explained our approach.
+In section \ref{formal}, we discussed the feature generation setting, looked at he ways in which an unsupervised approach can be used for feature generation given a complex relational knowledge base, and explained our approach in detail.
 Additionally, we looked at the domain of text categorization, and considered how our problem can be applied to it through the use of the bag-of-entities approach.
 
-We evaluated our approach on the text categorization learning problem, focusing on short texts. Empirical evaluation confirmed that complex knowledge-based feature generation improves classifier accuracy. 
+Empirical evaluation of our approach on the text categorization learning problem confirmed that complex knowledge-based feature generation significantly improves classifier accuracy. Experiments on the TechTC-100 dataset show an improvement over a wide range of problems of varying difficulty, with problems considered difficult yielding a proportionally higher improvement.
 
 The main strength of approach is its ability to use existing induction approaches in a meaningful way on the knowledge base, allowing for the creation of complex features. These features can then be used by any induction algorithm, giving us a powerful, generic approach.
-Even more so than unsupervised feature generation algorithms,  our approach is heavily dependant on linking feature values and entities within the knowledge base in a correct manner. Mistaken links can lead to incorrect features within the constructed learning problems that may cause the classifier learned to create a mistaken hypothesis. 
+
+One limitation of our approach is that even more so than unsupervised feature generation algorithms,  we are dependant on a correct link between feature values and entities within the knowledge base. Mistaken links can lead to incorrect features within the constructed learning problems that may cause the classifier learned to represent a false hypothesis. 
 
 While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where entities can be extracted from feature values, such as drug names, cities and so on. 
 
