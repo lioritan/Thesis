@@ -730,7 +730,7 @@ if __name__=='__main__':
     logfile= open('run_log.txt','w')
     blor= FeatureGenerationFromRDF(msg_objs,msg_entities,  message_labels, relations)
     before=time.time()
-    blor.generate_features(1000, 2, 3, 2, logfile, 1)    
+    blor.generate_features(1000, 3, 3, 3, logfile, 3)    
     #blah3=TreeRecursiveSRLClassifier(msg_objs, message_labels, relations, [], 200, 2, 3, logfile)    
     #blah3.train(1)
     print time.time()-before
@@ -751,6 +751,13 @@ if __name__=='__main__':
 #    blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
     blah3.fit(trn, trn_lbl)
     
+    pred3trn=blah3.predict(trn)
+    print mean(pred3trn!=trn_lbl)
+    pred3tst=blah3.predict(tst)
+    print mean(pred3tst!=test_lbl)
+    
+    trn, trn_lbl, tst, new_features= blor.get_new_table(test, tst_ents, 3)
+    blah3.fit(trn, trn_lbl)
     pred3trn=blah3.predict(trn)
     print mean(pred3trn!=trn_lbl)
     pred3tst=blah3.predict(tst)

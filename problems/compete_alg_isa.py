@@ -72,6 +72,7 @@ def is_relation_key(x, relation):
     return res
 
 def is_set_valued(relation,relname):
+    return relname.startswith('reversed_') or relname=='types' #yago
     return True #new one for ohsumed
     
 
@@ -132,7 +133,7 @@ class CompeteFeatureGenFromISA(object):
                     relation_constants.add(const)            
                         
             for const in relation_constants:
-                query=  lambda x: 1 if is_in_relation(x, self.relations[relation],relation,const) else 0
+                query=  lambda x,r=relation,c=const: 1 if is_in_relation(x, self.relations[r],r,c) else (0 if len(is_in_relation(x, self.relations[r],r))>0 else -1)
                 justify = 'hasword(X),X in relation: %s with %s'%(relation, const)
                 self.new_features.append(query)
                 self.new_justify.append(justify)
@@ -303,12 +304,12 @@ if __name__=='__main__':
     
     print time.time()-before
     trn, trn_lbl, tst, feature_names, floo= blor.get_new_table(test, tst_ents)
-    print len(floo)
-    print floo
+    #print len(floo)
+    print floo[-5:]
     from sklearn.svm import SVC
     bf = SVC(C=1.0)
     bf.fit(trn, trn_lbl)
     print mean(bf.predict(tst)==test_lbl)
-    print tst[:,-1]
+    print trn[:,-5:]
 
     

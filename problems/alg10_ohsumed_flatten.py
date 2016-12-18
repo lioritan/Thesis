@@ -8,21 +8,24 @@ Created on Sun Jan 18 16:46:57 2015
 from random import choice
 from numpy import *
 from matplotlib.mlab import find
-from scipy.stats import mode, chisquare
+from scipy.stats import mode
 
 import time
 
 
 def clean_tree_for_pickle(tree_node):
-#    tree_node.relations=None
+    tree_node.relations=None
+    tree_node.good_recs=None
     if tree_node.chosen_query is None:
         return
     try:
         clean_tree_for_pickle(tree_node.justify)
     except:
         pass
-    #for (tree_root,_,_) in tree_node.cool_things:
-    #    clean_tree_for_pickle(tree_root)
+    for (tree_root,_,_,_,_) in tree_node.cool_things:
+        tree_root.relations=None
+        tree_root.recursive_features=None
+        clean_tree_for_pickle(tree_root.query_tree)
     tree_node.chosen_query=None
     for son in tree_node.sons.values():
         clean_tree_for_pickle(son)
@@ -38,21 +41,6 @@ def entropy(tags): #this is 0 if all same tag, 1 if uniform, lower=better
         count=count_nonzero(tags==val)/length
         ent-=count*log2(count)
     return ent 
- 
-def statistic_test(tagging, feature_values):
-    '''need to compare the two sides I split (how many of each label in each one)'''
-    return 0.0,0.0
-#    if len(frozenset(feature_values))>2:
-#        return 0.0,0.0 #only works for 2 values
-#    locs= find(feature_values==1)
-#    locs2= find(feature_values!=1)
-#    observed= array([len(find(tagging[locs]==1)),len(find(tagging[locs]!=1))])
-#    expected= array([len(find(tagging[locs2]==1)),len(find(tagging[locs2]!=1))])
-#    if any(expected==0):
-#        if any(observed==0):
-#            return inf, 0.0 #this is good for us
-#        return chisquare(expected, observed)
-#    return chisquare(observed, expected) #high stat+low p->good
     
 def info_gain(curr_node_tags, feature_values): #0 if same divide, 1 if perfect
     '''computes simple info-gain for a split. '''
@@ -190,10 +178,6 @@ def ig_from_one_retag(tagging):
         curr_max= max(curr_max, ig_ratio(tagging, tag_pos))
     return curr_max
         
-MAX_SIZE= 1500 #TODO: change this in future(needed to make it run fast)
-IGTHRESH=0.01
-P_THRESH=0.001
-#BAD_RELATION=False
 class TreeRecursiveSRLStep(object):
     def __init__(self, objects, entities, tagging, relations, steps_to_curr, n, MAX_DEPTH, SPLIT_THRESH, d, logfile, stopthresh, cond=False):
         self.relations= relations
@@ -281,7 +265,6 @@ class TreeRecursiveSRLStep(object):
         self.bttoo=worthy_relations
         tree_ig=0.0
         best_ig= self.ig
-        before_all= time.time()
         for relation_used_for_recursive,rel_n in worthy_relations:  
             
             feature_vals=[is_relation_key(ents, self.relations[relation_used_for_recursive]) for ents in self.entities]
@@ -298,25 +281,20 @@ class TreeRecursiveSRLStep(object):
                 blop=len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging)
             #self.logfile.write('trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
             #(blop)/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
-            before=time.time()
             classifier_chosen.train_vld_local()
-            #self.logfile.write('tree tried! Time: '+str(time.time()-before)+'\n')
             
             #TODO: FIXME!!!!!! predict shouldn't work on x but rather do something smart...
             clf_labels=array([classifier_chosen.predict(x) for x in self.entities])
             tree_ig=ig_ratio(self.tagging, clf_labels)
             tree_ig_penalty=0.5 #TODO? something to do with tree size and depth?
                     
-            self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
-            if tree_ig >= avg_word_ig: #any better than non-rec
+            self.cool_things.append((classifier_chosen,tree_ig,self.ig, inds, blop))
+            if tree_ig >= tree_ig_penalty*max_ig: #any better than non-rec
                 self.good_recs.append(lambda x,c=classifier_chosen: c.predict(x))
                 self.good_recs_justify.append(str(classifier_chosen.transforms))
                 self.good_recs_trees.append((relation_used_for_recursive,classifier_chosen))
             
-            if tree_ig >= avg_word_ig: #if tree is better, it's the new classifier                
-                test_statistic, p_val= statistic_test(self.tagging, clf_labels) #high stat+low p->good
-                if p_val > P_THRESH: #1% confidence level
-                    continue
+            if tree_ig >= tree_ig_penalty*max_ig: #if tree is better, it's the new classifier                
                 self.is_rec= True
                 #self.logfile.write('chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
                 self.chosen_query= lambda x, b=classifier_chosen: b.predict(x)
@@ -352,6 +330,7 @@ class TreeRecursiveSRLStep(object):
                 for const in obj:
                     relation_constants.add(const)            
             sz=len(relation_constants)
+            MAX_SIZE=1500
             if sz>=MAX_SIZE:
                 continue #For now, skip. 
             relation_constants.add(None)
@@ -406,7 +385,6 @@ class TreeRecursiveSRLStep(object):
         self.bttoo=worthy_relations
     
         tree_ig=0.0
-        before_all= time.time()
         for relation_used_for_recursive,new_n in worthy_relations:  
             feature_vals=[is_in_relation(obj, self.relations[relation_used_for_recursive],relation_used_for_recursive) for obj in self.objects]#apply_transforms_other(self.relations, [relation_used_for_recursive], self.objects) #
             new_objs, new_tagging= relabel(feature_vals, self.tagging) #flatten+relabel
@@ -422,7 +400,6 @@ class TreeRecursiveSRLStep(object):
                 blop=len(find(new_tagging!=mode(new_tagging)[0]))*1.0/len(new_tagging)
             #self.logfile.write(' '*len(self.transforms+['a'])+'trying out tree with transform:'+str(self.transforms+[relation_used_for_recursive])+'. Number of N/A:'+str(len([p for p in feature_vals if len(p)==0]))+'. Ratio of new/old misclass ratios: '+str( 
             #(blop)/rep_zero(len(find(self.tagging[inds]!=self.chosen_tag))*1.0/len(inds)) ) +'\n')
-            before= time.time()
             classifier_chosen.train_vld_local()
             #self.logfile.write(' '*len(self.transforms)+'tree tried! Time: '+str(time.time()-before)+'\n')
             
@@ -431,7 +408,7 @@ class TreeRecursiveSRLStep(object):
             tree_ig=ig_ratio(self.tagging, clf_tagging)
             tree_ig_penalty=0.5 #TODO? something to do with tree size and depth?
             
-            self.cool_things.append((classifier_chosen.transforms,tree_ig,self.ig))
+            self.cool_things.append((classifier_chosen,tree_ig,self.ig, inds, blop))
             if tree_ig/tree_ig_penalty >= self.ig: #if tree is better, it's the new classifier
                 self.is_rec= True
                 #self.logfile.write(' '*len(self.transforms)+'chose tree with: '+str(self.transforms+[relation_used_for_recursive])+'. ig is '+str(tree_ig)+'\n')
@@ -576,8 +553,6 @@ class FeatureGenerationFromRDF(object):
         tree= TreeRecursiveSRLClassifier(self.objects, self.entities, self.tagging, self.relations, [], n, max_depth, split_thresh, d, logfile)
         tree.train(STOPTHRESH) #minimum number of objects!
         
-        #self.new_features= list(tree.recursive_features)
-        #self.new_justify= list(tree.feature_justify)
         self.feature_trees= list(tree.feature_trees)
         self.blah=tree
         self.new_features = []
@@ -588,8 +563,7 @@ class FeatureGenerationFromRDF(object):
                 if node.chosen_query is not None:
                     self.new_features.append(node.chosen_query)
                     self.new_justify.append(node.justify)
-                
-        
+                        
     
     def get_new_table(self, test, test_ents):
         all_words=set()
@@ -750,8 +724,8 @@ if __name__=='__main__':
 #    feature_selector= SelectKBest(chi2, k=100)
 #    filtered_trn= feature_selector.fit_transform(trn, trn_lbl)
 #    filtered_tst= feature_selector.transform(tst)
-    blah3= SVC(kernel='linear', C=inf)
-#    blah3= KNeighborsClassifier(n_neighbors=5)
+#    blah3= SVC(kernel='linear', C=inf)
+    blah3= KNeighborsClassifier(n_neighbors=5)
 #    blah3= DecisionTreeClassifier(criterion='entropy', min_samples_split=2)
     blah3.fit(trn, trn_lbl)
     
@@ -764,5 +738,4 @@ if __name__=='__main__':
     print blor.blah.d
     print blor.blah.query_tree.d
     print 3>=blor.blah.query_tree.sons[0].d
-    print 3>=blor.blah.query_tree.sons[0].sons[0].d
     

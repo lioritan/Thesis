@@ -9,7 +9,7 @@ Created on Mon Mar 16 12:34:42 2015
 from numpy import *
 from matplotlib.mlab import find
 import cPickle
-import alg10_ohsumed_ver as alg
+import alg10_ohsumed_flatten as alg
 from sklearn.cross_validation import StratifiedKFold
 
 from alg10_ohsumed_ver import ig_ratio
@@ -39,38 +39,27 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
     blor.generate_features(400*(d**2), d, stopthresh, 20, logfile, stopthresh)  
     trn, trn_lbl, tst, feature_names,feature_trees= blor.get_new_table(tst, tst_ents)
-    for (rel, tree) in feature_trees:
-        alg.clean_tree_for_pickle(tree.query_tree)
-    with open('trn_and_tst_%d_%d.pkl'%(d, f), 'wb') as fptr:
-        orig_tree = blor.blah
-        #alg.clean_tree_for_pickle(blor.blah.query_tree)
-        if d==0:
-            useful_info = ()
-        else:
-            useful_info = (orig_tree.query_tree.bttoo, orig_tree.query_tree.cool_things)
-        cPickle.dump((trn, trn_lbl, tst, tst_lbl, feature_names,feature_trees, useful_info), fptr, -1)
-        #TODO: feature trees also. can analyze them!
 
     #TODO: selection, run all 5...
     
-    from sklearn.svm import SVC
+    from sklearn.naive_bayes import BernoulliNB, MultinomialNB
     from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.ensemble import AdaBoostClassifier
     blah1=zeros((19,4)) #accuracy,precision,recall,F1
     blah2=zeros((19,4))
     blah3=zeros((19,4))
     for i,fraction in enumerate(fractions):
         new_trn, new_tst= feature_select_ig(trn, trn_lbl, tst, fraction)
         
-        clf= SVC(kernel='linear', C=10)
+        clf= MultinomialNB()
         clf.fit(new_trn, trn_lbl)    
         blah1[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
         
-        clf= KNeighborsClassifier(n_neighbors=3)
+        clf= BernoulliNB()
         clf.fit(new_trn, trn_lbl)    
         blah2[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
         
-        clf=DecisionTreeClassifier(criterion='entropy', min_samples_split=21, random_state=0)
+        clf=AdaBoostClassifier(n_estimators=100)
         clf.fit(new_trn, trn_lbl)    
         blah3[i,:]= calc_stats(clf.predict(new_tst),tst_lbl)
                
@@ -103,8 +92,8 @@ if __name__=='__main__':
     with open('folds_2cats.pkl','rb') as fptr:
         kfold=cPickle.load(fptr)
     for f,(trn_idxs, tst_idxs) in enumerate(kfold):
-        if f!=0 and f!=1:
-            continue
+        #if f!=0 and f!=1:
+        #    continue
         trn=articles[trn_idxs]
         trn_lbl=data_labels[trn_idxs]
         trn_ents=ents[trn_idxs]

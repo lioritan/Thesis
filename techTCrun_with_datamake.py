@@ -3,8 +3,8 @@ from numpy import *
 #import bruteforce_propo as compete
 #import alg4geq as bullcrap
 #import alg4geq2 as bullcrap2
-import alg6 as godfish
-import yago
+#import alg6 as godfish
+#import yago
 #from nltk.tag.stanford import NERTagger
 #from nltk.corpus import stopwords
 #from nltk.stem.porter import PorterStemmer
@@ -13,7 +13,7 @@ import string
 #import nltk
 import os
 import time
-
+import cPickle
 
 def process_techTC_doc(fptr):
     '''turn to documents.
@@ -84,22 +84,6 @@ def clean_tokens(tokenized_text, stemmer):
         tokens.append(stemmer.stem(lowercased).encode())#and also stemming!2 hit combo!
 
     return tokens
-
-def calc_bep(predictions, labels):
-    '''precision-recall break even point is the value for which 
-    precision (predict true and got right/predicted true) and
-    recall (predict true and got right/ all true) are the same.
-    between 0 and 1, higher is better.
-    
-    This should be calculated per category and averaged.
-    Relevant ML because gives you a point to tune parameters with respect to?
-    also if clssfiy by threshold-now you know which one to choose
-    
-    
-    in my case probably want accuracy, possibly also precsion, recall, f-measure
-    '''
-    pass
-
 if __name__=='__main__':    
     
     MAX_SPLIT_FACTOR= 1000 #any reverse relation with over 1:1000 multiplicity is bad...
@@ -157,11 +141,11 @@ if __name__=='__main__':
 #    relationss['type']=type_rel
 #    fptr.close()
     
-    import cPickle as pickle
-    fptr=open('yago_relationss_full.pkl', 'rb')
-    relationss= pickle.load(fptr)
-    fptr.close()
-    print 'yago loaded'
+#    import cPickle as pickle
+#    fptr=open('yago_relationss_full.pkl', 'rb')
+#    relationss= pickle.load(fptr)
+#    fptr.close()
+#    print 'yago loaded'
 
 #    for path,dirnames, filenames in os.walk('./techtc_processed/'):
 #        for filename in filenames:
@@ -188,49 +172,49 @@ if __name__=='__main__':
 #    #stemmer= PorterStemmer()
 #    stemmer=EnglishStemmer()
 #    #for all 100 datasets
-#    count=0
-#    for path,dirnames,filenames in os.walk('./techtc100/'):            
-#        if len(filenames)==0:
-#            print 'first_step'
-#            continue
-#        print filenames
-#        neg_file=open(path+'/'+filenames[0], 'r')#first file always the negative
-#        pos_file=open(path+'/'+filenames[1], 'r')#second file always the positive
-#        pos1=process_techTC_doc(pos_file)
-#        neg1=process_techTC_doc(neg_file)
-#        pos_file.close()
-#        neg_file.close()
-#        trn= []
-#        trn_lbl = []
-#        tst= []
-#        tst_lbl= []
-#        is_trn = True
-#        for i,doc_set in enumerate([pos1, neg1]):
-#            for doc in doc_set:
-#                if len(doc)==0:
-#                    continue
-#                new_doc=clean_tokens(tokenize_and_find_named_entities(clean_punctuation(doc), stanford_NER), stemmer)
-#                if is_trn is True:
-#                    trn.append(new_doc)
-#                    trn_lbl.append(1 if i==0 else 0)
-#                else:
-#                    tst.append(new_doc)
-#                    tst_lbl.append(1 if i==0 else 0)
-#                is_trn= not is_trn
-#        trn_lbl= array(trn_lbl, dtype=int)
-#        tst_lbl= array(tst_lbl, dtype=int)
-#        fptr=open('./techtc_processed/techtcdata%d.pkl'%(count),'w')
-#        pickle.dump(((trn,trn_lbl),(tst,tst_lbl)), fptr)
-#        fptr.close()
-#        count+=1
+    count=0
+    for path,dirnames,filenames in os.walk('./techtc100/'):            
+        if len(filenames)==0:
+            print 'first_step'
+            continue
+        print filenames
+        neg_file=open(path+'/'+filenames[0], 'r')#first file always the negative
+        pos_file=open(path+'/'+filenames[1], 'r')#second file always the positive
+        pos1=process_techTC_doc(pos_file)
+        neg1=process_techTC_doc(neg_file)
+        pos_file.close()
+        neg_file.close()
+        trn= []
+        trn_lbl = []
+        tst= []
+        tst_lbl= []
+        is_trn = True
+        for i,doc_set in enumerate([pos1, neg1]):
+            for doc in doc_set:
+                if len(doc)==0:
+                    continue
+                new_doc=clean_tokens(tokenize_and_find_named_entities(clean_punctuation(doc), stanford_NER), stemmer)
+                if is_trn is True:
+                    trn.append(new_doc)
+                    trn_lbl.append(1 if i==0 else 0)
+                else:
+                    tst.append(new_doc)
+                    tst_lbl.append(1 if i==0 else 0)
+                is_trn= not is_trn
+        trn_lbl= array(trn_lbl, dtype=int)
+        tst_lbl= array(tst_lbl, dtype=int)
+        fptr=open('./techtc_processed/techtc_raw%d.pkl'%(count),'wb')
+        pickle.dump(((trn,trn_lbl),(tst,tst_lbl)), fptr, -1)
+        fptr.close()
+        count+=1
             
-    datasets=[]
-    for path,dirnames, filenames in os.walk('./techtc_processed_fixed/'):
-        filenames.sort()
-        for filename in filenames:
-            fptr=open(path+'/'+filename, 'rb')
-            datasets.append(pickle.load(fptr))
-            fptr.close()
+#    datasets=[]
+#    for path,dirnames, filenames in os.walk('./techtc_processed_fixed/'):
+#        filenames.sort()
+#        for filename in filenames:
+#            fptr=open(path+'/'+filename, 'rb')
+#            datasets.append(pickle.load(fptr))
+#            fptr.close()
     
 #    datasets=[]
 #    res_3=[]

@@ -35,7 +35,7 @@ def calc_stats(predicted, actual):
     means_of_things= [x/len(frozenset(actual)) for x in sums_of_things]
     return array([mean(predicted==actual),means_of_things[0],means_of_things[1],means_of_things[2]])
 
-def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,logfile, fractions, f, d=0, stopthresh=10):
+def solve_multiclass(trn, trn_ents, trn_lbl, test, tst_ents,tst_lbl, relations,logfile, fractions, f, d=0, stopthresh=10):
     blor= alg.FeatureGenerationFromRDF(trn, trn_ents, trn_lbl, relations)
     blor.generate_features(400*(d**2), d, stopthresh, 20, logfile, stopthresh)  
 
@@ -48,7 +48,9 @@ def solve_multiclass(trn, trn_ents, trn_lbl, tst, tst_ents,tst_lbl, relations,lo
     blue=zeros(19)
     for depth in range(1, 20):
         idx= depth-1
-        trn, trn_lbl, tst, feature_num= blor.get_new_table(tst, tst_ents, depth)
+        import pdb
+        pdb.set_trace()
+        trn, trn_lbl, tst, feature_num= blor.get_new_table(test, tst_ents, depth)
         blue[idx]=feature_num
 
         for i,fraction in enumerate(fractions):
@@ -81,6 +83,7 @@ if __name__=='__main__':
         ents+=[x for x in entities[idxs]]
         data_labels+=[x for x in labels[idxs]]
     data,ents, data_labels= array(data, dtype=object), array(ents, dtype=object), array(data_labels)
+    print shape(data)
     svm_accs=zeros((10,3,19,19, 4)) 
     knn_accs=zeros((10,3,19,19, 4)) 
     feature_nums=zeros((10,3, 19)) 
