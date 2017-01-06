@@ -477,7 +477,7 @@ We tested the following parameters:
 \begin{enumerate}
 	\item Recursion level: We ran our feature generation algorithm for both a depth of one, creating a recursive learning problem for the original problem, and a depth of two, creating recursive learning problems within generated problems. This parameter allowed us to test the effect of both first and second order application of our feature generation approach.
 	%\item Tree depth: As discussed in section \ref{tree_usage}, we use Deep-FEAGURE within a decision tree. In order to avoid over-fitting, we limit both tree depth and node size, proportionately to the size of the training set. We experimented with the parameter of maximal tree depth to test its effect on the accuracy of the resulting features.
-	%\item FEAGURE internal induction algorithm: In section \ref{algorithm_section}, we define FEAGURE without specifying the internal induction algorithm used to generate features within the new learning problem. We ran most of our experiments using a decision tree induction algorithm for that purpose, flattening the result to yield additional features. We also experimented with the use of other induction algorithms, namely SVM and K-NN.
+	\item FEAGURE internal induction algorithm: In section \ref{algorithm_section}, we define FEAGURE without specifying the internal induction algorithm used to generate features within the new learning problem. We ran most of our experiments using a decision tree induction algorithm for that purpose, flattening the result to yield additional features. We also experimented with the use of other induction algorithms, namely SVM and K-NN.
 	%We note that this choice is orthogonal to that of the induction algorithm used to evaluate the generated features.
 	%\item Feature filtering criterion: In section \ref{algorithm_section}, we use a comparison function to decide whether a generated feature should be added to the feature map. We experimented with both a comparison based on maximal Information Gain (IG) and one based on average IG, both taking into account all existing features in $F$.
 \end{enumerate}
@@ -581,34 +581,43 @@ Of the 25 datasets, only a single dataset shows a degrade in accuracy. These res
 	\label{fig:25best}
 \end{figure}
 
-%\subsection{Using Non-Tree classifiers with FEAGURE}
+\subsection{Using Non-Tree classifiers with FEAGURE}
 
-%As we have discussed in section \ref{algorithm_section}, algorithm \ref{code-creating-prob} creates a generic learning problem as part of its execution. In this section, we will test the effects of using various induction algorithms on these recursive problems. We have chosen to try both K-NN and SVM, with the following parameters: For K-NN, we used $K=3$. For SVM we used $C=10$, with both Linear and a Radial Basis Function (RBF) kernels.
+As we have discussed in section \ref{algorithm_section}, algorithm \ref{code-creating-prob} creates a generic learning problem as part of its execution. In this section, we will test the effects of using various induction algorithms on these recursive problems. We have chosen to try both K-NN and SVM, with the following parameters: For K-NN, we used $K=3$. For SVM we used $C=10$, with both Linear and a Radial Basis Function (RBF) kernels.
 
 %Table \ref{table:features-nontree} shows the average number of generated features. We see that these approaches generate far fewer features on average. This should come as no surprise, as we cannot flatten constructed recursive trees in order to generate additional features, nor do we run the learning algorithms on smaller problems.
-%Table \ref{table:acc-nontree} shows the accuracies achieved by using these induction algorithms. We see that while in general, the results are slightly poorer than those achieved by our approach, they are roughly comparable, and in some cases perform noticeably better. One particular such case is that of K-NN for the OHSUMED dataset, which was previously the only case where no improvement in accuracy was achieved. Using an SVM classifier to generate features rather than tree-based features, we see an improvement in accuracy for this case. This may be due to the nature of RBF-based classifiers, which look at distance between examples, similarly to K-NN.
+Table \ref{table:acc-nontree} shows the accuracies achieved by using these induction algorithms. We see that while in general, with the exception of K-NN, the results are slightly poorer than those achieved by our approach as well as the Shallow approach, many of these results do show an improvement over the baseline.
+Of particular note are the results for K-NN classifiers for both TechTC-100 and OHSUMED. In both cases, K-NN classifiers showed a marked improvement over the baseline approach. This can be attributed to the fact that unlike Shallow and our results when using decision trees as inner classifiers, the number of generated features for these approaches is much smaller, thus allowing each feature to have a greater effect.
+The most noteworthy of the results shown in table \ref{table:acc-nontree} are those referring to K-NN for the OHSUMED dataset. Here we see, for the first time, a significant improvement over the baseline approach.
+
+%, they are roughly comparable, and in some cases perform noticeably better. One particular such case is that of K-NN for the OHSUMED dataset, which was previously the only case where no improvement in accuracy was achieved. Using an SVM classifier to generate features rather than tree-based features, we see an improvement in accuracy for this case. This may be due to the nature of RBF-based classifiers, which look at distance between examples, similarly to K-NN.
 %Looking at the number of features generated, we see that on average, these approaches generate far fewer features. This should come as no surprise, as the tree-based classifier uses flattening to create additional features.
 
-%\begin{table}[]
-%	\centering
-%	\caption{Average accuracy over all datasets. The columns specify the induction algorithm used in FEAGURE (Decision Tree, SVM with linear or RBF kernel, K-NN). The rows specify the induction algorithm used on the generated features for evaluation. TechTC-100 has an additional entry for 5\% feature selection, meaning only 5\% of all features are used.}
-%	\label{table:acc-nontree}
-%	\centering
-%	\begin{tabular}{|l | l || l | l| l|l|}
-%		\hline
-%		Dataset & Classifier  & Tree-FEAGURE & Linear SVM   & RBF SVM & 3-NN    \\ \hline
-%		\multirow{2}{*}{OHSUMED} & KNN  & 0.761 & 0.756   & \textbf{0.783} & 0.744 \\ \cline{2-6}
-%		& SVM   & \textbf{0.814}  & 0.795  & 0.796 & 0.788 \\ \specialrule{.15em}{.05em}{.01em} % \hline
+\begin{table}[]
+	\centering
+	\caption{Average accuracy over all datasets. The columns specify the induction algorithm used in FEAGURE (SVM with linear or RBF kernel, K-NN). The rows specify the induction algorithm used on the generated features for evaluation. Entries marked with * show a p-value of under $0.001$.}
+	\label{table:acc-nontree}
+	\centering
+	\begin{tabular}{|l | l || l || l | l| l|l|}
+		\hline
+		Dataset & Classifier  & Baseline & Shallow & Linear SVM   & RBF SVM & 5-NN    \\ \hline
 		
-%		\multirow{2}{*}{TechTC-100} & KNN  & \textbf{0.533} & 0.531 ($p<0.05$) & 0.527 &  0.528 \\ \cline{2-6}
-%		& SVM    & \textbf{0.712} &  0.705 ($p<0.005$)  & 0.698 ($p<0.05$) & 0.697 \\ \specialrule{.15em}{.05em}{.01em}
+		\multirow{3}{*}{OHSUMED} & KNN  & 0.777 & 0.756 & 0.76 & \textbf{0.795 ($p<0.05$)}   & 0.771 \\ \cline{2-7}
+		& SVM  & 0.797 & \textbf{0.804} & 0.798   & 0.796    & 0.788 \\ \cline{2-7}
 		
-%		\multirow{2}{*}{TechTC-100 (5\%)} & KNN  & \textbf{0.629 ($p<0.001$)}  & 0.625 ($p<0.05$) & 0.61 & 0.617 \\ \cline{2-6}
+		& CART  & 0.806 & \textbf{0.814} & 0.775   & 0.791    & 0.787 \\
 		
-%		& SVM   & \textbf{0.707 ($p<.001$)} & 0.697 & 0.7 ($p<0.05$) & 0.699 ($p<0.05$)\\ \hline
+		\specialrule{.15em}{.05em}{.01em} % \hline
 		
-%	\end{tabular}
-%\end{table}
+		\multirow{3}{*}{TechTC-100} & KNN & 0.531 & 0.702* & \textbf{0.722*} & 0.689*   & 0.705*\\ \cline{2-7}
+		& SVM   & 0.739 & \textbf{0.782*} & 0.781*  & 0.774*   & 0.774* \\ \cline{2-7}
+		
+		& CART & 0.81 & \textbf{0.815} & 0.778   & 0.81    & 0.79 \\
+		
+		\specialrule{.15em}{.05em}{.01em} % \hline
+		
+	\end{tabular}
+\end{table}
 
 %\subsection{The Effects of Feature Filtering on Accuracy}
 %\label{result-maximal-average}
@@ -704,6 +713,57 @@ Of the 25 datasets, only a single dataset shows a degrade in accuracy. These res
 %For the two-level application of FEAGURE, we see a higher accuracy, followed by a slow, constant decline. This decline may be due to the same masking effect, or it can be a similar trend to that of FEAGURE.
 
 %In both cases, we see that the two level application of Deep-FEAGURE yields slightly better accuracy on average.
+
+\subsection{Quantitative Analysis}
+
+In order to better understand the results of FEAGURE, we must first try to better understand its output and how it behaves from a variety of angles.
+In this section, we examine the following factors:
+\begin{itemize}
+	\item Number of features tried vs number of features considered
+	\item Number of features generated per depth
+	\item Information Gain of new features compared to old ones
+	\item Size of new induction problems relative to existing ones
+	\item Local IG and support of the features
+\end{itemize}
+
+Looking at the average number of features considered by FEAGURE at every step, we see that for TechTC-100, out of an average of 36 features looked at, 7 are chosen by FEAGURE. The rest have either a too low Information gain (compared to other features in that node) or separates too few objects.
+We note that there are 46 available relations, and thus the number of features we can expect to look at is at most 46 (if a relation does not apply to a sub=problem, it is not counted in this average). %lvl2: it almost always makes a feature 42/42, and lvl2 features we have
+
+When taking depth into account, we see a rapidly decreasing number of generated features as depth increases, as shown in Figure \ref{fig:features_per_depth}.
+This is unsurprising, as we know that increased depth will cause generated problems to separate fewer objects, making them less reliable overall. Additionally, we see the number of available features decrease in a roughly linear manner with depth. This is again unsurprising, as features deeper in the tree cannot easily make use of the same relation multiple times due to orthogonality.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\linewidth]{features_per_depth}
+	\caption{Average number of features tried vs average number of features generated per depth.}
+	\label{fig:features_per_depth}
+\end{figure}
+
+An interesting measure with regards to the newly constructed features is that of relative information gain, compared to existing features. Figure \ref{fig:ig_errorbars} shows the error bar graph for information gain compared to the testing set. We see that compared to word-based features, the features generated by FEAGURE are better on average, with a higher standard deviation, indicating more variance in terms of information gain.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\linewidth]{ig_errorbars}
+	\caption{Error-bar graph for information gain. On the right is the error bar for non-recursive features. On the left is the error bar for FEAGURE features.
+		The error bar shows mean and one standard deviation.}
+	\label{fig:ig_errorbars}
+\end{figure}
+
+Let us consider the relative size of recursive problems, compared to the induction existing problems. Figure \ref{fig:problem_ratio} shows the size ratio of newly created problems compared to existing problems. We note an interesting effect here:
+As depth in the search tree increases, the size ratio increases as well. This is somewhat surprising, as an increase in depth infers a smaller induction problem, and thus we would expect a similar size ratio to be maintained. Even more unexpected, however, is the fact that average recursive problem size increases with problem depth, rather than simply remaining roughly the same due to the process of its creation. One possible explanation to this increase is that as we search smaller problems deeper down the search process, the relations that result in a smaller or roughly similar sized recursive induction problem have already been used, and thus relations that cause a larger size ratio are needed.
+
+We also note that these recursive problems do not maintain the same labelling balance as the original learning problems, showing a general increase in label imbalance. As a result of this, we may wish to make use of various known strategies on reducing the impact of label imbalance in induction problems when using FEAGURE.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\linewidth]{problem_ratio}
+	\caption{Mean size ratio of newly created recursive problem compared to the original learning problem size.}
+	\label{fig:problem_ratio}
+\end{figure}
+
+Lastly, we look at the local IG and support of the newly created features.
+%TODO
+
 
 \subsection{Qualitative Analysis}
 
