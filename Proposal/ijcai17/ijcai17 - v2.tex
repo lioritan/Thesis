@@ -697,7 +697,7 @@ These results show a much more pronounced accuracy increase, and illustrate that
 
 \subsection{Effect of recursive problem classifier on \emph{FEAGURE}}
 
-As we have discussed in section \ref{algorithm_section}, \emph{FEAGURE} creates a generic learning problem as part of its execution. In this section, we will test the effects of using various induction algorithms on these recursive problems. We have chosen to try both K-NN and SVM, with the following parameters: For K-NN, we used $K=3$. For SVM we used $C=10$, with both Linear and a Radial Basis Function (RBF) kernels.
+As we have discussed in section \ref{algorithm_section}, \emph{FEAGURE} creates a generic learning problem as part of its execution. In this section, we will test the effects of using various induction algorithms on these recursive problems. We have chosen to try both K-NN and SVM.%, with the following parameters: For K-NN, we used $K=3$. For SVM we used $C=10$, with both Linear and a Radial Basis Function (RBF) kernels.
 
 We note that this choice is orthogonal to that of the induction algorithm used to evaluate the generated features.
 
@@ -710,21 +710,21 @@ The most noteworthy of the results shown in table \ref{table:acc-nontree} are th
 	\caption{Average accuracy over all datasets. The columns specify the induction algorithm used in \emph{FEAGURE} (SVM with linear or RBF kernel, K-NN). The rows specify the induction algorithm used on the generated features for evaluation. Entries marked with * show a statistically significant p-value over the baseline accuracy}
 	\label{table:acc-nontree}
 	\centering
-	\begin{tabular}{|l | l || l || l |l | l| l|l|}
+	\begin{tabular}{|l | l || l || l | l| l|l|}
 		\hline
-		Dataset & Classifier  & Baseline & Expander-FG & Tree & Linear SVM   & RBF SVM & 5-NN    \\ \hline
+		Dataset & Classifier  & Baseline & Expander-FG & Tree  & RBF SVM & 5-NN    \\ \hline
 		
-	\multirow{3}{*}{OHSUMED} & KNN  & 0.777 & 0.756 & 0.769 & 0.76 & \textbf{0.795*}   & 0.771 \\ \cline{2-8}
-		& SVM  & 0.797 & 0.804 & \textbf{0.816*} & 0.798   & 0.796    & 0.788 \\ \cline{2-8}
+	\multirow{3}{*}{OHSUMED} & KNN  & 0.777 & 0.756 & 0.769 & \textbf{0.795*}   & 0.771 \\ \cline{2-7}
+		& SVM  & 0.797 & 0.804 & \textbf{0.816*}   & 0.796    & 0.788 \\ \cline{2-7}
 		
-		& CART  & 0.806 & \textbf{0.814} & 0.809 & 0.775   & 0.791    & 0.787 \\
+		& CART  & 0.806 & \textbf{0.814} & 0.809   & 0.791    & 0.787 \\
 		
 		\specialrule{.15em}{.05em}{.01em} % \hline
 		
-		\multirow{3}{*}{TechTC-100} & KNN & 0.531 & 0.702* & \textbf{0.772*} & 0.722* & 0.689*   & 0.705*\\ \cline{2-8}
-		& SVM   & 0.739 & 0.782* & \textbf{0.796*} & 0.781*  & 0.774*   & 0.774* \\ \cline{2-8}
+		\multirow{3}{*}{TechTC-100} & KNN & 0.531 & 0.702* & \textbf{0.772*} & 0.689*   & 0.705*\\ \cline{2-7}
+		& SVM   & 0.739 & 0.782* & \textbf{0.796*}  & 0.774*   & 0.774* \\ \cline{2-7}
 		
-		& CART & 0.81 & \textbf{0.815} & 0.814 & 0.778   & 0.81    & 0.79 \\
+		& CART & 0.81 & \textbf{0.815} & 0.814   & 0.81    & 0.79 \\
 		
 		\specialrule{.15em}{.05em}{.01em} % \hline
 		
@@ -742,10 +742,11 @@ The most noteworthy of the results shown in table \ref{table:acc-nontree} are th
 
 Feature generation approaches were found useful for a wide variety of learning problems \citep{markovitch2002feature,ragavan1993complex}. %,utgo1991linear}.
 These feature generation approaches search for new features that better represent the target concept than existing features. To that end, there are three major approaches for feature generation: tailored approaches, combinational techniques and methods utilizing external knowledge.
-Tailored approaches \citep{hirsh1994bootstrapping} are designed for specific problem domains and rely on domain-specific background knowledge for feature construction. 
+Tailored approaches \citep{hirsh1994bootstrapping} are designed for specific problem domains and rely on domain-specific background knowledge. %for feature construction. 
 %One such example is the bootstrapping algorithm \cite{hirsh1994bootstrapping}, which was designed for the domain of molecular biology. The algorithm represents features as nucleotides sequences
 %whose structure is determined by existing background knowledge. The algorithm uses an initial set of feature sequences, produced by human experts, and uses a domain-specific set of operators to alter them into new sequence features. 
-Such special-purpose algorithms may be effectively tailored for a given domain, but have proven difficult to generalize to other domains and problems
+Such special-purpose algorithms% may be effectively tailored for a given domain, but 
+ have proven difficult to generalize to other domains and problems
 
 Combinational feature generation techniques aim to locate more descriptive features by combining existing features in various ways, without regards to the specific problem domain. %The LDMT algorithm \cite{utgo1991linear}, for example, performs feature construction in the course of building a decision-tree classifier. At each created tree node, the algorithm constructs a hyperplane feature through linear combinations of existing features in a way likely to produce concise, relevant hyperplanes. The FICUS algorithm \cite{markovitch2002feature} describes a general architecture for all combinational feature generation techniques, based on an a feature space specification: a grammar describing the problem domain.
 
@@ -768,8 +769,7 @@ In contrast to combinational approaches, some feature generation algorithms, inc
 	%\item
 	
 	 Propositionalization \citep{kramer2000bottom} approaches are a class of feature generation algorithms that rely on relational data to serve as external knowledge. They operate by using a combination of operators in order to create first-order logic predicates connecting existing data and relational knowledge. 
-	
-	\cite{cheng2011automatedfull} devised a generic propositionalization framework  using linked data via relation-based queries.% and offer an insight into using taxonomy-based features by creating features that list the taxonomic class relationships of a given entity.
+	\cite{cheng2011automatedfull} devised a generic propositionalization framework  using linked data via relation-based queries. % and offer an insight into using taxonomy-based features by creating features that list the taxonomic class relationships of a given entity.
 	The \emph{Expander-FG} algorithm described in section \ref{shallow_section} is another example of propositionalization algorithms.
 	%\item
 	
@@ -796,7 +796,7 @@ While upgrade approaches bear some similarities to our approach, there are sever
 %Kernel-based knowledge injection techniques aim to make use of powerful machine learning algorithms such as SVM and Deep-learning techniques by decoupling the knowledge base from the induction algorithm. This is done through the use of a kernel function that acts as a similarity function between examples in the problem domain. An example of this approach can be seen in the work of \cite{losch2012graph}, which attempts to learn graph kernels within the relational domain. This creates strong kernel functions that look at the neighbourhood of an entity in search of similarities between entities. This approach bears some similarity to our own in that it can locate complex relationships, but they fundamentally differs in their approach. Kernel methods attempt to create a filter through which entity similarity can be measured. In our approach, we attempt to locate the target concept through the use of different domains. This distinction is especially relevant to classification tasks, where many possible domains can apply for each example, and similarity may be difficult to find when considering the entire example set.
 %TODO: mby
 
-\emph{FEAGURE} itself is a supervised knowledge-based feature generation approach. It focuses on creation of recursive induction problems, in a manner reminiscent of view learning. This construction allows for a complex exploration of features, which can then be combined in general ways using existing induction methods, in a manner resembling combinational feature generation approaches.
+%\emph{FEAGURE} itself is a supervised knowledge-based feature generation approach. It focuses on creation of recursive induction problems, in a manner reminiscent of view learning. This construction allows for a complex exploration of features, which can then be combined in general ways using existing induction methods, in a manner resembling combinational feature generation approaches.
 %The features of recursive learning problems created by \emph{FEAGURE} during the feature generation process are similar to those constructed by ILP, relying on a technique that resembles refinement operators. 
 
 %\subsection{Knowledge bases and entity linking}
@@ -821,19 +821,19 @@ While upgrade approaches bear some similarities to our approach, there are sever
 \section{Conclusions}
 %finishing up and summary
 
-In this paper, we presented \emph{FEAGURE}, a supervised, knowledge-based feature generation algorithm. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge through the use of features constructed in a supervised manner based on the target concept. 
+In this paper, we presented and evaluated \emph{FEAGURE}, a supervised, knowledge-based feature generation algorithm. Our approach is based around the concept of injecting traditional induction algorithms with external knowledge. %through the use of features constructed in a supervised manner based on the target concept. 
 The algorithm does so through the creation of recursive learning problems based on existing features and the knowledge base, that is then given as input to an induction algorithm. The output of this process is a classifier that is then turned into a feature for the original problem.
 
 %In section \ref{formal}, we discussed the feature generation setting, looked at the ways by which an unsupervised approach can be used for feature generation given a complex relational knowledge base, and explained our approach in detail.
 
 %In section \ref{text-feagure}, we considered the domain of text categorization as a possible problem for which our approach can be applied, through the use of the bag-of-entities approach. We proceeded to empirically evaluate of our approach on the text categorization learning problem.
-Empirical evaluation of our approach confirmed that complex knowledge-based feature generation significantly improves classifier accuracy. Experiments on the TechTC-100 dataset show an improvement over a wide range of problems of varying difficulty, with problems considered difficult yielding a very high improvement overall.
+%Empirical evaluation of our approach confirmed that complex knowledge-based feature generation significantly improves classifier accuracy. Experiments on the TechTC-100 dataset show an improvement over a wide range of problems of varying difficulty, with problems considered difficult yielding a very high improvement overall.
 
 The main strength of our approach is its ability to use existing induction approaches in a meaningful way on the knowledge base, allowing for the creation of complex features. These features can then be used by any induction algorithm, giving us a powerful, generic approach.
 
-One limitation of our approach is that even more so than unsupervised feature generation algorithms,  we are dependant on a correct link between feature values and entities within the knowledge base. Mistaken links can lead to incorrect features within the constructed learning problems that may cause the classifier learned to represent a false hypothesis. 
+One limitation of our approach is that even more so than unsupervised feature generation algorithms,  we are dependant on a correct link between feature values and entities within the knowledge base. %Mistaken links can lead to incorrect features within the constructed learning problems that may cause the classifier learned to represent a false hypothesis. 
 
-While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where entities can be extracted from feature values, such as drug names, cities and so on. 
+%While we focused on applying this approach to text categorization problems, it is important to note that it is applicable to any classification problem where entities can be extracted from feature values, such as drug names, cities and so on. 
 
 %% The file named.bst is a bibliography style file for BibTeX 0.99c
 \clearpage
