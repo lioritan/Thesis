@@ -110,10 +110,10 @@ In such cases, we require knowledge external to the problem in order to solve it
 %\end{enumerate}
 
 %In order to combat these issues, we can make use of the extensive relational knowledge bases that have been constructed as part of the Semantic Web project (see survey, \cite{bizer2009linkedfull}). 
-In recent years, extensive relational knowledge bases have gained increasing popularity.These knowledge bases contain facts regarding type-annotated entities covering a multitude of domains. % that are connected via semantically meaningful relations.
+In recent years, extensive relational knowledge bases have gained increasing popularity. These knowledge bases contain facts regarding type-annotated entities covering a multitude of domains. % that are connected via semantically meaningful relations.
  Thus, the question is how relational knowledge can be used to enhance existing induction methods.
-There have been several efforts in utilizing Linked Data for unsupervised feature generation. \cite{cheng2011automatedfull} devised a framework for constructing features from linked data. By using intelligent queries, it is possible to construct features that utilize the knowledge base in a meaningful way. 
-\cite{paulheim2012unsupervisedfull} developed FeGeLOD, an automated, fully unsupervised framework that constructs features by using entity recognition techniques to locate entities and expand upon them using relations within the Semantic Web. % semantically meaningful features in the data set, and expand upon those entities using relations within the Semantic Web. %They then use feature selection techniques to remove features with a large percentage of missing, identical, or unique\footnote{Values which only appear in a single example} values.
+There have been several efforts in utilizing Linked Data for unsupervised feature generation. \cite{cheng2011automatedfull} devised a general framework for constructing features from linked data. %By using intelligent queries, it is possible to construct features that utilize the knowledge base in a meaningful way. 
+\cite{paulheim2012unsupervisedfull} developed FeGeLOD, an automated, fully unsupervised framework that constructs features by locating and expanding upon entities using relations within the Semantic Web \citep[see][]{bizer2009linkedfull}.%using entity recognition techniques to locate entities and expand upon them using relations within the Semantic Web. % semantically meaningful features in the data set, and expand upon those entities using relations within the Semantic Web. %They then use feature selection techniques to remove features with a large percentage of missing, identical, or unique\footnote{Values which only appear in a single example} values.
 
 In this work, we build upon these existing approaches in order to present a new supervised methodology for generating complex features based on a relational knowledge base. Our algorithm recursively constructs new learning problems from existing feature values, then uses knowledge bases to construct features for the new learning problem. %such as the Semantic Web to construct the features for the new learning problem.
 Using common induction algorithms, we can then construct a classifier that can be applied to the original problem, giving us a complex feature that takes advantage of external relational knowledge in a meaningful way.
@@ -136,7 +136,8 @@ Assuming we have no additional information, an induction algorithm would likely 
 The above example illustrates that without additional knowledge, an induction algorithm will yield a very poor result. %Even if we attempt to use standard feature generation approaches, there is no additional information that combinations of these features would find.
 However, if we assume that we have access to a relational knowledge base connecting surnames to common countries of origin, we can begin to apply knowledge-based feature generation techniques to the problem, as we can move from the domain of surnames to that of countries. 
 
-Our goal is to separate the set of people to those at high risk and those at low risk using induction algorithms. We see that the existing feature set is insufficient to perform this task successfully. Therefore, our approach aims to construct new features for the learning task $T_1$ by recursively creating a new learning problem $T_2$. Once we have done so, we can use induction methods on $T_2$ in order to create a classifier that can be used in $T_1$. We construct $T_2$ as follows: 
+Our goal is to separate the set of people to those at high risk and those at low risk using induction algorithms. We see that the existing feature set is insufficient to perform this task successfully. Therefore, our approach aims to construct new features for the learning task $T_1$ by recursively creating a new learning problem $T_2$. Once we have done so, we can use induction methods on $T_2$ in order to create a classifier that can be used in $T_1$. We construct $T_2$. %as follows: 
+
 The training objects are surnames; surnames of people with the disease are labelled as positive. The features for these new objects are extracted from the knowledge base. In this case, these features are their countries of origin.
 Solving the above learning problem through an induction algorithm yields a classifier on surnames that distinguishes between surnames of patients with the disease and surnames of healthy individuals. This classifier for $T_2$ can then be used as a binary feature in the original problem $T_1$ by applying it to the feature value of surname. For example, it can be used as a feature in the node of value female in Figure \ref{fig:tree_base}, yielding the tree seen in Figure \ref{fig:lvl1_tree}. 
 
@@ -155,7 +156,7 @@ Once again, we require additional knowledge in order to capture the target conce
 Therefore, we can recursively apply our method while trying to learn $T_2$ in an attempt to better locate the target concept and induce a classifier for $T_1$.
 We create a new training set, the objects of which are countries of origin, with countries of surnames belonging to people with high risk are labelled as positive. The knowledge base regarding countries is then used to construct features for this new this training set, giving us a recursive learning problem $T_3$.
 
-We can then use $T_3$ as an input to an induction algorithm. As a result of this process, we end up with a classifier for $T_3$, which tries to separate between countries of origin of people at risk and those not at risk. This classifier will do so by looking at the properties of countries, and reach the conclusion that countries with high average temperature and low precipitation are of high risk: both being characteristic of desert areas.
+We can then use $T_3$ as an input to an induction algorithm. As a result of this process, we end up with a classifier for $T_3$, which tries to separate between countries of origin of people at risk and those not at risk. This classifier will do so by looking at the properties of countries, and reach the conclusion that countries with high average temperature and low precipitation are of high risk: the characteristics of desert areas.
 %This classifier is then used on the country of origin feature in $T_2$, yielding a new feature for $T_2$.  This new feature can then be used when inducting a classifier for $T_2$, which, as we have mentioned earlier, is used as a feature for the original problem $T_1$.
 
 The complete process is depicted in Figure \ref{fig:moving_to_lvl2}. %The resulting two-level recursive classifier is depicted in Figure \ref{fig:lvl2_tree}. 
@@ -217,7 +218,7 @@ To begin with, we shall treat the example set $S$ as unlabelled, and define an u
 %If a relation $R_j$ is a function, then for any given $f_i$ such that 
 %$Image(f_i) \subseteq D_j$, we can generate a new feature function $f_{i,j}:O\rightarrow D_{j'}$ by composing $R_j$ onto $f_i$, yielding our new feature function  $f_{i,j}(x)=R_j\circ f_i=R_j(f_i(x))$.
 %Thus we can define the feature generation algorithm \emph{Expander-FG} using a closed formula: $\{f_{i,j}=R_j\circ f_i|Image(f_i) \subseteq D_j\}$.
-For any relation $R_j$, if $Image(f_i) \cap D_j \neq\emptyset$, we can generate a new feature function $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ by composing $R_j$ onto $f_i$, yielding our new feature function  $f_{i,j}(x)=\tilde{R_j}\circ f_i$, where $\tilde{R}_j(x)=\begin{cases} R_j(x) &\mbox{if } x\in D_j\\ 
+For any relation $R_j$, if $Image(f_i) \cap D_j \neq\emptyset$, we can generate a new feature function $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ ($\perp$ is the undefined symbol) by composing $R_j$ onto $f_i$ when applicable, yielding our new feature function  $f_{i,j}(x)=\tilde{R_j}\circ f_i$, where $\tilde{R}_j(x)=\begin{cases} R_j(x) &\mbox{if } x\in D_j\\ 
 \perp & \mbox{otherwise } \end{cases}$.
 
 %Another case that must be discussed is the case where some values of $f_i$ cannot be expanded as above, meaning $Image(f_i) \not\subset D_j$ but $Image(f_i) \cap D_j \neq\emptyset$. We can resolve this in a manner similar to missing features in induction problem, by treating $R_j$ as a partial function from $Image(f_i)$ to $D_{j'}$. In order to complete this partial function, we first mark \emph{undefined} as $\perp$. We can turn $R_j$ into a full function with regards to $Image(f_i)$ as follows: $\tilde{R}_j(x)=\begin{cases} R_j(x) &\mbox{if } x\in D_j\\ 
@@ -229,13 +230,14 @@ In the general case, composing $R_j$ onto $F_i$ yields a set of values, meaning 
 We use on aggregation function on this set.
 %An aggregation function is a function that given a multi-set as input, outputs a single value. There are many types of aggregators, such as numerical aggregators (i.e. sum), categorical aggregators (i.e. most common member) and binary aggregation functions (i.e. exists).
 We will make use of two aggregation function families: Majority and Any.
-For each value $v\in D_{j'}$, we can define Majority as follows (Any is similar):
+For each value $v\in D_{j'}$, we can define Majority as follows:
  
 $Majority^v(X)=\begin{cases} 1 &\mbox{if } majority(X)=v
 \\ 
 0 & \mbox{otherwise } \end{cases}$
 
-Using these functions, we can turn one generated feature $f_{i,j}$ into a set of binary features by applying the set of aggregation functions. For example:  $F_{i,j}^{Any}=\{Any^v(f_{i,j})|v\in D_{j'}\}$
+Using these functions, we can turn one generated feature $f_{i,j}$ into a set of binary features. %by applying the set of aggregation functions. 
+For example:  $F_{i,j}^{Majority}=\{Majority^v(f_{i,j})|v\in D_{j'}\}$
 
 %Now that we have considered the possible behaviours of a given relation $R_j$, we can proceed to define the \emph{Expander-FG} feature generation algorithm. Given a feature $f_i$, \emph{Expander-FG} will go over the relations within the knowledge base and attempt to create features $f_{i,j}:O\rightarrow D_{j'}\cup\{\perp\}$ through the discussed techniques. \emph{Expander-FG} then gathers all generated features and outputs them. The pseudo-code is given below.
 
@@ -451,7 +453,7 @@ The traditional approach to solving this problem is based on the bag-of-words \c
 Another way to describe this approach is that it creates a single feature, the titular bag-of-words, whose value is the set of all unique words in the text.
 %As we are well aware, however, not all words have semantic meaning. This observation makes usage of knowledge-based approaches non-trivial, as most knowledge bases rely on semantically meaningful entities rather than raw words.
 %To resolve this issue, we can make use of techniques such as Named Entity Recognition (NER), Wikification \cite{bunescu2006using} and Entity Linking \cite{rao2013entity}. These methods as well as similar techniques allow us to link words in the text with semantically meaningful entities. 
-Using entity linking techniques \citep{rao2013entity}, we can move to a \emph{bag-of-entities} representation, a model of the semantically meaningful entities within the text.
+Using entity linking techniques \citep{bunescu2006using,rao2013entity}, we can move to a \emph{bag-of-entities} representation, a model of the semantically meaningful entities within the text.
 
 %As discussed, we have seen the recent rise of Semantic Linked Data as a powerful knowledge base for text-based entities, with large databases such as Google Knowledge Graph \cite{pelikanova2014google}, Wikidata \cite{vrandevcic2014wikidata} and YAGO2 \cite{hoffart2013yago2} becoming common. 
 %These knowledge bases represent semantic knowledge through the use of relations, mostly represented by triplets of various schema such as RDF, or in structures such as OWL and XML. These structures conform to relationships between entities such as "born in" (hyponyms), as well as type information (hypernyms).
@@ -740,7 +742,7 @@ The most noteworthy of the results shown in table \ref{table:acc-nontree} are th
 
 \section{Related Work}
 
-Feature generation approaches were found useful for a wide variety of learning problems \citep{markovitch2002feature,ragavan1993complex}. %,utgo1991linear}.
+Feature generation approaches were found useful for a wide variety of learning problems \citep{markovitch2002feature,ragavan1993complex,utgo1991linear}.
 These feature generation approaches search for new features that better represent the target concept than existing features. To that end, there are three major approaches for feature generation: tailored approaches, combinational techniques and methods utilizing external knowledge.
 Tailored approaches \citep{hirsh1994bootstrapping} are designed for specific problem domains and rely on domain-specific background knowledge. %for feature construction. 
 %One such example is the bootstrapping algorithm \cite{hirsh1994bootstrapping}, which was designed for the domain of molecular biology. The algorithm represents features as nucleotides sequences
