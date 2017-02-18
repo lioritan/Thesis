@@ -161,6 +161,8 @@ Applying a standard learning algorithm to $T_3$ will yield a classifier that sep
 	\label{fig:moving_to_lvl2}
 \end{figure*}
 
+
+
 %\begin{figure*}[th]
 %	\centering
 %	\includegraphics[width=\linewidth]{fig3.pdf}
@@ -267,7 +269,7 @@ We note that during the induction process of the newly created learning problem,
 
 Given a feature $f_{i}$, we create a recursive learning problem $\langle S'_i,F_{\cal R} \rangle$. %In this section, we will discuss how we do so.
  Let $v_i(S) = \{v | (o,y) \in S, f_{i}(o)=v\}$ be the set of feature values for $f_i$ in the example set $S$. %In the intro example, for instance, $v_i(S)$ will be the set of all last names of patients that appeared in the training set.
-We use $v_i(S)$ as our set of objects. The labeling of each $v \in v_i(S)$ will be done by looking at the labels in the original problem.
+We use $v_i(S)$ as our set of objects. The labelling of each $v \in v_i(S)$ will be done by looking at the labels in the original problem.
  If there is a single example $o \in S$ such that $f_i(o)=v$, then the label of $v$ will be the label of $o$. Otherwise, we take the majority label  $label(v)=majority(\{y|(o,y)\in S, f_i(o)=v\})$.
 
 %We now formulate a new learning problem with the constructed training set
@@ -282,8 +284,10 @@ We proceed to use a learning algorithm\footnote{For the experiments described in
 
 %TODO
 The full algorithm is listed in Algorithm \ref{code-creating-prob}.
-While the \emph{FEAGURE} algorithm can be used as described above, we found it more useful to use it in the context of a Divide \& Conquer approach, in a manner similar to the induction of decision trees.
-In this approach, the set of examples is given as an input to a decision tree induction algorithm. The \emph{FEAGURE} algorithm is applied at each node. At the end of the process the tree is discarded and the generated features at each node are gathered as the final output.
+While the \emph{FEAGURE} algorithm can be used as described above, we found it more useful to use it in the context of a divide \& conquer approach, in a manner similar to the induction of decision trees.
+In this approach, the set of examples is given as an input to a decision tree induction algorithm. The \emph{FEAGURE} algorithm is applied at each node. 
+This allows us to generate features that are locally useful for a subset of examples.
+At the end of the process the tree is discarded and the generated features at each node are gathered as the final output.
 
 \begin{algorithm}[H]
 	\caption{FEAGURE algorithm}
@@ -332,7 +336,7 @@ We have applied our feature generation algorithm to the domain of text classific
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %assume base features, link to milne2013open,hoffart2011robust
-We use a variation of the bag-of-words \citep{Wu:1981:CST:1013228.511759} approach as the base feature set for the problem, using a single set feature composed of all of the words in a given document. Using entity linking software \citep{hoffart2011robust,milne2013open}, we transform these words into semantically meaningful entities, resulting in a \emph{bag-of-entities} representation. %, a model of the semantically meaningful entities within the text.
+We use a variation of the bag-of-words \citep{Wu:1981:CST:1013228.511759} approach as the base feature set for the problem, using a single set feature whose value is a set composed of all of the words in a given document. Using entity linking software \citep{hoffart2011robust,milne2013open}, we transform these words into semantically meaningful entities, resulting in a \emph{bag-of-entities} representation. %, a model of the semantically meaningful entities within the text.
 The use of entities allowed us to use two semantic knowledge bases: YAGO2 and Freebase.
 
 %problem - the bag-of-words isn't usaully thought of as a single feature
