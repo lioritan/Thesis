@@ -344,24 +344,11 @@ We have applied our feature generation algorithm to the domain of text classific
 \subsection{Application of \emph{FEAGURE} to Text Classification} \label{text-feagure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%One interesting problem domain for FEAGURE is that of \emph{Text Categorization}.
-%The text categorization problem is defined by a set of texts $O$ labelled by a set of categories $Y$ \footnote{We can assume $Y=\{0,1\}$ for ease of analysis}
-%such that we create $S=\{(o_i,y_i)|o_i\in O, y_i\in Y\}$. Given $S$, The learning problem is to find a hypothesis $h:O\rightarrow Y$ which minimizes generalization error over all possible texts of the given categories. To measure this error, a testing set is used as an approximation.
-%The traditional approach to solving this problem is based on the bag-of-words \cite{Wu:1981:CST:1013228.511759,salton1983introduction} approach, which uses the frequencies of word appearances (without regards to order) within the text as features. 
+The text classification problem is defined by a set of texts $O$ labelled by a set of categories $Y$ \footnote{We can assume $Y=\{0,1\}$ for ease of analysis}
+such that we create $S=\{(o_i,y_i)|o_i\in O, y_i\in Y\}$. Given $S$, The learning problem is to find a hypothesis $h:O\rightarrow Y$ which minimizes generalization error over all possible texts of the given categories. To measure this error, a testing set is used as an approximation.
 
-%Another way to describe this approach is that it creates a single feature, the titular bag-of-words, whose value is the set of all unique words in the text.
-%As we are well aware, however, not all words have semantic meaning. This observation makes usage of knowledge-based approaches non-trivial, as most knowledge bases rely on semantically meaningful entities rather than raw words.
-%To resolve this issue, we can make use of techniques such as Named Entity Recognition (NER), Wikification \cite{bunescu2006using} and Entity Linking \cite{rao2013entity}. These methods as well as similar techniques allow us to link words in the text with semantically meaningful entities. 
-%Using these techniques, we can move to a \emph{bag-of-entities} representation, that is, a model of the semantically meaningful entities within the text, without regard to order of appearance.
-
-%As discussed, we have seen the recent rise of Semantic Linked Data as a powerful knowledge base for text-based entities, with large databases such as Google Knowledge Graph \cite{pelikanova2014google}, Wikidata \cite{vrandevcic2014wikidata} and YAGO2 \cite{hoffart2013yago2} becoming common. 
-%These knowledge bases represent semantic knowledge through the use of relations, mostly represented by triplets of various schema such as RDF, or in structures such as OWL and XML. These structures conform to relationships between entities such as "born in" (hyponyms), as well as type information (hypernyms).
-%Naturally, we would like to make use of such semantic data to improve upon the bag-of-words and bag-of-entities approaches, with the implicit assumption that additional semantic knowledge will allow us to better approximate the relationship between a text and its given category.
-
-%assume base features, link to milne2013open,hoffart2011robust
-%We use a variation of the bag-of-words \citep{Wu:1981:CST:1013228.511759} approach as the base feature set for the problem, using a single set feature whose value is a set composed of all of the words in a given document. 
-
-%For evaluation, we use the binary bag of words representation \citep{Wu:1981:CST:1013228.511759}. This approach is not useful for our feature generation. We therefore define a virtual feature $f'$ that is used exclusively for the sake of feature generation. This $f'(e)=v iff e in enties$ 
+In recent years, we have seen the rise of Semantic Linked Data as a powerful semantic knowledge base for text-based entities, with large databases such as Google Knowledge Graph \cite{pelikanova2014google}, Wikidata \cite{vrandevcic2014wikidata} and YAGO2 \shortcite{hoffart2013yago2} becoming common. 
+These knowledge bases represent semantic knowledge through the use of relations, mostly represented by triplets of various schema such as RDF, or in structures such as OWL and XML. These structures conform to relationships between entities such as ``born in" (hyponyms), as well as type information (hypernyms).
 
 To use \emph{FEAGURE} for text classification, we use words as binary features and Freebase and YAGO2 as our semantic knowledge bases.
 YAGO2 \cite{hoffart2013yago2} is a large general knowledge base extracted automatically from Wikipedia, WordNet and GeoNames.
@@ -370,10 +357,10 @@ Freebase \cite{bollacker2008freebase} has been described as ``a massive, collabo
 
 In order to apply our approach to the domain of text classification, we perform a few minor adjustments to the \emph{FEAGURE} algorithm:
 \begin{enumerate}
-	\item To enable linkage between the basic features and the semantic knowledge bases, we use entity linking software \cite{hoffart2011robust,milne2013open} to transform these words into semantically meaningful entities.
-	\item Since all of our features are binary, we use the set of entities extracted from text	as the set of values $v_i(S)$ .
-	\item Once we have created a new classifier $h_i$, we cannot simply compose it on $f_i$, since every example potentially contains multiple entities. To that end,  we apply $h_i$ on each entity and take the majority vote.
-	\item Since $v_i(S)$ contains multiple domains,  we split it into several subsets according to relation domains and apply the \emph{FEAGURE} algorithm independently to each domain. For the case of semantic knowledge bases, using the entity type is a good way to obtain such a partition.
+	\item To enable linkage between the basic features and the semantic knowledge bases, we use entity linking software \shortcite{hoffart2011robust,milne2013open} to transform these words into semantically meaningful entities that are connected to our knowledge base. The result of this process is a set of entities corresponding to each document.
+	\item Since all of our base features are binary words, we use the set of entities extracted from text as the set of values $v_i(S)$, giving us a single feature.
+	\item Once we have created a new classifier $h_i$, we cannot simply compose it on $f_i$, since every example potentially contains multiple entities. To that end, we apply $h_i$ on each relevant entity and take the majority vote.
+	\item Since $v_i(S)$ contains entities belonging multiple domains,  we split it into several subsets according to relation domains and apply the \emph{FEAGURE} algorithm independently to each domain. For the case of semantic knowledge bases, using the entity type is a good way to obtain such a partition. The result of this process is a generated feature for each such domain.
 \end{enumerate}
 
 \subsection{Methodology}
@@ -382,42 +369,32 @@ We used two collections of datasets for our evaluation:
 
 \textbf{TechTC-100} \cite{gabrilovich2004text} is a collection of 100 different binary text classification problems of varying difficulty, extracted from the Open Dictionary project.
 We used the training and testing sets defined in the original paper. 
-%evaluated our approach by measuring accuracy based on the training and testing sets defined in the original paper. 
 As our knowledge base for this task, we used YAGO2.% \citep{hoffart2013yago2}.
-%YAGO2 (Yet Another Great Ontology) is a large general knowledge base extracted automatically from Wikipedia, WordNet and GeoNames.
-%YAGO2 contains over 10 million entities and 124 million facts, mostly dealing in individuals, countries and events.
-%In order to fully make use of this knowledge base, we performed some processing on it. Specifically, we omitted relations with literal data such as dates or geographic coordinates, and created inverse relations of all relations except ones that map very few values to very many \footnote{For example, the inverse of the ``has gender" relation  maps ``male" and ``female" to all to all existing people within the YAGO2 database.}.
-
-%For entity extraction, we used AIDA \citep{hoffart2011robust}, a framework for entity detection and disambiguation. %AIDA uses the Stanford NER tagger \cite{finkel2005incorporatingfull} to locate entity candidates, and attempts to link them to existing entities within the YAGO2 knowledge base.
+For entity extraction, we used AIDA \cite{hoffart2011robust}, a framework for entity detection and disambiguation. 
 
 %The TechTC-100 dataset collection served as a powerful benchmark, as it shows results for multiple problems at once, giving a broad view for many problems with varying difficulties. This aspect allowed us to better understand and analyse our approach in a variety of situations.
 
 %We also wanted to explore the results of our approach with regards to a more domain-specific problem.
 %To that end, we constructed a dataset based on OHSUMED \citep{hersh1994ohsumed}.
 
-\textbf{OHSUMED} \cite{hersh1994ohsumed} is a large dataset of medical abstracts from the MeSH categories of the year 1991. 
+\textbf{OHSUMED} \shortcite{hersh1994ohsumed} is a large dataset of medical abstracts from the MeSH categories of the year 1991. 
 %We constructed our own dataset based on the work of \cite{joachims1998text}.
-First, we took the first 20,000 documents, similarly to \cite{joachims1998text}.
+First, we took the first 20,000 documents, similarly to \citeA{joachims1998text}.
 Then, we limited the texts further to medical documents that contain only a title. %On each document, we used stopword elimination, a simple stemming scheme %(due to the medical nature of the texts, there was no need for complex stemming) in order to remove unnecessary noise. Once the documents have been cleaned of stopwords and stemmed,
-Due to the relatively sparse size of most MeSH categories, we only used the two categories with the most documents, C1 and C20. %``Bacterial Infections and Mycoses" and ``Immunologic Diseases"\footnote{C1 and C20, respectively}, yielding a binary learning problem.
+Due to the relatively sparse size of most MeSH categories, we only used the two categories with the most documents, C1 and C20\footnote{``Bacterial Infections and Mycoses" and ``Immunologic Diseases", respectively.}, yielding a binary learning problem.
 The result is a dataset of 850 documents of each category, for a total of 1700 documents.
 We used ten-fold cross validation to evaluate this dataset.
-Since the YAGO2 knowledge base does not contain many medical relations, we used Freebase instead. We took the Freebase data dump used by \cite{bast2014easy}. 
+Since the YAGO2 knowledge base does not contain many medical relations, we used Freebase instead. We took the Freebase data dump used by \shortciteA{bast2014easy}. 
 
- In our experiments, we generated features using the \emph{FEAGURE} algorithm. We then proceeded to use these new features alongside three learning algorithms: SVM \cite{cortes1995support}, K-NN \cite{fix1951discriminatory} and CART \cite{breiman1984classification}.
+%TODO: this part
+In our experiments, we compared the performance of a learning algorithm with the features generated by the \emph{FEAGURE} algorithm to the baseline of the same induction algorithm without the constructed features. In addition, since we could not obtain the code of competitive approaches for relation-based feature generation (such as FeGeLOD, SGLR), we instead compared our algorithm to \emph{Expander-FG}, that we believe should be indicative of the performance of these unsupervised approaches.
+We used three induction algorithms as benchmarks for measuring the difference in performance: SVM \cite{cortes1995support}, K-NN \cite{fix1951discriminatory} and CART \cite{breiman1984classification}.
+
+
+% In our experiments, we generated features using the \emph{FEAGURE} algorithm. We then proceeded to use these new features alongside three learning algorithms: SVM \cite{cortes1995support}, K-NN \cite{fix1951discriminatory} and CART \cite{breiman1984classification}.
  
- We compared the performance of a learning algorithm with the generated features to the baseline of the same induction algorithm without the constructed features.
- In addition, since we could not obtain the code of competitive approaches for relation-based feature generation (such as FeGeLOD, SGLR), we instead compared our algorithm to \emph{Expander-FG}, that we believe should be indicative of the performance of these unsupervised approaches.
-
-%\subsubsection{Experiment Parameters}
-
-%We tested the following parameters: 
-%\begin{enumerate}
-%	\item Recursion level: We ran our feature generation algorithm for both a depth of one, creating a recursive learning problem for the original problem, and a depth of two, creating recursive learning problems within generated problems. This parameter allowed us to test the effect of both first and second order application of our feature generation approach.
-	
-	%\item \emph{FEAGURE} internal induction algorithm: In section \ref{algorithm_section}, we define \emph{FEAGURE} without specifying the internal induction algorithm used to generate features within the new learning problem. We ran most of our experiments using a decision tree induction algorithm for that purpose, flattening the result to yield additional features. We also experimented with the use of other induction algorithms, namely SVM and K-NN.
-	
-%\end{enumerate}
+ %We compared the performance of a learning algorithm with the generated features to the baseline of the same induction algorithm without the constructed features.
+ %In addition, since we could not obtain the code of competitive approaches for relation-based feature generation (such as FeGeLOD, SGLR), we instead compared our algorithm to \emph{Expander-FG}, that we believe should be indicative of the performance of these unsupervised approaches.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -425,7 +402,7 @@ Since the YAGO2 knowledge base does not contain many medical relations, we used 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Table \ref{table:acc} shows average accuracies across all 10 folds for OHSUMED, as well as the average accuracies for all 100 datasets in techTC-100. For cases where the advantage of our method over the baseline was found to be significant using a pairwise t-test (with $p<0.05$), we marked the $p$-value in parenthesis. Best results are marked in bold.
-For the TechTC-100 dataset, \emph{FEAGURE} shows a significant improvement over the baseline approach. %, even though the number of generated features is much lower than the one achieved by the \emph{Expander-FG} algorithm, as seen in table \ref{table:features}.
+For the TechTC-100 dataset, \emph{FEAGURE} shows a significant improvement over the baseline approach, even though the number of generated features is much lower than the one achieved by the \emph{Expander-FG} algorithm, as seen in table \ref{table:features}.
 Of particular note are the results for KNN and SVM, where the two level activation of \emph{FEAGURE} shows statistically significant improvement over \emph{Expander-FG} as well as the baseline accuracy ($p < 0.05$). 
 One notable exception to our good results is the poor performance of K-NN for the OHSUMED dataset. This is likely due to the sensitivity of K-NN to the increase in dimension. 
 %The results for the OHSUMED datasets show that for K-NN, both feature generation methods perform poorly. %For SVM, we see a significant improvement over the baseline approach. For CART, we also see a general trend of improvement, with results for a two level application of \emph{FEAGURE} showing significant improvement over the baseline.
@@ -453,6 +430,59 @@ One notable exception to our good results is the poor performance of K-NN for th
 		
 		\specialrule{.15em}{.05em}{.01em}
 		
+	\end{tabular}
+\end{table*}
+
+\begin{table}[]
+	\centering
+	\caption{Average number of generated features for each dataset per fold/dataset, using \emph{FEAGURE}, a 2-level activation of \emph{FEAGURE}, and the Shallow algorithm. }
+	\label{table:features}
+	\begin{tabular}{|l||l|l|l|}
+		\hline
+		& \# Features(FEAGURE)  & \# Features(FEAGURE 2-level)  & \# Features(Expander-FG) \\ \hline
+		OHSUMED      & 506           & 732        & 27162               \\ \hline
+		TechTC-100  & 614       & 1477      & 10997 \\ 
+		\hline             
+	\end{tabular}
+\end{table}
+
+Figures \ref{fig:svm_base_lvl1} and \ref{fig:svm_base_lvl2} show the accuracies for datasets in techTC-100 using a SVM classifier. The x axis represents the baseline accuracy without feature generation, and the y axis represents the accuracy using our new feature set generated using \emph{FEAGURE}. Therefore, any dataset that falls above the $y=x$ line marks an improvement in accuracy. 
+The results show a strong trend of improvement, with high ($>10\%$) improvement being common.
+We see that for a few of the datasets, there is a degrade in accuracy. This degrade in accuracy can be a result of mistakes in the entity extraction and linking process.
+
+\begin{figure}
+	\centering
+	\begin{minipage}{0.45\textwidth}
+		\centering
+		\includegraphics[width=1.2\textwidth]{svm_full} % first figure itself
+		\caption{Accuracy of
+			baseline approach compared to one-level activation of \emph{FEAGURE} (SVM). Each point represents a dataset. The dotted lines represent a 5 and 10 percent difference in accuracy}
+		\label{fig:svm_base_lvl1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\textwidth}
+		\centering
+		\includegraphics[width=1.2\textwidth]{svm_full_lvl2} % second figure itself
+		\caption{Accuracy of
+			baseline approach compared to two-level activation of \emph{FEAGURE} (SVM). Each point represents a dataset. The dotted lines represent a 5 and 10 percent difference in accuracy}
+		\label{fig:svm_base_lvl2}
+	\end{minipage}
+\end{figure}
+
+
+In their paper on TechTC-100, \cite{gabrilovich2004text} define a metric called Maximal Achievable Accuracy (MAA). This criterion attempts to assess the difficulty of the induction problem by the maximal ten-fold accuracy over three very different induction algorithms (SVM, K-NN and CART).
+%Intuitively, a dataset with low MAA can be considered harder than one with a high MAA. %, since a known induction algorithm can achieve a higher accuracy for the dataset with higher MAA. needs to be better justified(one strong == easy)
+Figure \ref{fig:25best} shows the performance of \emph{FEAGURE} on the 25 hardest datasets in TechTC-100, in terms of the MAA criterion. We call this dataset collection ``TechTC-25MAA". 
+Table \ref{table:acc} shows the accuracies for the 25 hardest datasets in TechTC-100, in terms of the MAA criterion. We call this dataset collection ``TechTC-25MAA". 
+These results show a much more pronounced accuracy increase, and illustrate that we can, in general, rely on \emph{FEAGURE} to yield positive features for difficult classification problems.
+
+\begin{table}[!h]
+	\centering
+	\caption{Average accuracy over 25 hardest datasets in terms of MAA. The columns specify feature generation approach, with baseline being no feature generation. The rows specify the induction algorithm used on the generated features for evaluation. Best results are marked in bold.}
+	\label{table:acc_maa}
+	\begin{tabular}{|l | l || l | l | l| l|}
+		\hline
+		Dataset & Classifier & Baseline   & Expander-FG & FEAGURE   & FEAGURE 2-level    \\ \hline
+		
 		\multirow{3}{*}{TechTC-25MAA} & KNN & 0.524 & 0.723 ($p<0.001$) & \textbf{0.803 ($p<0.001$)} & 0.795 ($p<0.001$)  \\ \cline{2-6}
 		
 		& SVM  & 0.751 & 0.815 ($p<0.001$)    & 0.817 ($p<0.001$)    & \textbf{0.829 ($p<0.001$)} \\ \cline{2-6}
@@ -461,34 +491,23 @@ One notable exception to our good results is the poor performance of K-NN for th
 		
 		\specialrule{.15em}{.05em}{.01em}
 		
-		%	\multirow{3}{*}{TechEC-25} & KNN  & 0.539 & 0.72 ($p<0.001$) & 0.777 ($p<0.001$)  & \textbf{0.781 ($p<0.001$)} \\ \cline{2-6}
-		%	& SVM  & 0.762 & 0.788  & \textbf{0.82 ($p<0.001$)}    & 0.817 ($p<0.05$) \\ \cline{2-6}
-			
-		%	& CART  & 0.81 & 0.833   & 0.836 ($p<0.05$)    & \textbf{0.847 ($p<0.05$)} \\
-			
-		%	\specialrule{.15em}{.05em}{.01em} % \hline
+		\multirow{3}{*}{TechTC-100} & KNN & 0.531 & 0.702 ($p<0.001$) & 0.772 ($p<0.001$) & \textbf{0.775 ($p<0.001$)}  \\ \cline{2-6}
+		& SVM  & 0.739 & 0.782 ($p<0.001$)    & 0.796 ($p<0.001$)    & \textbf{0.807 ($p<0.001$)} \\ \cline{2-6}
+		
+		& CART  & 0.81 & 0.815   & 0.814   & \textbf{0.825 ($p<0.05$)}  \\
+		
+		\specialrule{.15em}{.05em}{.01em}
 		
 	\end{tabular}
-\end{table*}
-
-Figure \ref{fig:svm_base_lvl2} shows the accuracies for datasets in techTC-100 using a SVM classifier. The x axis represents the baseline accuracy without feature generation, and the y axis represents the accuracy using our new feature set generated using \emph{FEAGURE}. Therefore, any dataset that falls above the $y=x$ line marks an improvement in accuracy. 
-The results show a strong trend of improvement, with high ($>10\%$) improvement being common.
-We see that for 8 of the datasets, there is a degrade in accuracy. This degrade in accuracy can be a result of mistakes in the entity extraction and linking process.
+\end{table}
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.7\linewidth]{svm_full_lvl2}
+	\includegraphics[width=0.8\linewidth]{25best}
 	\caption{Accuracy of
-		baseline approach compared to two-level activation of \emph{FEAGURE} (SVM). Each point represents a dataset. The dotted lines represent a 5 and 10 percent difference in accuracy}
-	\label{fig:svm_base_lvl2}
+		baseline approach compared to single-level activation of \emph{FEAGURE} (SVM). Displayed are the 25 hardest datasets (meaning they have the lowest MAA)}
+	\label{fig:25best}
 \end{figure}
-
-
-In their paper on TechTC-100, \cite{gabrilovich2004text} define a metric called Maximal Achievable Accuracy (MAA). This criterion attempts to assess the difficulty of the induction problem by the maximal ten-fold accuracy over three very different induction algorithms (SVM, K-NN and CART).
-%Intuitively, a dataset with low MAA can be considered harder than one with a high MAA. %, since a known induction algorithm can achieve a higher accuracy for the dataset with higher MAA. needs to be better justified(one strong == easy)
-%Figure \ref{fig:25best} shows the 25 hardest datasets in TechTC-100, in terms of the MAA criterion. We call this dataset collection ``TechTC-25MAA". 
-Table \ref{table:acc} also shows the accuracies for the 25 hardest datasets in TechTC-100, in terms of the MAA criterion. We call this dataset collection ``TechTC-25MAA". 
-These results show a much more pronounced accuracy increase, and illustrate that we can, in general, rely on \emph{FEAGURE} to yield positive features for difficult classification problems.
 
 %\subsection{Effect of recursive problem classifier on \emph{FEAGURE}}
 
@@ -538,7 +557,6 @@ In this section, we examine the following factors:
 \begin{itemize}
 	\item Number of features tried vs number of features generated
 	\item Number of features generated per depth
-	\item Information gain of new features compared to existing ones
 	\item Size of new induction problems relative to existing ones
 	\item Local Information gain of the features
 \end{itemize}
@@ -673,7 +691,7 @@ This feature can then be applied to the locations using aggregation, giving a fe
 	\label{fig:figure_rec3_feature_full}
 \end{figure}
 
-To conclude, we see that in general, good features created by \emph{FEAGURE} are those that are sufficiently broad in scope to group together a sizeable subset of similar entities. To this end, hypernyms are very useful, as they, by definition, group together entities in a taxonomy. 
+To conclude, we see that in general, good features created by \emph{FEAGURE} are those that are sufficiently broad in scope to group together a sizeable subset of similar entities. To this end, hypernyms are very useful, as they group together entities in a taxonomy. 
 
 \section{Related Work}
 
