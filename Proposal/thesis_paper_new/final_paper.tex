@@ -123,7 +123,7 @@ Applying a standard learning algorithm to $T_3$ will yield a classifier that sep
 	\label{fig:moving_to_lvl2}
 \end{figure*}
 
- The result of this process, depicted in Figure \ref{fig:moving_to_lvl2}, is a new feature for $T_2$, that is, a feature on surnames. This feature is then used to construct a classifier for $T_2$, which is in turn used as a feature for $T_1$, yielding a feature on patients. This new feature for patients, shown in Figure \ref{fig:lvl2_tree}, will check whether their surname corresponds with a country of origin that has desert-like characteristics. 
+ The result of this process, depicted in Figure \ref{fig:moving_to_lvl2}, is a new feature for $T_2$, that is, a feature on surnames. This feature is then used to construct a classifier for $T_2$, that is in turn used as a feature for $T_1$, yielding a feature on patients. This new feature for patients, shown in Figure \ref{fig:lvl2_tree}, will check whether their surname corresponds to a country of origin that has desert-like characteristics. 
  %TODO:this part
  Through this example, we have explained the major concepts of our approach: The construction of new induction problems on feature values using the given knowledge base, the creation of classifiers over the above learning problems, and the use of said classifiers as new features. We see that in this example, we can accurately capture the target concept using a two-level recursive process.
  
@@ -181,7 +181,7 @@ Let $f_i$ be an original feature. Let $R_j:D_j\times D_{j'}$ be a relation such 
 %The result is a full function $\tilde{R}_j:Image(f_i)\cup D_j\rightarrow D_{j'}\cup\{\perp\}$. We also note that the same process can be applied to cases where $R_j$ has missing values\footnote{This is usually the case in human curated knowledge bases.}, meaning it is a partial function with regards to $D_j$. 
 
 In the general case, composing $R_j$ onto $F_i$ yields a set of values, meaning $f_{i,j}(x)=\{v\in D_{j'}|(f_i(x),v)\in R_j\}$. 
-To make it a single value, we use an aggregation function on this set.
+To yield a single value, we use an aggregation function on this set.
 An aggregation function is a function that given a multi-set as input, outputs a single value. There are many types of aggregators, such as numerical aggregators (i.e. sum), categorical aggregators (i.e. most common member) and binary aggregation functions (i.e. exists).
 For the experiments described in this paper, we use  
  two aggregation function types: Majority and Any, but in general any other reasonable aggregation function can be used instead.
@@ -220,7 +220,7 @@ The pseudo-code of this algorithm (called
 \subsection{Recursive feature generation algorithm}
 \label{algorithm_section}
 One way to extend the \emph{Expander-FG} algorithm described in the previous section is to apply it repeatedly to its own output.
-Extending the algorithm in this fashion, however, would yield an exponential increase in the number of generated features.
+Extending the algorithm in this fashion, however, would yield an exponential increase in the number of generated features, making deep connections very difficult to discover.
 To that end, we propose an alternative knowledge-based feature generation algorithm. Given an input $\langle S,F,{\cal R} \rangle$, for each feature $f_i\in F, f_i:O\rightarrow I_i$, our algorithm creates a recursive learning problem whose objects are the values of $f_i$, where values associated with positive examples in $S$ are labelled positive. %, and those associated with negative examples labelled negative. 
 Features for this generated problem are created using the relations in ${\cal R}$. Once this new learning problem $\langle S'_i,F_{\cal R}\rangle$ is defined, an learning algorithm is used to induce a classifier $h_i:I_i\rightarrow Y$. Finally, our algorithm outputs a single generated feature for $f_i$, $f'_i(x)=h_i\circ f_i=h_i(f_i(x)), f'_i:O\rightarrow Y$.
 We note that during the induction process of the newly created learning problem, we can apply a feature generation algorithm on $\langle S'_i,F_{\cal R},{\cal R} \rangle$. In particular, we can apply the above method recursively to create additional features. We call this algorithm \emph{FEAGURE} (FEAture Generation Using REcursive induction).
@@ -239,12 +239,23 @@ For each $R_j\in {\cal R}$, if it is relevant to the problem domain, meaning $v_
 The result of this process is a generated feature map for $S'_i$, denoted as $F_{\cal R}$. 
 
 We now have a new induction problem $\langle S'_i,F_{\cal R} \rangle$.
-We can further extend $F_{\cal R}$ by recursively using \emph{FEAGURE}, yielding a new feature map $F'_{\cal R}$. The depth of recursion is controlled by a parameter $d$, that will usually be set according to available learning resources.
-We proceed to use a learning algorithm\footnote{For the experiments described in this paper, we used a decision tree learner, but any induction algorithm can be used.} on $\langle S'_i,F'_{\cal R} \rangle$ in order to train a classifier, giving us $h_i:I_i\rightarrow Y$. We can then use $h_i$ on objects in $S$ as discussed above, giving us a new feature $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$. 
+We can further extend $F_{\cal R}$ by recursively using \emph{FEAGURE}, yielding a new feature map $F'_{\cal R}$. The depth of recursion is controlled by a parameter $d$, that is usually set according to available learning resources.
+We proceed to use a learning algorithm\footnote{For the experiments described in this paper, we used a decision tree learner, but any induction algorithm can be used.} on $\langle S'_i,F'_{\cal R} \rangle$ in order to train a classifier, giving us $h_i:I_i\rightarrow Y$. We can then use $h_i$ on objects in $S$ as discussed above, yielding a new feature $f'_{i}(x)=h_{i}(f_{i}(x)), f'_{i}:O\rightarrow Y$. 
+
+It is important to note that these new features can potentially over-fit the generated problem, especially if it is small or imbalanced. There are several known ways to combat this issue. For our experiments, we decided to apply the following filters:
+\begin{itemize}
+	\item In cases where the generated learning problem has too few examples.
+	\item we do not call the learner on a generated training set if it is a single set problem.
+	\item We filter out generated features that have an information gain of zero on the (original or generated) training set.
+\end{itemize}  
+
+We found these criteria sufficient to disqualify very poor features without causing a significant change in our approach.
+
+%TODO:mby-two level features: we have a set...
 
 %TODO
 The full algorithm is listed in Algorithm \ref{code-creating-prob}.
-We note that this feature generation approach creates features that can be used alongside any induction algorithm. Additionally, any induction algorithm can be used to learn $h_i$. Due to this generality, the extensive knowledge and literature available for induction methods applies in full. Furthermore, the recursive nature of \emph{FEAGURE} allows for a structured search of the knowledge base, with each new recursive problem modelling a projection of the problem space to the new domain, allowing for a process similar to deductive learning. For example, in the motivating example, we began by learning a problem regarding patients, which we projected to a new domain of surnames. We then re-contextualized that problem to the domain of countries, for which we located a good solution. We then used this solution to resolve the original learning task concisely and accurately.
+We note that this feature generation approach creates features that can be used alongside any induction algorithm. Additionally, any induction algorithm can be used to learn $h_i$. Due to this generality, the extensive knowledge and literature available for induction methods applies in full. Furthermore, the recursive nature of \emph{FEAGURE} allows for a structured search of the knowledge base, with each new recursive problem modelling a projection of the problem space to the new domain. For example, in the motivating example, we began by learning a problem regarding patients, which we projected to a new domain of surnames. We then re-contextualized that problem to the domain of countries, for which we induced a good solution. We proceeded to use this solution to resolve the original learning task concisely and accurately.
 
 \begin{algorithm}[H]
 	\caption{FEAGURE algorithm}
@@ -257,7 +268,7 @@ We note that this feature generation approach creates features that can be used 
 		\State $S'_i,F_{\cal R}$= \Call{CreateNewProblem}{$f_i$,$S$,${\cal R}$,$d$} %\Comment{We can apply our algorithm recursively here}
 		\State $h_i$= \Call{InductionAlgorithm}{$S'_i,F_{\cal R}$} 
 		%\If {\Call{Compare}{$h_i,F$}} \Comment Compare $h_i$ to $F$
-		\State add $f'_i(x)=h_i\circ f_i$ to generated features
+		\State add $f'_i(x)=h_i\circ f_i$ to generated features (unless disqualified)
 		%\EndIf
 		\EndFor
 		\State \Return generated features
@@ -280,51 +291,58 @@ We note that this feature generation approach creates features that can be used 
 
 \subsection{Finding Locally Improving Features} \label{tree_usage}
 
-In many cases, it is easier to locate powerful features within a localized subset of data which shares common attributes rather than trying to locate the same features in a more global context. In the motivating example, for instance, male patients are irrelevant to the target concept, and thus serve as noise when used for feature generation.
+Some generated features may prove very useful for separating only a subset of the training data. Such features may be difficult to identify in the context of the full training data. In the motivating example in Section \ref{motivation}, for instance, male patients are irrelevant to the target concept, and thus mask the usefulness of the candidates for feature generation.
 
-One approach to creating such local contexts is the divide \& conquer approach. This approach seeks to iteratively create increasingly smaller subsets of the original problem by dividing it according to the values of a feature. One way to do so is to make use of the information gain \cite{quinlan1986} metric to determine the feature used to split the examples. The divide \& conquer approach has numerous advantages we can make use of, namely:
+In this subsection, we present an extension of our \emph{FEAGURE} algorithm that evaluates features in local contexts using the divide \& conquer approach.
+This algorithm uses a decision tree induction method as the basis of its divide \& conquer process. At each node, the \emph{FEAGURE} algorithm is applied to the given set of features, giving us a set of generated features. Out of the expanded (base and generated) feature set, the feature with the highest information gain \cite{quinlan1986} measure is selected, and the training set is split by the values of that feature. This feature may or may not be one of the generated features. Each child node contains examples with a single feature value, and we apply the approach recursively for the examples in that node, using the expanded feature set as a baseline.
+Once a stopping criteria has been reached, the generated features at each node are gathered as the final output. The decision tree can then be discarded.
+We stopped if the training set was too small or if all examples had the same label.
+
+In addition to the creation of features that operate within localized contexts of the original induction problem, our approach offers several advantages for feature generation:
 \begin{enumerate}
-	\item Orthogonality: Because all examples with the same value for a given feature are grouped together, any further splits must make use of different features. Due to this and the fact that the features selected in each step have high IG, it is usually the case that features chosen later in the process will be mostly orthogonal to previously chosen features. This results in a larger variety of features overall. In our approach in particular, the elimination of a feature prunes the search tree and forces later splits to rely on different features and thus different domains.
+	\item Orthogonality: Because all examples with the same value for a given feature are grouped together, any further splits must make use of different features. Due to this and the fact that the features selected in each step have high IG, it is usually the case that features chosen later in the process will be mostly orthogonal to previously chosen features. This results in a larger variety of features overall. The feature chosen as a split effectively prunes the search tree of possible features and forces later splits to rely on other features and thus different domains.
 	\item Interpertability: Looking at the features used at each splitting point gives us an intuitive understanding of the resulting subsets. Because of this, we can more easily understand why certain features were picked over others, which domains are no longer relevant, and so on.
 	\item Iterative construction: The divide \& conquer approach allows for an iterative search process, that can be interrupt if a sufficient number of features were generated, or when the remaining training set is no longer sufficiently representative for drawing meaningful conclusions.
 	%\item Guided by labelling: This approach explicitly uses the labels of the training set to create meaningfully different groups. As a result of this, we can expect that as we go further down, the need for good, distinguishing features will rise, and we can locate stronger features.
 \end{enumerate}
 
-Due to the above advantages, we have a strong incentive to utilize the divide \& conquer approach when attempting to create additional features using \emph{FEAGURE}. This new feature generation algorithm, which we shall name \emph{Deep-FEAGURE}, applies the \emph{FEAGURE} algorithm at every node, splitting it according to the best feature in term of information gain. Once a stopping criteria has been reached, the tree is discarded and the generated features at each node are gathered as the final output.
-As our stopping criteria, we either wait until we either receive a consistent training set, meaning all examples have the same label, or until the size of the training set becomes so small that it is wholly unrepresentative of the complete problem. 
+Due to the above advantages, we have a strong incentive to utilize this approach when attempting to create additional features using \emph{FEAGURE}. 
+We call this new algorithm \emph{Deep-FEAGURE}, as it goes into increasingly deeper local contexts. 
 Pseudocode for this method is shown in Algorithm \ref{code-tree-thing}.
-Through the use of a divide \& conquer approach, we can better locate strong, locally useful features, that the \emph{FEAGURE} algorithm has difficult locating otherwise. In our experiments, we used this approach to generate features.
+Through the use of a divide \& conquer approach, we can better locate strong, locally useful features, that the \emph{FEAGURE} algorithm may have difficulty locating otherwise. In our experiments, we used this approach to generate features.
 
 \begin{algorithm}[H]
 	\caption{Deep FEAGURE- Divide \& conquer feature generation}
 	\label{code-tree-thing}
 	\small
-	minSize- minimal size of a node.
+	minSize: minimal size of a node.
 	
-	SplitByBestFeature- a method that splits a training set according to a feature.
+	generatedFeatures: The resulting set of generated features.
+	
+	SelectFeature: Method that selects a single feature, such as highest information gain.
 	
 	\begin{algorithmic}
-		\Function{GenerateFeaturesInANode}{$S$, $F$, ${\cal R}$, $d$}
-		\If {$|S|<$minSize or $S$ is consistent} 
-		\State
-		\Return 
-		\EndIf
-		\State newFeatures=\Call{FEAGURE}{$S$, $F$, ${\cal R}$, $d$}
-		\State \Return \Call{SplitByBestFeature}{$S$, $F\cup$ newFeatures}, newFeatures
-		\EndFunction
-		
-		
+		\Function{DecisionTreeInduction}{$S$, $F$, ${\cal R}$, $d$}
+		\If {all examples in $S$ are of same class}
 		\State 
-		\Function{GenerateFeatures}{$S$, $F$, ${\cal R}$}
-		\State currentFeatures= $\emptyset$
-		\State sons, $F_{new}$=\Call{GenerateFeaturesInANode}{$S$, $F$, ${\cal R}$}
-		\State currentFeatures= currentFeatures$\cup F_{new}$
-		\For {son in sons}
-		\State newFeatures=\Call{GenerateFeatures}{son.$S$,$F$,${\cal R}$}
-		\State currentFeatures= currentFeatures$\cup$newFeatures
+		\Return leaf(label of $S$)
+		\EndIf
+		\If {$|S|<$minSize}
+		\State 
+		\Return leaf(majority class of $S$)
+		\EndIf
+		\State localGeneratedFeatures=\Call{FEAGURE}{$S$, $F$, ${\cal R}$, $d$}
+		\State add localGeneratedFeatures to generatedFeatures
+		\State $f=$ \Call{SelectFeature}{$S$, $F\cup$localGeneratedFeatures}
+		\State $children=\emptyset$
+		\For{$v\in Domain(f)$}
+			\State $S(f)=\{(o,y)\in S|f(o)=v\}$
+			\State subTree= \Call{DecisionTreeInduction}{$S(f)$, $F\cup$localGeneratedFeatures, ${\cal R}$, $d$}
+			\State add subTree to $children$
 		\EndFor
-		\State \Return currentFeatures
+		\State \Return $children$
 		\EndFunction
+		
 	\end{algorithmic}
 \end{algorithm}
 
@@ -352,13 +370,13 @@ These knowledge bases represent semantic knowledge through the use of relations,
 
 To use \emph{FEAGURE} for text classification, we use words as binary features and Freebase and YAGO2 as our semantic knowledge bases.
 YAGO2 \cite{hoffart2013yago2} is a large general knowledge base extracted automatically from Wikipedia, WordNet and GeoNames.
-YAGO2 contains over 10 million entities and 124 million relational facts, mostly dealing in individuals, countries and events.
+YAGO2 contains over 10 million entities and 124 million relational facts, mostly dealing with individuals, countries and events.
 Freebase \cite{bollacker2008freebase} has been described as ``a massive, collaboratively edited database of cross-linked data". Freebase is constructed as a combination of data harvested from databases such as Wikipedia and data contributed by users. The result is a massive, extensive knowledge base containing 1.9 billion facts. 
 
 In order to apply our approach to the domain of text classification, we perform a few minor adjustments to the \emph{FEAGURE} algorithm:
 \begin{enumerate}
 	\item To enable linkage between the basic features and the semantic knowledge bases, we use entity linking software \shortcite{hoffart2011robust,milne2013open} to transform these words into semantically meaningful entities that are connected to our knowledge base. The result of this process is a set of entities corresponding to each document.
-	\item Since all of our base features are binary words, we use the set of entities extracted from text as the set of values $v_i(S)$, giving us a single feature.
+	\item Since all of our base features are binary words, we use the set of entities extracted from the text as the set of values $v_i(S)$, giving us a single feature.
 	\item Once we have created a new classifier $h_i$, we cannot simply compose it on $f_i$, since every example potentially contains multiple entities. To that end, we apply $h_i$ on each relevant entity and take the majority vote.
 	\item Since $v_i(S)$ contains entities belonging multiple domains,  we split it into several subsets according to relation domains and apply the \emph{FEAGURE} algorithm independently to each domain. For the case of semantic knowledge bases, using the entity type is a good way to obtain such a partition. The result of this process is a generated feature for each such domain.
 \end{enumerate}
@@ -369,7 +387,7 @@ We used two collections of datasets for our evaluation:
 
 \textbf{TechTC-100} \cite{gabrilovich2004text} is a collection of 100 different binary text classification problems of varying difficulty, extracted from the Open Dictionary project.
 We used the training and testing sets defined in the original paper. 
-As our knowledge base for this task, we used YAGO2.% \citep{hoffart2013yago2}.
+As our knowledge base for this task, we used YAGO2. % \citep{hoffart2013yago2}.
 For entity extraction, we used AIDA \cite{hoffart2011robust}, a framework for entity detection and disambiguation. 
 
 %The TechTC-100 dataset collection served as a powerful benchmark, as it shows results for multiple problems at once, giving a broad view for many problems with varying difficulties. This aspect allowed us to better understand and analyse our approach in a variety of situations.
@@ -384,10 +402,11 @@ Then, we limited the texts further to medical documents that contain only a titl
 Due to the relatively sparse size of most MeSH categories, we only used the two categories with the most documents, C1 and C20\footnote{``Bacterial Infections and Mycoses" and ``Immunologic Diseases", respectively.}, yielding a binary learning problem.
 The result is a dataset of 850 documents of each category, for a total of 1700 documents.
 We used ten-fold cross validation to evaluate this dataset.
-Since the YAGO2 knowledge base does not contain many medical relations, we used Freebase instead. We took the Freebase data dump used by \shortciteA{bast2014easy}. 
+Since the YAGO2 knowledge base does not contain many medical relations, we used Freebase instead. We took the Freebase data dump used by \shortciteA{bast2014easy}.
+We used Wikipedia miner \cite{milne2013open} for entity linking. 
 
 %TODO: this part
-In our experiments, we compared the performance of a learning algorithm with the features generated by the \emph{FEAGURE} algorithm to the baseline of the same induction algorithm without the constructed features. In addition, since we could not obtain the code of competitive approaches for relation-based feature generation (such as FeGeLOD, SGLR), we instead compared our algorithm to \emph{Expander-FG}, that we believe should be indicative of the performance of these unsupervised approaches.
+In our experiments, we compared the performance of a learning algorithm with the features generated by the \emph{Deep-FEAGURE} algorithm, discussed in Section \ref{tree_usage}, to the baseline of the same induction algorithm without the constructed features. In addition, since we could not obtain the code of competitive approaches for relation-based feature generation (such as FeGeLOD, SGLR), we instead compared our algorithm to \emph{Expander-FG}, that we believe should be indicative of the performance of these unsupervised approaches.
 We used three induction algorithms as benchmarks for measuring the difference in performance: SVM \cite{cortes1995support}, K-NN \cite{fix1951discriminatory} and CART \cite{breiman1984classification}.
 
 
@@ -448,7 +467,7 @@ One notable exception to our good results is the poor performance of K-NN for th
 
 Figures \ref{fig:svm_base_lvl1} and \ref{fig:svm_base_lvl2} show the accuracies for datasets in techTC-100 using a SVM classifier. The x axis represents the baseline accuracy without feature generation, and the y axis represents the accuracy using our new feature set generated using \emph{FEAGURE}. Therefore, any dataset that falls above the $y=x$ line marks an improvement in accuracy. 
 The results show a strong trend of improvement, with high ($>10\%$) improvement being common.
-We see that for a few of the datasets, there is a degrade in accuracy. This degrade in accuracy can be a result of mistakes in the entity extraction and linking process.
+We see that for a few of the datasets, there is a degrade in accuracy. This degrade in accuracy can be a result of mistakes in the entity extraction and linking process that can cause over-fitting in generated learning problems.
 
 \begin{figure}
 	\centering
@@ -552,20 +571,22 @@ Table \ref{table:acc-nontree} shows the accuracies achieved by using these induc
 
 \subsection{Quantitative Analysis}
 
-In order to better understand the results of \emph{FEAGURE}, we must first try to better understand its output and how it behaves from a variety of angles.
-In this section, we examine the following factors:
-\begin{itemize}
-	\item Number of features tried vs number of features generated
-	\item Number of features generated per depth
-	\item Size of new induction problems relative to existing ones
-	\item Local Information gain of the features
-\end{itemize}
+In order to better understand the behaviour of the \emph{Deep-FEAGURE} algorithm, we measured its output and tried to better understand it in aggregate.
 
-Looking at the average number of features considered by \emph{FEAGURE} at every step, we see that for TechTC-100, out of an average of 36 features looked at, 7 are chosen by \emph{FEAGURE}. The rest have either a low information gain (compared to other features in that node) or separate too few objects.
+%we must first try to better understand its output and how it behaves from a variety of angles.
+%In this section, we examine the following factors:
+%\begin{enumerate}
+%	\item Number of features tried during the feature generation process compared number of features generated
+%	\item Number of features generated per depth of the divide \& conquer process
+%	\item Size of new induction problems relative to existing ones
+%	\item Local Information gain of generated features
+%\end{enumerate}
+
+We first look at the average number of features considered by \emph{Deep-FEAGURE} at every node, we see that for TechTC-100, out of an average of 36.7 partitions by type that are considered for each feature, an average of 7.3 are expanded into new features by \emph{FEAGURE}. The rest of the generated problems are discarded due to the filtering criteria mentioned in section \ref{code-tree-thing}.
 We note that there are 46 available relations, and thus the number of features we can expect to look at is at most 46 (if a relation does not apply to a sub-problem, it is not counted in this average). 
 
 When taking depth into account, we see a rapidly decreasing number of generated features as depth increases, as shown in Figure \ref{fig:features_per_depth}.
-This is unsurprising, as we know that increased depth will cause generated problems to separate fewer objects, making them less reliable overall. Additionally, we see that the number of available features decrease in a roughly linear manner with depth. This is again unsurprising, as features deeper in the tree cannot easily make use of the same relation multiple times due to the orthogonality trait discussed in section \ref{tree_usage}.
+This is unsurprising, as we know that increased depth will cause generated problems to have a smaller training set, increasing the likelihood of those features to be filtered out. Additionally, we see that the number of available features decrease in a roughly linear manner with depth. This is again unsurprising, as features deeper in the tree cannot easily make use of the same relation multiple times due to the orthogonality trait discussed in section \ref{tree_usage}.
 
 \begin{figure}[h!]
 	\centering
@@ -592,11 +613,10 @@ This is unsurprising, as we know that increased depth will cause generated probl
 %	\end{tabular}
 %\end{table}
 
-
-Let us consider the relative size of recursive problems, compared to the existing induction problems. Figure \ref{fig:problem_ratio} shows the size ratio of newly created problems compared to existing problems, that is, the size of the newly constructed problem divided by the size of the original problem. We check this ratio at various depths of the search process. We note an interesting effect here:
+Let us consider the relative size of recursive problems, compared to the existing induction problems. Figure \ref{fig:problem_ratio} shows the ratio between the number of examples (size) in the  newly constructed induction problem and the size of the original learning problem at various depths of the divide \& conquer search process. We note an interesting effect here:
 As depth in the search tree increases, the size ratio increases as well. This is somewhat surprising, as an increase in depth means a smaller induction problem, and thus we would expect a similar size ratio to be maintained. Even more unexpected, however, is the fact that average \textbf{recursive} problem size increases with problem depth, rather than simply remaining roughly the same due to the process of its creation. One possible explanation to this increase is that as we search smaller problems deeper down the search process, the relations that result in a smaller or roughly similar sized recursive induction problem have already been used, and thus relations that cause a larger size ratio are needed.
 
-We also note that these recursive problems do not maintain the same labelling balance as the original learning problems, showing an increase in label imbalance (that is, one label set is much larger). This should not come as a surprise, as the divide and conquer search strategy aims to separate based on the label set. As a result of this imbalance, we may wish to make use of various known strategies to reducing the impact of label imbalance in induction problems when using \emph{FEAGURE}.
+We also note that these recursive problems do not maintain the same labelling balance as the original learning problems, showing an increase in label imbalance (that is, one label set is much larger). This is expected, as the divide and conquer search strategy aims to separate based on the label set. As a result of this imbalance, we may wish to make use of various known strategies to reducing the impact of label imbalance in induction problems when using \emph{Deep-FEAGURE}.
 
 \begin{figure}[h!]
 	\centering
@@ -605,7 +625,7 @@ We also note that these recursive problems do not maintain the same labelling ba
 	\label{fig:problem_ratio}
 \end{figure}
 
-Lastly, we look at the local information gain of the newly created features. In figure \ref{fig:local_ig_depth}, we see the mean information gain of generated features per depth, compared to the best information gained achieved by a non-recursive feature for that depth. We see that our recursive features tend to have a much higher information gain, especially as tree depth decreases. We see a decrease in both measures as depth increases, due to the fact that it is more difficult to find distinguishing features as depth increases.
+Lastly, we look at the local information gain of the newly created features. In figure \ref{fig:local_ig_depth}, we see the mean information gain of generated features per depth, compared to the best information gained achieved by a non-recursive feature for that depth. We see that our recursive features tend to have a much higher information gain, especially as in the beginning of the search process. We see a decrease in both measures as depth increases, due to the fact that it is more difficult to find distinguishing features as depth increases.
 
 \begin{figure}[h!]
 	\centering
@@ -616,7 +636,7 @@ Lastly, we look at the local information gain of the newly created features. In 
 
 \subsection{Qualitative Analysis}
 
-In order to better understand the contribution of the features constructed by \emph{FEAGURE}, let us look at a few of them in order to get a clearer understanding of them.
+In order to better understand the contribution of the features constructed by \emph{FEAGURE}, let us look at a few generated features in order to get a clearer understanding of them.
 
 For our first example, let us consider a simple, single level feature construction.
 In this example, we are attempting to separate texts regarding Virginia businesses from those discussing locations in Michigan. At an early point during the learning process, we apply \emph{FEAGURE} to this problem, taking entities from the texts. We create a recursive problem over these entities, using the ``owns" relation as a filter. Thus this new problem (Figure \ref{fig:figure_rec1_example}) attempts to separate owners (usually organisations) of properties mentioned in texts regarding Virginia businesses and those mentioned in texts regarding locations in Michigan.
@@ -640,9 +660,9 @@ This generalization is mostly achieved by the expressiveness of the relation kno
 	\label{fig:feature_eastcoast_rel}
 \end{figure}
 
-Our next example shows a slightly more complex feature within a single level activation of \emph{FEAGURE}. Similarly to the first example, we are attempting to separate texts of two categories: locations in California and in Alabama. 
+Our next example shows a slightly more complex feature within a single level activation of \emph{FEAGURE}. Here,  we are attempting to separate texts of two categories: locations in California and locations in Alabama. 
 Once again, entities are extracted, and this time, the ``lives in" relation is used, looking at people mentioned in the texts.
-We can see the construction of a new recursive problem in figure \ref{fig:figure_rec2_example}. For each person, the label is decided based on the original tagging, and all applicable relations are used to create features for the newly created induction problem.
+We can see the construction of a new recursive problem in Figure \ref{fig:figure_rec2_example}. For each person, the label is decided based on the original tagging, and all applicable relations are used to create features for the newly created induction problem.
 
 \begin{figure}[!h]
 	\centering
@@ -651,7 +671,7 @@ We can see the construction of a new recursive problem in figure \ref{fig:figure
 	\label{fig:figure_rec2_example}
 \end{figure}
 
-Once this recursive learning problem has been constructed, it can be solved using traditional induction methods. In our case, a decision tree induction algorithm was used, yielding the recursive feature described in figure \ref{fig:figure_rec2_feature}. This feature can be applied to people in the text, and can be described as ``is this person an actor, director or model?". This feature is quite useful, as there is a much higher chance that a person living in California will belong to one of these categories, compared to someone living in Alabama. This feature shows how type relations (also known as ``is-a" relations or hypernyms) can be used to effectively group together several types of celebrity figures, namely actors, directors and models.
+Once this recursive learning problem has been constructed, it can be solved using traditional induction methods. In our case, a decision tree induction algorithm was used, yielding the recursive feature described in Figure \ref{fig:figure_rec2_feature}. This feature can be applied to people in the text, and can be described as ``is this person an actor, director or model?". This feature is quite useful, as there is a much higher chance that a person living in California will belong to one of these categories, compared to someone living in Alabama. This feature shows how type relations (also known as ``is-a" relations or hypernyms) can be used to effectively group together several types of celebrity figures, namely actors, directors and models.
 
 \begin{figure}[h!]
 	\centering
@@ -698,58 +718,50 @@ To conclude, we see that in general, good features created by \emph{FEAGURE} are
 Many feature generation methodologies have been developed to search for new features that better represent the target concepts. There are three major approaches for feature generation: tailored methods, combinational techniques and algorithms utilizing external knowledge.
 
 Tailored approaches \cite{sutton1991learning,hirsh1994bootstrapping} are designed for specific problem domains and rely on domain-specific techniques. %for feature construction. 
-%One such example is the bootstrapping algorithm \cite{hirsh1994bootstrapping}, which was designed for the domain of molecular biology. The algorithm represents features as nucleotides sequences
-%whose structure is determined by existing background knowledge. The algorithm uses an initial set of feature sequences, produced by human experts, and uses a domain-specific set of operators to alter them into new sequence features. 
-Such special-purpose algorithms % may be effectively tailored for a given domain, but 
- have proven difficult to generalize to other domains and problems.
+One such example is the bootstrapping algorithm \cite{hirsh1994bootstrapping}, which was designed for the domain of molecular biology. The algorithm represents features as nucleotides sequences whose structure is determined by existing background knowledge. The algorithm uses an initial set of feature sequences, produced by human experts, and uses a domain-specific set of operators to alter them into new sequence features. 
+Such special-purpose algorithms  may be effectively tailored for a given domain, but have proven difficult to generalize to other domains and problems.
 
 Combinational feature generation techniques are domain-independent methods for constructing more descriptive features by combining existing features in various ways. The LDMT algorithm \cite{utgo1991linear}, for example, performs feature construction in the course of building a decision-tree classifier. At each created tree node, the algorithm constructs a hyperplane feature through linear combinations of existing features in a way likely to produce concise, relevant hyperplanes. The LFC algorithm \cite{ragavan1993complex} combines binary features through the use of logical operators such as $\land ,\lnot$.
-The FICUS algorithm \cite{markovitch2002feature} allows the use of any combinational feature generation techniques, based on an a given set of constructor functions. Recent work by \cite{katz2016explorekit} uses a similar approach.
+The FICUS algorithm \cite{markovitch2002feature} allows the use of any combinational feature generation techniques, based on an a given set of constructor functions. Recent work by \shortciteA{katz2016explorekit} uses a similar approach.
 
-Another major class of combinational feature generation approaches is that of \emph{Deep Learning} \cite{rumelhart1986learning,lecun1998gradient}. Here, the  activation functions of the nodes can be viewed as feature schemes, which are instantiated during the learning process by changing the weights.
+Another major class of combinational feature generation approaches is that of \emph{Deep Learning} \shortcite{rumelhart1986learning,lecun1998gradient}. Here, the  activation functions of the nodes can be viewed as feature schemes, which are instantiated during the learning process by changing the weights.
 
 One limitation of combinational approaches is that they merely combine existing features to make the representation more suitable for the 
 learning algorithm. 
-
-%Another class of feature generation algorithms seek to inject additional knowledge into the existing learning problem.
 Our \emph{FEAGURE} algorithm belongs to a third class of approaches that inject additional knowledge to the existing problem through the feature generation process.
 	
 	 Propositionalization approaches \cite{kramer2000bottom,cheng2011automatedfull} rely on relational data to serve as external knowledge. They operate by using a combination of operators in order to create first-order logic predicates connecting existing data and relational knowledge. 
-	\cite{cheng2011automatedfull} devised a generic propositionalization framework  using linked data via relation-based queries. 
+	\citeA{cheng2011automatedfull} devised a generic propositionalization framework  using linked data via relation-based queries. 
 	
 	 FeGeLOD \cite{paulheim2012unsupervisedfull} also uses linked data to automatically enrich existing data. 
-	FeGeLOD uses feature values as entities and adds related knowledge to the example, thus creating additional features. 
+	FeGeLOD uses feature values as entities and adds related knowledge from a relational knowledge base as new features to the existing examples. By doing so, FeGeLOD performs an extension of the feature set.
 	
 	While these unsupervised approaches allow us to utilize external knowledge, they have a major issue: Should we try to construct deep connections and relationships within the knowledge base, we would experience an exponential increase in the number of generated features.
 	To that end, \emph{FEAGURE} and other supervised approaches use the presence of labelled examples to better generate deeper features.
 	
-%Unlike unsupervised approaches, some methods, \emph{FEAGURE} included, seek to utilize a labelled training set in order to perform a more guided search through the space of possible features based on external knowledge. 
-%Most of these techniques can trace their source to \emph{Inductive Logic Programming (ILP)} \citep{muggleton1991inductive, quinlan1990learning}, a supervised approach that induces a set of first-order logical formulae with the purpose of achieving a good separation of the given training set. 
-%ILP methods do so by starting from single relation formulae and adding additional relational constraints using the knowledge base, until formulae that separate the training set into positive and negative examples are found. To that end, these approaches make use of an operator known as a refinement operator. When applied on a relational formula, a refinement creates a more specialized case of that formula. For example, given the logical formula $BornIn(X,Y)$, where $X$ is a person and $Y$ is a city, one possible refinement is the formula $BornIn(X,Y)\land CapitalOf(Y,Z)$, where $Z$ is a country. The result is a logical formula that considers a more specific case. Additionally, we can look at a refinement that restricts by a constant, turning $BornIn(X,Y)$ into, for example, $BornIn(X, \mbox{{United States}})$.This refinement process continues until a sufficient set of consistent formulas is found.
-%TODO: muggleton is super important
-
-%An algorithm suggested by \cite{terziev2011feature} shows an interesting approach to supervised feature generation. In his paper, \cite{terziev2011feature} suggests a decision tree based approach, where in each node of the tree, an expansion of features is done similarly to FeGeLOD, with a criteria based on entropy used to decide whether further expansion is required. This technique bears several similarities to the approach of \emph{Deep-FEAGURE} (Algorithm \ref{code-tree-thing}). Unlike Deep \emph{FEAGURE}, the feature expansion process is unsupervised, and the resulting feature must be a decision tree, restricting the generality of the approach.
+	%TODO
+	Most supervised methods can trace their source to \emph{Inductive Logic Programming (ILP)} \cite{muggleton1991inductive}, a supervised approach that induces a set of first-order logical formulae with the purpose of achieving a good separation of the given training set. 
+	ILP methods do so by starting from single relation formulae and adding additional relational constraints using the knowledge base, until formulae that separate the training set into positive and negative examples are found. To that end, these approaches make use of an operator known as a refinement operator. When applied on a relational formula, a refinement creates a more specialized case of that formula. For example, given the logical formula $BornIn(X,Y)$, where $X$ is a person and $Y$ is a city, one possible refinement is the formula $BornIn(X,Y)\land CapitalOf(Y,Z)$, where $Z$ is a country. The result is a logical formula that considers a more specific case. Additionally, we can look at a refinement that restricts by a constant, turning $BornIn(X,Y)$ into, for example, $BornIn(X, \mbox{{United States}})$.This refinement process continues until a sufficient set of consistent formulas is found. 
 
 The \emph{dynamic feature generation} approach used by the SGLR algorithm \cite{popescul200716} can be seen as the supervised equivalent of propositionalization methods. Instead of creating first-order predicates a-priori, feature generation is performed during the training phase, allowing for complex features to be considered by performing a best-first search on possible candidates.
 This process allows SGLR to narrow the exponential size of the feature space to a manageable number of candidates.
-
 While this supervised approach overcomes the exponential increase in features that unsupervised approaches suffer from, the space of generated features that it searches is significantly less expressive than that of our approach.
 Through the use of recursive induction algorithm, our approach automatically locates relationships and combinations that we would not otherwise consider when using other approaches.
 
-Since in our paper we focused on the problem of text classification, we also discuss a few text-based approaches for concept-based feature generation. Two examples of such methods are Explicit Semantic Analysis (ESA) \cite{gabrilovich2009wikipediafull} that generates explicit concepts from Wikipedia, and Word2Vec \cite{mikolov2013distributed} that generates latent concepts based on a large corpus. 
+One known method of utilizing external knowledge is known as Deductive Learning \shortcite{mitchell1982generalization,dejong1986explanation}. This school of learning methods uses a knowledge base of logical assertions in order to locate a small set of logical conditions that capture the target concept based on examples from that concept. This approach does so using deduction, rather than induction, as its main tool, allowing us to leverage a logical knowledge base effectively.
+However, due to the difficulty in creating good knowledge bases of logical assertions, this approach has shown limited success.
 
-%One known method of utilizing external knowledge is known as Deductive Learning \citep{mitchell1982generalization,dejong1986explanation}. This school of learning methods uses a knowledge base of logical assertions in order to locate a small set of logical conditions that capture the target concept based on examples from that concept. This approach does so using deduction, rather than induction, as its main tool, allowing us to leverage a logical knowledge base effectively.
-%There are two main concerns that must be addressed for deductive learning to be effective:
-%\begin{enumerate}
-%	\item Extensive knowledge bases comprised of logical assertions are difficult to find and create.
-%	\item This approach forfeits the progress and power gained by the use of well-known and extensively researched inductive methods.
-%\end{enumerate}
+Another type of supervised, knowledge-based, feature generation approaches is \emph{Relational Learning} techniques. These techniques are designed to utilize relational databases and expand their knowledge. One such technique is that of View Learning \shortcite{davis2005view}. View learning generates new relational tables from the existing relational knowledge, based on labelled data.
+It does so by applying ILP on relational data to construct new, simple, relational tables, then,  using a Bayesian network induction algorithm, learns ways to combine these relations into a single, more complex table.
+This approach bears similarity to our approach in that it can effectively utilize background knowledge to draw conclusions using the combination of labelled data and background knowledge. Unlike our approach, these views attempt to fit new knowledge to existing examples, whereas our approach re-frames the learning problem within a new context.
 
-%Another type of supervised, knowledge-based, feature generation approaches is \emph{Relational Learning} techniques. These techniques are designed to utilize relational databases and expand their knowledge. One such technique is that of View Learning \cite{davis2005view}. View learning generates new relational tables from the existing relational knowledge, based on labelled data.
-%It does so by applying ILP on relational data to construct new, simple, relational tables, then using a Bayesian network induction algorithm, learns ways in which these relations can be combined more effectively into a single, more complex table.
-%This approach bears similarity to our approach in that it can effectively utilize background knowledge to draw conclusions using the combination of labelled data and background knowledge. Unlike our approach, these views attempt to fit new knowledge to existing examples, whereas our approach re-frames the learning problem within a new context.
+Kernel-based knowledge injection techniques aim to make use of powerful machine learning algorithms such as SVM and Deep-learning techniques by decoupling the knowledge base from the induction algorithm. This is done through the use of a kernel function that acts as a similarity function between examples in the problem domain. An example of this approach can be seen in the work of \shortciteA{losch2012graph}, that attempt to learn graph kernels within the relational domain. This process creates strong kernel functions that look at the neighbourhood of an entity in search of similarities between entities. This  approach fundamentally differs from our own. Kernel methods attempt to create a filter through which entity similarity can be measured. In our approach, we attempt to locate the target concept through the use of different domains. This distinction is especially relevant to classification tasks, where many possible domains can apply for each example, and similarity may be difficult to find when considering the entire example set.
 
-%Kernel-based knowledge injection techniques aim to make use of powerful machine learning algorithms such as SVM and Deep-learning techniques by decoupling the knowledge base from the induction algorithm. This is done through the use of a kernel function that acts as a similarity function between examples in the problem domain. An example of this approach can be seen in the work of \cite{losch2012graph}, which attempts to learn graph kernels within the relational domain. This creates strong kernel functions that look at the neighbourhood of an entity in search of similarities between entities. This approach bears some similarity to our own in that it can locate complex relationships, but they fundamentally differs in their approach. Kernel methods attempt to create a filter through which entity similarity can be measured. In our approach, we attempt to locate the target concept through the use of different domains. This distinction is especially relevant to classification tasks, where many possible domains can apply for each example, and similarity may be difficult to find when considering the entire example set.
+An algorithm suggested by \citeA{terziev2011feature} shows an interesting approach to supervised feature generation. In his paper, \citeA{terziev2011feature} suggests a decision tree based approach, where in each node of the tree, an expansion of features is done similarly to FeGeLOD, with a criteria based on entropy used to decide whether further expansion is required. This technique bears several similarities to the approach of \emph{Deep-FEAGURE} (Algorithm \ref{code-tree-thing}). Unlike \emph{Deep-FEAGURE}, the feature expansion process is unsupervised, and the resulting feature must be a decision tree, restricting the generality of the approach.
+
+Since in our paper we focused on the problem of text classification, we also discuss a few text-based approaches for feature generation. 
+Linguistic methods such as those described in a study by \shortciteA{moschitti2004complex} attempt to use part-of-speech and grammar information to generate more indicative features than the bag-of-words representation of texts.
+Concept-based approaches are the most similar to our own. Two examples of such methods are Explicit Semantic Analysis (ESA) \cite{gabrilovich2009wikipediafull} that generates explicit concepts from Wikipedia based on similarity scores, and Word2Vec \shortcite{mikolov2013distributed} that generates latent concepts based on a large corpus. Both of these approaches provide us with a feature set of semantic concepts. These concepts can be used alongside our approach, allowing us to induce over these concepts.
 
 \section{Conclusions}
 %finishing up and summary
@@ -759,7 +771,7 @@ The algorithm works by generating complex features induced using the available k
 
 %TODO:these parts
 %problems in alg+how we can solve them (overfitting, label requirement?)
-One potential problem our approach has is the issue of over-fitting. Since our algorithm creates a recursive learning problem on feature values, special care must be taken to avoid over-fitting in generated features. To that end, we can employ well-known techniques used in machine learning and data mining literature designed to reduce the risks of over-fitting. For instance, we could apply feature selection approaches to filter out poor generated features, such as those created from a small training set.
+One potential problem our approach has is the issue of over-fitting potential. Since our algorithm creates a recursive learning problem on feature values, special care must be taken so as to fit a classifier to generated learning problem without over-fitting. To that end, we can employ well-known techniques used in machine learning and data mining literature designed to reduce the risks of over-fitting. For instance, we could apply feature selection approaches to filter out poor generated features, such as those created from a small training set.
 
 %possible uses
 In this paper, we applied our approach to the text classification problem. Aside from this problem, there are many problems where knowledge-based feature generation algorithms such as \emph{FEAGURE} can be applied, from other problems involving entities, through domains such as academic citation and topic classification, to medical diagnostics.
