@@ -29,28 +29,78 @@
 \newtheorem{defn}{Definition}[section]
 
 %\jairheading{1}{2015}{3-17}{6/91}{9/91}
-\ShortHeadings{Recursive Feature Generation for Knowledge-based Induction}
-{Friedman \& Markovitch}
+%\ShortHeadings{Recursive Feature Generation for Knowledge-based Induction}
+%{Friedman \& Markovitch}
 %\firstpageno{25}
 
-\title{Recursive Feature Generation for Knowledge-based Induction}
-\author{\name Lior Friedman \email liorf@cs.technion.ac.il \\
-	\name Shaul Markovitch \email shaulm@cs.technion.ac.il \\
-	\addr Technion-Israel Institute of Technology\\
-	Haifa 32000, Israel
-}
+%\title{Recursive Feature Generation for Knowledge-based Induction}
+%\author{\name Lior Friedman \email liorf@cs.technion.ac.il \\
+%	\name Shaul Markovitch \email shaulm@cs.technion.ac.il \\
+%	\addr Technion-Israel Institute of Technology\\
+%	Haifa 32000, Israel
+%}
 
 \begin{document}
 	
-\maketitle
-	
+%\maketitle
+
+\thispagestyle{empty}
+
+\begin{center}
+{\LARGE Recursive Feature Generation\\ for Knowledge-based Induction}\\[0.2\baselineskip]
+\end{center}
+
+\begin{center}
+{\large Research Thesis
+In Partial Fulfilment of The Requirements for the Degree of
+ \\Master of Science in Computer Science}
+\end{center}
+
+\vspace*{2\baselineskip}
+
+\begin{center}
+{\Large Lior Friedman}
+\end{center}
+
+\vspace*{8\baselineskip}
+
+
+\begin{center}
+Submitted to the Senate of the Technion - Israel Institute of Technology\\
+Adar, 5777, Haifa, May, 2017
+\end{center}
+
+\clearpage
+\thispagestyle{empty}
+
+\tableofcontents
+
+\clearpage
+\thispagestyle{empty}
+
+\listoffigures
+
+\thispagestyle{empty}
+
+\listoftables
+\clearpage
+
+\thispagestyle{empty}
+
+
 \begin{abstract}
-	When humans perform inductive learning they often enhance the process by using extensive background knowledge.
-	With the increasing availability of well-formed collaborative knowledge bases, the performance of learning algorithms could
-	 be significantly enhanced if a way was found to exploit these knowledge bases. 
-	In this work we present a novel algorithm for injecting external knowledge into induction algorithms using feature generation. Given a feature, the algorithm defines a new learning task over its set of values, and uses the knowledge base to solve the constructed learning task. The resulting classifier is then used as a new feature for the original problem.
-	We have applied our algorithm to the domain of text classification using large semantic knowledge bases. We have shown that the generated features significantly improve the performance of existing learning algorithms.
+	When humans perform inductive learning, they often enhance the process by using extensive background knowledge.
+	 Recently, a large collection of common-sense and domain specific relational knowledge bases have become available on the web.
+	With the increasing availability of well-formed collaborative knowledge bases, it is possible to significantly enhance the performance and accuracy of existing learning by finding a way to effectively exploit these knowledge bases. 
+	In this work, we present a novel supervised algorithm for injecting external knowledge into induction algorithms using a feature generation framework. Given a feature, the algorithm defines a new learning task over its set of values, and uses the knowledge base to solve the constructed learning task. The resulting classifier is then used as a new feature for the original problem.
+	This approach allows us to make use of existing methods in machine learning to better generate our features.
+	We have applied our algorithm to the domain of text classification using large semantic knowledge bases such as YAGO2 and Freebase. We have shown that the generated features significantly improve the performance of existing learning algorithms.
+	Additionally, we have shown that our approach performs significantly better than another, unsupervised feature generation method, thus demonstrating the unique benefits of our approach.
 \end{abstract}
+
+\clearpage
+\pagenumbering{arabic}
+
 
 \section{Introduction}
 \label{sec:Intro}

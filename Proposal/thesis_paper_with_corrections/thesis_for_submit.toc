@@ -1,0 +1,19 @@
+\contentsline {section}{\numberline {1}Introduction}{1}
+\contentsline {section}{\numberline {2}Motivation}{1}
+\contentsline {section}{\numberline {3}Generating Features through Recursive Induction}{4}
+\contentsline {subsection}{\numberline {3.1}Problem definition}{4}
+\contentsline {subsection}{\numberline {3.2}Expansion-based feature generation}{5}
+\contentsline {subsection}{\numberline {3.3}Recursive feature generation algorithm}{5}
+\contentsline {subsection}{\numberline {3.4}Finding Locally Improving Features}{7}
+\contentsline {section}{\numberline {4}Empirical Evaluation}{8}
+\contentsline {subsection}{\numberline {4.1}Application of \emph {FEAGURE} to Text Classification}{8}
+\contentsline {subsection}{\numberline {4.2}Methodology}{9}
+\contentsline {subsection}{\numberline {4.3}Results}{10}
+\contentsline {subsection}{\numberline {4.4}Quantitative Analysis}{12}
+\contentsline {subsection}{\numberline {4.5}Qualitative Analysis}{14}
+\contentsline {subsubsection}{\numberline {4.5.1}A simple example}{14}
+\contentsline {subsubsection}{\numberline {4.5.2}A more complex example}{16}
+\contentsline {subsubsection}{\numberline {4.5.3}Recursive application of \emph {FEAGURE}}{17}
+\contentsline {section}{\numberline {5}Related Work}{21}
+\contentsline {section}{\numberline {6}Conclusions}{23}
+\contentsline {section}{References}{25}
