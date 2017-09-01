@@ -125,12 +125,13 @@ Applying a standard learning algorithm to $T_3$ will yield a classifier that sep
 
 \begin{figure*}[th]
 	\centering
-	\includegraphics[width=1.0\linewidth,height=0.4\linewidth]{fig4_annotated.pdf}
+	\includegraphics[width=0.9\linewidth,height=0.35\linewidth]{fig4_annotated.pdf}
 	\caption{Recursive construction of a learning problem on countries of origin. $(1)$ Creating the objects for the new problem. $(2)$ Creating features using the knowledge base. $(3)$ Applying an induction algorithm. $(4)$ The resulting feature.}
 	\label{fig:moving_to_lvl2}
 \end{figure*}
 
 The result of this process, depicted in Figure \ref{fig:moving_to_lvl2}, is a new feature for $T_2$, that is, a feature on surnames. This feature is then used to construct a classifier for $T_2$, which is in turn used as a feature for $T_1$, yielding a feature on patients. This new feature for patients will check whether their surname corresponds with a country of origin that has desert-like characteristics. We see that this feature allows us to correctly capture the target concept.
+
 
 %\begin{figure*}[th]
 %	\centering
@@ -233,7 +234,7 @@ Extending the algorithm in this fashion, however, would yield an exponential inc
 %We could potentially resolve this issue by applying \emph{Expander-FG} to the generated features, giving us additional hops and thus more complex features. The downside of this expansion is that it causes an exponential increase in the number of generated features.
 To that end, we propose an alternative knowledge-based feature generation algorithm. Given an input $\langle S,F,{\cal R} \rangle$, for each feature $f_i\in F, f_i:O\rightarrow I_i$, our algorithm creates a recursive learning problem whose objects are the values of $f_i$, where values associated with positive examples in $S$ are labeled positive. %, and those associated with negative examples labeled negative. 
 Features for this generated problem are created using the relations in ${\cal R}$. Once this new learning problem $\langle S'_i,F_{\cal R}\rangle$ is defined, an learning algorithm is used to induce a classifier $h_i:I_i\rightarrow Y$. Finally, our algorithm outputs a single generated feature for $f_i$, $f'_i(x)=h_i\circ f_i=h_i(f_i(x)), f'_i:O\rightarrow Y$.
-We note that during the induction process of the newly created learning problem, we can apply a feature generation algorithm on $\langle S'_i,F_{\cal R},{\cal R} \rangle$. In particular, we can apply the above method recursively to create additional features. We call this algorithm \emph{FEAGURE} (FEAture Generation Using REcursive induction).
+Note that during the induction process of the newly created learning problem, we can apply a feature generation algorithm on $\langle S'_i,F_{\cal R},{\cal R} \rangle$. In particular, we can apply the above method recursively to create additional features. We call this algorithm \emph{FEAGURE} (FEAture Generation Using REcursive induction).
 
 %\subsubsection{Creating Learning Problems using Relations}  
 
@@ -257,7 +258,7 @@ The full algorithm is listed in Algorithm \ref{code-creating-prob}.
 While the \emph{FEAGURE} algorithm can be used as described above, we found it more useful to use it in the context of a divide \& conquer approach, in a manner similar to the induction of decision trees.
 In this approach, the set of examples is given as an input to a decision tree induction algorithm. The \emph{FEAGURE} algorithm is applied at each node. 
 This allows us to generate features that are locally useful for a subset of examples.
-At the end of the process the tree is discarded and the generated features at each node are gathered as the final output.
+At the end of the process the tree is discarded and the generated features are gathered as the final output.
 
 \begin{algorithm}[H]
 	\caption{FEAGURE algorithm}
@@ -291,7 +292,6 @@ At the end of the process the tree is discarded and the generated features at ea
 		
 	\end{algorithmic}
 \end{algorithm}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Empirical evaluation}
@@ -476,6 +476,63 @@ The only exception to this trend is the case of an external K-NN classifier for 
 		
 %	\end{tabular}
 %\end{table*}
+
+\subsection{\emph{FEAGURE} Demonstration}
+
+To demonstrate \emph{FEAGURE}, We selected one problem from TechTC-100. In this example, texts refer either to locations in and around Texas, or to locations in and around New York. The extracted entities are locations, with the ``Located in" relation as our domain (Figure \ref{fig:figure_rec3_example}). Applicable relations are used to then create a new induction problem. \emph{FEAGURE} uses the ``Located in" and ``Happened in" relations as features for this problem, as shown in Figure \ref{fig:figure_rec3_problem}. 
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\linewidth]{figure_rec3_example_new}
+	\caption{Entities are extracted from the text, and entities in the ``Located in" relation are used as labeled objects.}
+	\label{fig:figure_rec3_example}
+\end{figure}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\linewidth]{figure_rec3_problem_new}
+	\caption{Construction of a recursive learning problem based on the ``Located in" relation. Applicable relations are used to create a feature set for the newly constructed example set.}
+	\label{fig:figure_rec3_problem}
+\end{figure}
+
+Since we chose $d=2$ as the recursion depth parameter, the algorithm calls \emph{FEAGURE} recursively to try and generate new features for the new induction problem.
+The values of the feature ``Happened in" are events. These events are used as objects for a recursive learning problem (Figure \ref{fig:figure_rec3_example_rec}).
+We use the ``Type" relation as a feature, relying on hypernyms to classify events (Figure \ref{fig:figure_rec3_problem_rec}).
+The resulting classifier (a decision tree induction algorithm was used) is shown in Figure \ref{fig:figure_rec3_feature}, and can be interpreted as ``is this event a battle or conflict?".
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\linewidth]{figure_rec3_example_rec_new}
+	\caption{Construction of a second level recursive learning problem based on the ``Happened in" relation. Feature values are treated as objects and labeled according to the labels of the problem on locations.}
+	\label{fig:figure_rec3_example_rec}
+\end{figure}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\linewidth]{figure_rec3_problem_rec_new}
+	\caption{Construction of a recursive learning problem based on the ``Happened in" relation. Once the example set has been created, applicable relations are used to create a feature set for the newly constructed induction problem.}
+	\label{fig:figure_rec3_problem_rec}
+\end{figure}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figure_rec3_feature_rec_new}
+	\caption{Recursive feature constructed by \emph{FEAGURE} for entities in the ``happened in" relation. This feature operates on events, and can be used in a classifier on locations.}
+	\label{fig:figure_rec3_feature}
+\end{figure}
+
+Once we have generated this classifier on events, we can use it as a binary feature. \emph{FEAGURE} uses this new feature to expand the constructed induction problem on locations, shown in Figure \ref{fig:figure_rec3_problem}.
+This feature is applied to a location through a majority vote over events that happened in that location. The result is a feature for locations representing the concept ``were most notable events in this location battles/conflicts?"
+Finally, a decision tree learner is used on the expanded feature set to learn a classifier on locations to be used as a feature for our original learning problem. The new classifier for locations is shown in Figure \ref{fig:figure_rec3_feature_full}. It can be described as ``is this location located in Texas, or the site of battles or conflicts?".
+Texts mentioning locations in and around Texas are more likely to link to locations that correspond to the output of this classifier.
+We note that this feature was generated by \emph{FEAGURE}, and was later used by our external induction algorithm due to its high information gain. 
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\linewidth]{figure_rec3_feature_new}
+	\caption{Final generated feature constructed by \emph{FEAGURE} for entities in the ``located in" relation. The feature in the left branch is the recursive feature constructed by applying \emph{FEAGURE} to the new learning problem.}
+	\label{fig:figure_rec3_feature_full}
+\end{figure}
 
 \section{Related work}
 
