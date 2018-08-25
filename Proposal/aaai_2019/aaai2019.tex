@@ -550,7 +550,7 @@ Tailored approaches \cite{sutton1991learning,hirsh1994bootstrapping} are designe
 Such special-purpose algorithms % may be effectively tailored for a given domain, but 
 have proven difficult to generalize to other domains and problems.
 
-Combinational feature generation techniques are domain-independent methods for constructing new features by combining existing features. The LDMT algorithm \cite{utgo1991linear} performs feature construction in the course of building a decision-tree classifier. At each tree node, the algorithm constructs a hyperplane feature through linear combinations of existing features in a way likely to produce concise, relevant hyperplanes. The LFC algorithm \cite{ragavan1993complex} combines binary features through the use of logical operators such as $\land ,\lnot$.
+Combinational feature generation techniques are domain-independent methods for constructing new features by combining existing features. The LFC algorithm \cite{ragavan1993complex} combines binary features through the use of logical operators such as $\land ,\lnot$.
 The FICUS algorithm \cite{markovitch2002feature} allows the use of any combinational feature generation techniques, based on an a given set of constructor functions. Recent work by \citeauthor{katz2016explorekit} \shortcite{katz2016explorekit} uses a similar approach.
 \emph{Deep Learning} \cite{rumelhart1986learning,lecun1998gradient} is another major class of combinational feature generation approaches. Here, the activation functions of the nodes can be viewed as feature schemes, that are constructed during learning process by changing the weights.
 
@@ -565,7 +565,9 @@ FeGeLOD \cite{paulheim2012unsupervisedfull} also uses linked data to automatical
 FeGeLOD uses feature values as entities and adds related knowledge to the example,
 thus creating additional features.
 
-Unsupervised approaches allow us to utilize external knowledge, but they have a major issue: Should we try to construct deep connections and relationships within the knowledge base, we would experience an exponential increase in the number of generated features.
+Unsupervised approaches allow us to utilize external knowledge, but they have a major issue: 
+The number of generated features increases exponentially when constructing deep relationships within the knowledge base.
+%Should we try to construct deep connections and relationships within the knowledge base, we would experience an exponential increase in the number of generated features.
 To that end, \emph{FEAGURE} and other supervised approaches use the presence of labeled examples to better generate deeper features.
 
 %An algorithm suggested by \citeauthor{terziev2011feature} shows an interesting approach to supervised feature generation. In his paper, \citeauthor{terziev2011feature} suggests a decision tree based approach, where in each node of the tree, an expansion of features is done similarly to FeGeLOD, with an entropy-based criterion to decide whether further expansion is required. This technique bears several similarities to \emph{Deep-FEAGURE} (Algorithm \ref{code-tree-thing}). Unlike \emph{Deep-FEAGURE}, the feature expansion
@@ -578,8 +580,8 @@ performing a best-first search on possible candidates. This process allows SGLR 
 exponential size of the feature space to a manageable number of candidates. While this supervised
 approach overcomes the exponential increase in features that unsupervised approaches suffer
 from, the space of generated features that it searches is significantly less expressive than that of our
-approach. Through the use of a recursive induction algorithm, our approach automatically locates
-relationships and combinations that we would not consider otherwise.
+approach. %Through the use of a recursive induction algorithm, our approach automatically locates
+%relationships and combinations that we would not consider otherwise.
 
 
 %\emph{Relational Learning} techniques attempt to approach the problem of expanding knowledge from a different angle. These techniques are designed to expand an existing relational database. One such technique is View Learning \shortcite{davis2005view}. View learning uses labeled data to generate new relational tables from the existing relational knowledge.
