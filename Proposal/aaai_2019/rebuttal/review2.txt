@@ -1,0 +1,43 @@
+Questions
+1. [Summary] Please summarize the main claims/contributions of the paper in your own words.
+This paper proposes two methods Expander-FG and FEAGURE to generate features from text collections using knowledge bases. Expander-FG extends each a feature value by all the tuples it appears in in the knowledge base. FEAGURE recursively creates, for each original feature, a learning algorithm with objects the values of that feature (values are labeled positive if they are associated with positive examples) and features created using the relations in the knowledge base. The predicted label is then used as a new feature. Experiments are conducted on a text classification task with two binary text collections with 101 datasets and two knowledge bases. Performances are evaluated with three classification algorithms (KNN, SVM, CART). The paper compares the two proposed methods Expander-FG and FEAGURE with a baseline (using only the original features). Results show that FEAGURE improves both the baseline and Expander-FG most of the time.
+2. [Relevance] Is this paper relevant to an AI audience?
+Likely to be of interest to a large proportion of the community
+3. [Significance] Are the results significant?
+Moderately significant
+4. [Novelty] Are the problems or approaches novel?
+Not novel
+5. [Soundness] Is the paper technically sound?
+Technically sound
+6. [Evaluation] Are claims well-supported by theoretical analysis or experimental results?
+Somewhat weak
+7. [Clarity] Is the paper well-organized and clearly written?
+Satisfactory
+8. [Detailed Comments] Please elaborate on your assessments and provide constructive feedback.
+•	The topic of feature engineering using knowledge base presented in this paper is very interesting. 
+•	The writing of the paper is not always very clear, there are a few typos and mistakes with reference format (“Katz, Shin and Song (2016)”, “(2000; 2011)”, and “Cheng et al.”).
+•	The paper proposes two methods Expansion-based feature generation (Expander-FG) and Recursive feature generation (FEAGURE). 
+o	The first one, Expander-FG, which generates all possible features from the knowledge base for each original feature in the dataset, is very simple and non-original. The idea is proposed in (Cheng et al. 2011). 
+o	The second method FEAGURE generates all possible features recursively from the knowledge base, then applies a binary classification algorithm (decision tree in general in the paper) on each original feature + the features derived from it, then uses the predicted variable (0 or 1) as a new feature. Finally the new (binary) features plus original features are used as the augmented dataset (equivalent to eliminating all features generated from the knowledge base directly). The only difference is that the majority target label is used, rather than the exact target label (to add noise) when the binary classification algorithm is applied. 
+o	An important feature of FEAGURE is that it works on each feature independently. Hence, complex features using e.g. two original features cannot be derived.
+o	The additional contribution from FEAGURE w.r.t. Expander-FG is the use of a binary classification algorithm on features and then using the predicted variable as a new feature. But this is well known and is called stacking. The stacking method is common, but is known to be a time consuming trick in data mining. Unfortunately, the authors do not discuss computing time.
+•	As the authors use the target label to generate new features, it is very easy to lead to leakage. But the authors do not explain how they avoid this issue. 
+•	This paper compares FEAGURE with recursive depth 1 and 2 with Expander-FG and Baseline (only the raw features). Expander-FG generates a lot of features for each original feature, including many noisy features, while FEAGURE only generates one goal-oriented feature for each original feature. Thus, the comparison is not fair; feature selection on Expander-FG should first be used to eliminate irrelevant features. Also, no indication of the number of features generated is given (a large number of original features –hence large dimension- probably explains why k-nn is best for baseline in Table 1).
+•	Similarly, FEAGURE is applied with recursive depth (depth=1 and 2), why not also apply Expander-FG with depth 2? Also there is no discussion on the influence of depth: why not use increasing depth? Computing time might be the issue, but this is not discussed.
+•	The comparisons are very limited. The authors explain that their method is “from a third class”, different from the combinational techniques, classically used in feature engineering. Obviously comparison to some combinational techniques would be required. 
+•	The authors also mention text-based approaches (ESA and Word2Vec) for feature generation. Comparison to such techniques would be required.
+9. [QUESTIONS FOR THE AUTHORS] Please provide questions for authors to address during the author feedback period.
+•	Can you explain what happens when one feature has a very large number of values, such as e.g. your example of surname? These values become objects, and your learning algorithm may have a poor accuracy. The quality of that “internal” learning algorithm seems to have a significant effect on the final accuracy, as you show p5, under Figure 4.
+•	How can you generate features based on two original features?
+•	Can you give some information about the number of features, original and generated?
+•	Can you show, for fair comparison, the performance of Expander-FG after feature selection and Expander-FG with depth = 2 as FEAGURE?
+•	Can you explain how you encode the text data and what the dimensionality is after encoding, for different feature generation methods?
+•	Can you give some information about computing time?
+•	Why do you stop at depth d=2? How does accuracy vary with d?
+•	Can you explain the leakage problem or how you avoid it when you use the stacking way to generate features?
+•	Provide comparisons to some combinational techniques.
+•	Provide comparisons to text-based approaches (ESA and Word2Vec for example).
+10. [OVERALL SCORE]
+4 - Reject
+11. [CONFIDENCE]
+Reviewer is knowledgeable in the area

@@ -1,0 +1,16 @@
+Regarding your various questions:
+- The depth parameter is an algorithm parameter that allows for an expressiveness and performance tradeoff, and was tested with depth 1 and 2. Expander-FG cannot reasonably run with depth 2 due to exponential cost.
+- The time cost of FEAGURE heavily depends on the number of features, recursion depth, and the knowledge graph used. In practice, it proved to be more feasible than running Expander-FG for depth 2.
+- Regarding working with singular features versus set-based features, that explanation was cut for the sake of brevity. 
+- Regarding possible risks and shortcomings, this method is not applicable unless feature values are meaningful entities in some knowledge base. 
+It is possible for the method to generate overfitted features, but there are several common ways to prevent this, such as regularization in the classifier used for recursive feature construction.
+- The Expander-FG method is used as a baseline for comparison for FEAGURE performance. 
+- You are correct in pointing out that FEAGURE bears similarities to model stacking, and can be seen as a method for model stacking for cases of out-of-dataset features. 
+Propositionalization and other feature generation approaches based on knowledge graphs do not make use of labels and known machine learning models, and are therefore much more limited in either expressiveness or search space exploration.
+- The number of original features limits to some extent the number of generated features for FEAGURE, but since the number of features depends on the domain and its representation in the knowledge graph, it is possible to generate several features even with a single original feature.
+- The use of a decision tree learner for the outermost layer of FEAGURE allows us to mitigate the risk of leakage, as each new generated feature is orthogonal to previous features.
+- An experiment with feature selection was performed but did not show significantly different results, and was thus omitted.
+- The number of generated features was omitted for brevity and readability. FEAGURE generated a number of features on par with the number of original features, EXPANDER-FG an order of magnitude more.
+- Regarding a feature with a large number of values such as surnames, the use of a knowledge graph allows us to find common features, and thus an effective classifier based on the original training set.
+
+Thank you for pointing out several typos and readability improvements, we will endeavor to incorporate them in the print copy.

@@ -1,0 +1,30 @@
+Questions
+1. [Summary] Please summarize the main claims/contributions of the paper in your own words.
+The author proposed a recursive feature generation algorithm for knowledge-based learning especially for the cases without sufficient features. Instead of linear combining the features, the proposed algorithm derive a new learning task for a given feature over its set of values/properties. By solving this new task, a new classifier is obtained and used as the input binary feature for the original problem. Good maximal achievable accuracy performance has been observed on three different datasets.
+2. [Relevance] Is this paper relevant to an AI audience?
+Relevant to researchers in subareas only
+3. [Significance] Are the results significant?
+Moderately significant
+4. [Novelty] Are the problems or approaches novel?
+Novel
+5. [Soundness] Is the paper technically sound?
+Has minor errors
+6. [Evaluation] Are claims well-supported by theoretical analysis or experimental results?
+Sufficient
+7. [Clarity] Is the paper well-organized and clearly written?
+Poor
+8. [Detailed Comments] Please elaborate on your assessments and provide constructive feedback.
+This paper is well structured and it is nice to use an example to illustrating the main idea of the proposed algorithm first before the formal definition. Figure illustrations of the proposed algorithm are also very helpful. Overall, the research idea is interesting, however, the language should be significantly improved for better readability. Also, a number of typos, confusing phrases and missing references can be found through the paper. Here are some examples:
+In the Introduction section: “distinguishing features are (not is) available”…, “the given set of features are (not is) insufficient...”
+Also in the Introduction section, references are missing for the statement “..., there are many cases where simply combining existing features is not sufficient”. 
+In the Motivation section, it might be more clear to readers if the phrase “women with ancestors originating from desert areas” can be reworded by specifying the regions e.g. north Africa etc. rather than using ‘desert areas’.
+Also in the Motivation section, “... and their full names (not name)”.
+In the Related Work section: “...: the (not The) number of generated features increases”.
+9. [QUESTIONS FOR THE AUTHORS] Please provide questions for authors to address during the author feedback period.
+Q1: In the recursive grenation process, when to stop the recursive process or how deep the recursive process goes?
+Q2: What is the overall time cost of the proposed algorithm performing on each dataset?
+Q3: The readers may wonder why the author preferred to work on singular values rather than set-based features (in the Generating features through recursive induction section). A simple explanation would be helpful.
+10. [OVERALL SCORE]
+5 - Marginally below threshold
+11. [CONFIDENCE]
+Reviewer is knowledgeable but out of the area
